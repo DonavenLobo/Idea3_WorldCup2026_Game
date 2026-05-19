@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "World Cup Game",
+    "slug": "world-cup-game",
+    "scheme": "worldcupgame",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "plugins": ["expo-router", "expo-secure-store", "expo-notifications"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

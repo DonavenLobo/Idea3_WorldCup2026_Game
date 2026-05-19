@@ -1,0 +1,35 @@
+import { Image, StyleSheet } from "react-native";
+import type { CardTemplateLayerMetadata } from "@world-cup-game/types";
+
+export interface PlayerAvatarLayerProps {
+  imageUrl?: string;
+  layer: CardTemplateLayerMetadata;
+}
+
+export function PlayerAvatarLayer({ imageUrl, layer }: PlayerAvatarLayerProps) {
+  if (!imageUrl) {
+    return null;
+  }
+
+  return (
+    <Image
+      source={{ uri: imageUrl }}
+      style={[
+        styles.avatar,
+        {
+          height: layer.height,
+          left: layer.x,
+          top: layer.y,
+          width: layer.width
+        }
+      ]}
+    />
+  );
+}
+
+const styles = StyleSheet.create({
+  avatar: {
+    position: "absolute",
+    resizeMode: "contain"
+  }
+});

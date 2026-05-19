@@ -1,0 +1,4 @@
+interface:
+  display_name: "World Cup Game Start Here"
+  short_description: "Read first before working in the World Cup Game repo."
+  default_prompt: "Use this skill first to understand the World Cup Game repo before making changes."

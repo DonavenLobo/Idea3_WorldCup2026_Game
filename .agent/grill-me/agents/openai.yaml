@@ -1,0 +1,4 @@
+interface:
+  display_name: "Grill Me"
+  short_description: "Pressure-test plans one question at a time."
+  default_prompt: "Use this skill to stress-test my plan before implementation."

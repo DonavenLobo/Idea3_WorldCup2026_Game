@@ -1,0 +1,40 @@
+# dependencies
+node_modules/
+
+# build outputs
+.next/
+.wxt/
+dist/
+.output/
+.turbo/
+*.tsbuildinfo
+
+# env files
+.env
+.env.*
+!.env.example
+!**/.env.example
+!.env.local.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# misc
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+
+# zip files
+*.zip
+
+# agent files
+*.claude
+claude_docs/
+docs/plans
+.pnpm-store/

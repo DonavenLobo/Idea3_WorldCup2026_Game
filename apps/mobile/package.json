@@ -1,0 +1,39 @@
+{
+  "name": "mobile",
+  "version": "0.0.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "build": "expo export",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "echo \"No tests yet for mobile\""
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "*",
+    "@tanstack/react-query": "*",
+    "@world-cup-game/card-renderer": "workspace:*",
+    "@world-cup-game/config": "workspace:*",
+    "@world-cup-game/game-engine": "workspace:*",
+    "@world-cup-game/types": "workspace:*",
+    "@world-cup-game/ui": "workspace:*",
+    "expo": "*",
+    "expo-camera": "*",
+    "expo-image-picker": "*",
+    "expo-linking": "*",
+    "expo-notifications": "*",
+    "expo-router": "*",
+    "expo-secure-store": "*",
+    "react": "*",
+    "react-native": "*",
+    "react-native-reanimated": "*"
+  },
+  "devDependencies": {
+    "@types/react": "*",
+    "typescript": "*"
+  }
+}
