@@ -1,6 +1,6 @@
 # World Cup Game MVP Decisions
 
-Last updated: May 18, 2026
+Last updated: May 21, 2026
 
 ## Product Loop
 
@@ -47,6 +47,15 @@ The AI footballer card is the core identity, monetization, and sharing surface. 
 31. Desired auth options are Apple, Google, Facebook, and Instagram if feasible. Treat Instagram as desired until provider feasibility is confirmed.
 32. The product is 13+, avoids gambling framing, avoids paid randomness, and moderates photo/AI generation.
 33. Start with monorepo skeleton plus product decision docs, then build the first vertical slice.
+
+## Proposed Decisions (Pending Confirmation)
+
+These proposals answer open questions from `docs/world_cup_game_repo_scaffolding_plan.md` section 22. They are not yet locked. Once confirmed by the team, move them into Locked Decisions above.
+
+1. App name is "Squad". (Resolves open decision 1)
+2. Avatar creation offers three user-selected options: generate an AI avatar, upload a personal photo, or let the app randomly assign one. The choice is the user's. (Resolves open decision 6)
+3. Each user gets one free AI card generation. Any further regeneration is a paid action. (Resolves open decision 7)
+4. Each user has exactly one card. (Resolves open decision 4)
 
 ## Non-Negotiable Engineering Rules
 
