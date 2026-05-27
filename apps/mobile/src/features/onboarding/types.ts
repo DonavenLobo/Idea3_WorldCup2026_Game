@@ -1,0 +1,14 @@
+import type { NationConfig } from "@world-cup-game/config";
+
+export type PhotoSourceType = "selfie" | "upload" | "random";
+
+export interface PhotoSource {
+  type: PhotoSourceType;
+  uri?: string;
+}
+
+export interface OnboardingData {
+  nation: NationConfig | null;
+  photoSource: PhotoSource | null;
+  displayName: string;
+}
