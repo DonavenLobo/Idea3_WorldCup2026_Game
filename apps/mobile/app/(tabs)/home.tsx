@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useRouter } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { APP_ROUTES } from "@world-cup-game/config";
 import { MockPlayerCard, useOnboarding } from "../../src/features/onboarding";
@@ -33,9 +33,17 @@ export default function HomeScreen() {
   const router = useRouter();
   const { nation, displayName, photoSource } = useOnboarding();
   const { days, hours, minutes, seconds } = useCountdown(KICKOFF_DATE);
+  const scrollRef = useRef<ScrollView>(null);
+
+  // Reset scroll to top whenever the Home tab gets focused.
+  useFocusEffect(
+    useCallback(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+    <ScrollView ref={scrollRef} style={styles.root} contentContainerStyle={styles.content}>
       <Text style={styles.eyebrow}>YOUR CARD</Text>
       <MockPlayerCard nation={nation} displayName={displayName} photoSource={photoSource} />
 

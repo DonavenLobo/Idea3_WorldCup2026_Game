@@ -20,12 +20,9 @@ export function NationRow({ nation, selected, onPress }: NationRowProps) {
       ]}
     >
       <Text style={styles.flag}>{nation.flagEmoji}</Text>
-      <View style={styles.text}>
-        <Text style={styles.name}>{nation.name}</Text>
-        {nation.confederation ? (
-          <Text style={styles.confederation}>{nation.confederation}</Text>
-        ) : null}
-      </View>
+      <Text style={styles.name} numberOfLines={1}>
+        {nation.name}
+      </Text>
       {selected ? <Text style={styles.check}>✓</Text> : null}
     </Pressable>
   );
@@ -46,6 +43,7 @@ const styles = StyleSheet.create({
   },
   name: {
     color: colors.pitch,
+    flex: 1,
     fontSize: 17,
     fontWeight: "800"
   },
