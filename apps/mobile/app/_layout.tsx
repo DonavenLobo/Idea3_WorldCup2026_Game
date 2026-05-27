@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { BracketProvider } from "../src/features/bracket";
 import { OnboardingProvider } from "../src/features/onboarding";
+import { TriviaProvider } from "../src/features/trivia";
 import { queryClient } from "../src/lib/queryClient";
 
 export default function RootLayout() {
@@ -11,7 +12,9 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <OnboardingProvider>
           <BracketProvider>
-            <Stack screenOptions={{ headerShown: false }} />
+            <TriviaProvider>
+              <Stack screenOptions={{ headerShown: false }} />
+            </TriviaProvider>
           </BracketProvider>
         </OnboardingProvider>
       </SafeAreaProvider>
