@@ -1,4 +1,4 @@
-project_id = "world-cup-game"
+project_id = "gogaffa"
 
 [api]
 enabled = true
@@ -31,7 +31,7 @@ enabled = true
 site_url = "http://localhost:3000"
 additional_redirect_urls = [
   "http://localhost:3000",
-  "worldcupgame://",
+  "gogaffa://",
   "exp://127.0.0.1:8081"
 ]
 jwt_expiry = 3600

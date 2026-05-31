@@ -9,7 +9,7 @@ export function ScreenPlaceholder({ title, body }: ScreenPlaceholderProps) {
   return (
     <View style={styles.root}>
       <View style={styles.card}>
-        <Text style={styles.eyebrow}>World Cup Game</Text>
+        <Text style={styles.eyebrow}>GoGaffa</Text>
         <Text style={styles.title}>{title}</Text>
         {body ? <Text style={styles.body}>{body}</Text> : null}
       </View>

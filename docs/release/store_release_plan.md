@@ -1,6 +1,6 @@
 # Store Release Readiness Plan
 
-Last updated: May 30, 2026
+Last updated: May 31, 2026
 
 This plan prepares the Expo mobile app for Apple App Store and Google Play submission. It is not a claim that the app is ready to submit today. It documents what must be true before the first TestFlight, internal Play test, and public launch.
 
@@ -27,6 +27,43 @@ Official references:
 - Android App Bundle format: https://developer.android.com/guide/app-bundle
 - Google Play Data safety: https://support.google.com/googleplay/android-developer/answer/10787469
 - Google Play target audience and app content: https://support.google.com/googleplay/android-developer/answer/9867159
+- Vercel monorepo deployments: https://vercel.com/docs/monorepos
+- Vercel CLI deployments: https://vercel.com/docs/cli/deploy
+
+## Current Confirmed Setup
+
+Confirmed setup details:
+
+- App name: `GoGaffa`.
+- iOS bundle ID: `com.ivs.gogaffa`.
+- Android package: `com.ivs.gogaffa`.
+- Apple Team ID: `PT8MR25M5P`.
+- App Store Connect App ID: `6775258169`.
+- Support email: `denshimdon@gmail.com`.
+- Expo account owner: `internationalventurestudio`.
+- EAS project: `@internationalventurestudio/gogaffa`.
+- EAS project ID: `b9b7a050-9841-4ed5-9154-eafed8a84bab`.
+- Supabase project exists: `GoGaffa` / `hnwrhkrzvjesjrtjpjtm` in `us-east-1`.
+- Supabase Auth providers configured: Email, Google, Apple.
+- AI provider: Anthropic through server-side Supabase Edge Functions only.
+- Vercel project exists: `gogaffa` / `prj_hmrALSf2Kt62HIAOCT1YpsTMZeHi`.
+- Vercel team: `denshimdon-5307s-projects` / `team_lBY9AzfREi5PixiToVkPOZUr`.
+- Vercel preview deployment verified: `https://gogaffa-nqgt6mnw6-denshimdon-5307s-projects.vercel.app`.
+- Vercel public Supabase env configured: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+- Vercel production deployment/custom domain is not finalized yet.
+- Website privacy, Terms of Service, and support URLs are not ready yet.
+
+Do not call Anthropic directly from the mobile or web clients. Store `ANTHROPIC_API_KEY` only in Supabase Edge Function secrets/local function env, call Anthropic from the relevant Edge Function, and return only the app-safe result to the client.
+
+The missing website URLs block public App Store submission, but they do not block the work below:
+
+- Registering/configuring Apple identifiers and capabilities.
+- Creating and refining the App Store Connect record.
+- Creating an Expo account and EAS project.
+- Configuring EAS credentials and building internal/preview binaries.
+- Wiring Supabase auth providers and Edge Function secret boundaries.
+- Uploading early TestFlight builds when the app is technically buildable.
+- Preparing screenshots, metadata drafts, privacy answers, and review notes.
 
 ## Repo Additions
 
@@ -35,6 +72,7 @@ The repo now includes baseline release configuration:
 - `apps/mobile/eas.json`: EAS build and submit profiles.
 - `apps/mobile/app.json`: iOS bundle identifier, Android package, build numbers, and permission copy.
 - `apps/mobile/package.json`: EAS build and submit scripts.
+- `apps/web/vercel.json`: Vercel monorepo build settings for the Next.js web app.
 - Root `package.json`: forwarded EAS scripts.
 - `.env.example` and `apps/mobile/.env.example`: app-store identifier placeholders.
 
@@ -43,9 +81,20 @@ The repo now includes baseline release configuration:
 Current provisional IDs:
 
 ```txt
-iOS bundle ID: com.donavenlobo.worldcupgame
-Android package: com.donavenlobo.worldcupgame
-URL scheme: worldcupgame
+iOS bundle ID: com.ivs.gogaffa
+Android package: com.ivs.gogaffa
+URL scheme: gogaffa
+Apple Team ID: PT8MR25M5P
+App Store Connect App ID: 6775258169
+Support email: denshimdon@gmail.com
+Expo owner: internationalventurestudio
+EAS project: @internationalventurestudio/gogaffa
+EAS project ID: b9b7a050-9841-4ed5-9154-eafed8a84bab
+Supabase project ref: hnwrhkrzvjesjrtjpjtm
+Supabase URL: https://hnwrhkrzvjesjrtjpjtm.supabase.co
+Vercel team ID: team_lBY9AzfREi5PixiToVkPOZUr
+Vercel project ID: prj_hmrALSf2Kt62HIAOCT1YpsTMZeHi
+Vercel preview URL: https://gogaffa-nqgt6mnw6-denshimdon-5307s-projects.vercel.app
 ```
 
 Finalize these before the first store upload. Apple says the Bundle ID cannot be changed after uploading a build to App Store Connect. Google Play also treats the Android package as the app identity.
@@ -110,7 +159,19 @@ Complete before TestFlight or Play internal testing:
 - [ ] Finalize app name and public-safe brand language.
 - [ ] Finalize iOS bundle ID and Android package before any store upload.
 - [ ] Replace placeholder app icon, adaptive icon, splash screen, and notification icon.
-- [ ] Add production Supabase project and environment values.
+- [x] Create production Supabase project: `hnwrhkrzvjesjrtjpjtm`.
+- [ ] Add production Supabase environment values to local/deployment secrets.
+- [x] Apply initial Supabase schema, storage buckets, RLS policies, and advisor fixes.
+- [x] Configure Supabase Auth providers for Email, Google, and Apple.
+- [x] Create and link EAS project: `@internationalventurestudio/gogaffa`.
+- [x] Create and link Vercel project: `gogaffa`.
+- [x] Verify Vercel preview source deploy.
+- [x] Add public Supabase env values to Vercel.
+- [ ] Deploy or promote the web app to production after the public web copy is acceptable.
+- [ ] Add a custom web domain when the team has one.
+- [ ] Add Privacy Policy, Terms of Service, and support URLs to the deployed website.
+- [ ] Add final web/deep-link redirect URLs to Supabase Auth after the production domain is chosen.
+- [ ] Configure Anthropic API usage behind Supabase Edge Functions only.
 - [ ] Replace mock auth with real Supabase auth.
 - [ ] Persist created card, profile, onboarding completion, and session state.
 - [ ] Gate full app access behind completed base card.
@@ -119,7 +180,8 @@ Complete before TestFlight or Play internal testing:
 - [ ] Ensure push notification permission is requested contextually, not on first launch.
 - [ ] Add account deletion and data deletion request flow.
 - [ ] Add Terms of Service and Privacy Policy web pages.
-- [ ] Add support/contact URL and support email.
+- [ ] Add support/contact URL.
+- [x] Confirm support email: `denshimdon@gmail.com`.
 - [ ] Add crash reporting only after privacy disclosure is updated.
 - [ ] Replace provisional nation/team data with official sourced data.
 - [ ] Run `pnpm typecheck`.
@@ -146,17 +208,17 @@ Complete before public launch:
 Account and records:
 
 - [ ] Enroll in Apple Developer Program.
-- [ ] Create or confirm Apple Team.
+- [x] Create or confirm Apple Team: `PT8MR25M5P`.
 - [ ] Register the final Bundle ID in Apple Developer.
 - [ ] Create the App Store Connect app record.
 - [ ] Set SKU, primary language, app name, subtitle, category, age rating, and privacy policy URL.
-- [ ] Save App Store Connect App ID into `apps/mobile/eas.json` under `submit.production.ios.ascAppId`.
+- [x] Save App Store Connect App ID into `apps/mobile/eas.json` under `submit.production.ios.ascAppId`: `6775258169`.
 - [ ] Configure App Store Connect API key or EAS-managed credentials.
 
 App capabilities:
 
 - [ ] Configure push notifications if used.
-- [ ] Configure Sign in with Apple if any third-party/social sign-in ships on iOS.
+- [x] Configure Sign in with Apple for Supabase Auth.
 - [ ] Configure in-app purchases if paid credits/cosmetics/regeneration ship on iOS.
 - [ ] Configure Associated Domains if universal links ship.
 
@@ -242,7 +304,7 @@ Decisions to make:
 
 - Final app name and subtitle.
 - Legal developer entity: individual or company.
-- Final iOS bundle ID and Android package.
+- Final iOS bundle ID and Android package. Current provisional values are `com.ivs.gogaffa` for both iOS and Android.
 - Whether first launch includes purchases, ads, both, or neither.
 - Whether the launch audience is 13+ only and how that is enforced.
 - Which countries/regions to launch in.
@@ -254,16 +316,17 @@ Accounts to create:
 - App Store Connect app record.
 - Google Play Developer account.
 - Google Play app record.
-- Expo account and EAS project.
+- Expo account and EAS project: created under `internationalventurestudio`.
 - Production Supabase project.
-- OpenAI or chosen AI image provider account.
+- Anthropic account and API key.
+- Separate image generation provider account if generated avatar images require true image generation.
 - Support email inbox.
 
 Legal/content assets to prepare:
 
-- Privacy Policy URL.
+- Privacy Policy URL. Required for App Store submission.
 - Terms of Service URL.
-- Support URL.
+- Support URL. Required for App Store submission and must lead to real contact information.
 - Account/data deletion instructions.
 - App screenshots and preview media.
 - Store descriptions and review notes.

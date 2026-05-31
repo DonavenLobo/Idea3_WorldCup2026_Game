@@ -1,0 +1,4 @@
+interface:
+  display_name: "GoGaffa Start Here"
+  short_description: "Read first before working in the GoGaffa repo."
+  default_prompt: "Use this skill first to understand the GoGaffa repo before making changes."

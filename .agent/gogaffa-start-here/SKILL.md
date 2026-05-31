@@ -1,13 +1,13 @@
 ---
-name: world-cup-game-start-here
-description: Start-here repo onboarding guide for the World Cup Game monorepo. Use first when an agent begins work in this repository, initially explores the repo, adds features, fills scaffolded modules, updates Supabase schema/functions, wires mobile or web routes, adjusts shared packages, or makes product/engineering decisions that must respect the MVP guardrails.
+name: gogaffa-start-here
+description: Start-here repo onboarding guide for the GoGaffa monorepo. Use first when an agent begins work in this repository, initially explores the repo, adds features, fills scaffolded modules, updates Supabase schema/functions, wires mobile or web routes, adjusts shared packages, or makes product/engineering decisions that must respect the MVP guardrails.
 ---
 
-# World Cup Game Start Here
+# GoGaffa Start Here
 
 ## Purpose
 
-Use this skill first when starting work in the World Cup Game repository. It captures the repo structure, key reference files, product guardrails, and implementation rules future agents should follow.
+Use this skill first when starting work in the GoGaffa repository. It captures the repo structure, key reference files, product guardrails, and implementation rules future agents should follow.
 
 ## Read First
 

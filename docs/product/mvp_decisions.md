@@ -1,4 +1,4 @@
-# World Cup Game MVP Decisions
+# GoGaffa MVP Decisions
 
 Last updated: May 18, 2026
 

@@ -1,27 +1,30 @@
 {
   "expo": {
-    "name": "World Cup Game",
-    "slug": "world-cup-game",
-    "scheme": "worldcupgame",
+    "name": "GoGaffa",
+    "slug": "gogaffa",
+    "scheme": "gogaffa",
     "version": "0.0.1",
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "ios": {
-      "bundleIdentifier": "com.donavenlobo.worldcupgame",
+      "bundleIdentifier": "com.ivs.gogaffa",
       "buildNumber": "1",
       "supportsTablet": false,
       "infoPlist": {
-        "NSCameraUsageDescription": "World Cup Game uses your camera so you can capture a photo for your tournament card.",
-        "NSPhotoLibraryUsageDescription": "World Cup Game uses your photo library so you can choose a photo for your tournament card."
+        "NSCameraUsageDescription": "GoGaffa uses your camera so you can capture a photo for your tournament card.",
+        "NSPhotoLibraryUsageDescription": "GoGaffa uses your photo library so you can choose a photo for your tournament card."
       }
     },
     "android": {
-      "package": "com.donavenlobo.worldcupgame",
+      "package": "com.ivs.gogaffa",
       "versionCode": 1,
       "permissions": [
-        "CAMERA",
-        "POST_NOTIFICATIONS"
+        "android.permission.CAMERA",
+        "android.permission.POST_NOTIFICATIONS"
       ],
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO"
@@ -34,13 +37,20 @@
       [
         "expo-image-picker",
         {
-          "cameraPermission": "World Cup Game uses your camera so you can capture a photo for your tournament card.",
-          "photosPermission": "World Cup Game uses your photo library so you can choose a photo for your tournament card."
+          "cameraPermission": "GoGaffa uses your camera so you can capture a photo for your tournament card.",
+          "photosPermission": "GoGaffa uses your photo library so you can choose a photo for your tournament card."
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b9b7a050-9841-4ed5-9154-eafed8a84bab"
+      }
+    },
+    "owner": "internationalventurestudio"
   }
 }

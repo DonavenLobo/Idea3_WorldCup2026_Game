@@ -12,17 +12,17 @@
     "test": "echo \"No tests yet for web\""
   },
   "dependencies": {
-    "@supabase/supabase-js": "*",
+    "@supabase/supabase-js": "2.106.0",
     "@world-cup-game/config": "workspace:*",
     "@world-cup-game/types": "workspace:*",
-    "next": "*",
-    "react": "*",
-    "react-dom": "*"
+    "next": "16.2.6",
+    "react": "19.2.6",
+    "react-dom": "19.2.6"
   },
   "devDependencies": {
-    "@types/node": "*",
-    "@types/react": "*",
-    "@types/react-dom": "*",
-    "typescript": "*"
+    "@types/node": "25.9.0",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "typescript": "5.9.3"
   }
 }

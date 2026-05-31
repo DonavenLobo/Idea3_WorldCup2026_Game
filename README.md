@@ -1,4 +1,4 @@
-# World Cup Game
+# GoGaffa
 
 Mobile-first World Cup fan game built around a personalized AI footballer card, daily trivia, groups, and card progression.
 
@@ -32,7 +32,7 @@ docs
 
 ## Agent Onboarding
 
-Future agents should read [.agent/world-cup-game-start-here/SKILL.md](.agent/world-cup-game-start-here/SKILL.md) before making repo changes. It contains the repo map, key reference files, product guardrails, implementation rules, and validation expectations.
+Future agents should read [.agent/gogaffa-start-here/SKILL.md](.agent/gogaffa-start-here/SKILL.md) before making repo changes. It contains the repo map, key reference files, product guardrails, implementation rules, and validation expectations.
 
 For substantial new features, product surfaces, backend workflows, monetization paths, schema expansions, or architecture changes, agents should invoke [.agent/grill-me/SKILL.md](.agent/grill-me/SKILL.md) before implementation. Use it to pressure-test the plan one question at a time and record locked decisions before writing code.
 
@@ -66,6 +66,24 @@ Do not commit real secrets. `.env.local` and other real env files are intentiona
 The mobile app is intended to ship to both the Apple App Store and Google Play through Expo EAS. Release readiness is tracked in [docs/release/store_release_plan.md](docs/release/store_release_plan.md).
 
 The baseline EAS config lives at [apps/mobile/eas.json](apps/mobile/eas.json). Finalize the iOS bundle ID and Android package before the first store upload.
+
+## Web Deployment
+
+The web app is linked to Vercel project `gogaffa` (`prj_hmrALSf2Kt62HIAOCT1YpsTMZeHi`) under team `denshimdon-5307s-projects` (`team_lBY9AzfREi5PixiToVkPOZUr`).
+
+Current verified preview:
+
+```txt
+https://gogaffa-nqgt6mnw6-denshimdon-5307s-projects.vercel.app
+```
+
+Vercel is configured to use `apps/web` as the root directory while installing from the monorepo root. Keep web framework dependencies pinned in [apps/web/package.json](apps/web/package.json); broad `*` ranges can make Vercel misclassify the Next.js app as legacy.
+
+Deploy a preview from the repo root:
+
+```sh
+pnpm dlx vercel@latest deploy --target preview --scope denshimdon-5307s-projects
+```
 
 ## Important Product Rules
 
