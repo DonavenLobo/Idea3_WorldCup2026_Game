@@ -61,6 +61,12 @@ Use [.env.example](.env.example) as the master checklist for required environmen
 
 Do not commit real secrets. `.env.local` and other real env files are intentionally ignored.
 
+## Store Release
+
+The mobile app is intended to ship to both the Apple App Store and Google Play through Expo EAS. Release readiness is tracked in [docs/release/store_release_plan.md](docs/release/store_release_plan.md).
+
+The baseline EAS config lives at [apps/mobile/eas.json](apps/mobile/eas.json). Finalize the iOS bundle ID and Android package before the first store upload.
+
 ## Important Product Rules
 
 - Purchases affect card identity/status only.

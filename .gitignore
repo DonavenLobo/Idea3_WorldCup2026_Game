@@ -37,4 +37,11 @@ pnpm-debug.log*
 *.claude
 claude_docs/
 docs/plans
+
+# local signing/submission secrets
+secrets/
+*.p8
+*.mobileprovision
+*.keystore
+*.jks
 .pnpm-store/
