@@ -6,9 +6,11 @@ import {
   createSessionFromOAuthUrl,
   isSupabaseAuthCallbackUrl
 } from "../api/signInWithProvider";
+import { saveCompletedOnboarding, useOnboarding } from "../../onboarding";
 
 export function useAuthRedirectHandler() {
   const router = useRouter();
+  const onboarding = useOnboarding();
   const url = Linking.useURL();
   const handledUrlRef = useRef<string | null>(null);
 
@@ -20,13 +22,19 @@ export function useAuthRedirectHandler() {
     handledUrlRef.current = url;
 
     void createSessionFromOAuthUrl(url)
-      .then((session) => {
+      .then(async (session) => {
         if (session) {
+          try {
+            await saveCompletedOnboarding(onboarding);
+          } catch (saveError) {
+            console.warn("Failed to save onboarding after auth callback", saveError);
+          }
+
           router.replace(APP_ROUTES.tabs.home);
         }
       })
       .catch((error: unknown) => {
         console.warn("Failed to handle Supabase auth callback", error);
       });
-  }, [router, url]);
+  }, [onboarding, router, url]);
 }

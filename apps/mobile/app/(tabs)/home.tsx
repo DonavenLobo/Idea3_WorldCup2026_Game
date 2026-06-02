@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { APP_ROUTES } from "@world-cup-game/config";
+import { APP_ROUTES, SUPPORTED_NATIONS } from "@world-cup-game/config";
 import { MockPlayerCard, useOnboarding } from "../../src/features/onboarding";
+import { useCard } from "../../src/hooks/useCard";
+import { useProfile } from "../../src/hooks/useProfile";
 import { colors } from "../../src/theme/colors";
 import { radius } from "../../src/theme/radius";
 import { spacing } from "../../src/theme/spacing";
@@ -32,12 +34,29 @@ function pad(value: number) {
 export default function HomeScreen() {
   const router = useRouter();
   const { nation, displayName, photoSource } = useOnboarding();
+  const { card } = useCard();
+  const { profile } = useProfile();
   const { days, hours, minutes, seconds } = useCountdown(KICKOFF_DATE);
+  const selectedNationCode =
+    profile?.selectedNationCode ?? card?.selectedNationCode ?? nation?.code;
+  const savedNation = selectedNationCode
+    ? SUPPORTED_NATIONS.find((item) => item.code === selectedNationCode)
+    : null;
+  const cardDisplayName = profile?.displayName || card?.displayName || displayName;
+  const savedPhotoUrl = profile?.avatarUrl ?? card?.avatarSourceUrl;
+  const cardPhotoSource = savedPhotoUrl
+    ? { type: "upload" as const, uri: savedPhotoUrl }
+    : photoSource;
 
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.content}>
       <Text style={styles.eyebrow}>YOUR CARD</Text>
-      <MockPlayerCard nation={nation} displayName={displayName} photoSource={photoSource} />
+      <MockPlayerCard
+        displayName={cardDisplayName}
+        nation={savedNation ?? nation}
+        photoSource={cardPhotoSource}
+        stats={card?.stats}
+      />
 
       <View style={styles.countdownCard}>
         <Text style={styles.countdownLabel}>Kickoff in</Text>

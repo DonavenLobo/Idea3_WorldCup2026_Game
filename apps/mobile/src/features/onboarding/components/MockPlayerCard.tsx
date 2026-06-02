@@ -1,6 +1,7 @@
 import { Image, StyleSheet, Text, View } from "react-native";
 import { BASE_CARD_STATS, CARD_STATS } from "@world-cup-game/config";
 import type { NationConfig } from "@world-cup-game/config";
+import type { CardStats } from "@world-cup-game/types";
 import { colors } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
@@ -10,11 +11,17 @@ interface MockPlayerCardProps {
   nation: NationConfig | null;
   displayName: string;
   photoSource: PhotoSource | null;
+  stats?: CardStats;
 }
 
 const MOCK_OVERALL = 50;
 
-export function MockPlayerCard({ nation, displayName, photoSource }: MockPlayerCardProps) {
+export function MockPlayerCard({
+  nation,
+  displayName,
+  photoSource,
+  stats = BASE_CARD_STATS
+}: MockPlayerCardProps) {
   const name = displayName.trim() || "Rookie";
 
   return (
@@ -41,7 +48,7 @@ export function MockPlayerCard({ nation, displayName, photoSource }: MockPlayerC
       <View style={styles.statsRow}>
         {CARD_STATS.map((stat) => (
           <View key={stat.key} style={styles.stat}>
-            <Text style={styles.statValue}>{BASE_CARD_STATS[stat.key]}</Text>
+            <Text style={styles.statValue}>{stats[stat.key]}</Text>
             <Text style={styles.statLabel}>{stat.label}</Text>
           </View>
         ))}

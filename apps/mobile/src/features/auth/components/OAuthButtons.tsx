@@ -3,6 +3,7 @@ import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { APP_ROUTES } from "@world-cup-game/config";
 import type { AuthProvider } from "@world-cup-game/types";
+import { saveCompletedOnboarding, useOnboarding } from "../../onboarding";
 import { signInWithProvider } from "../api/signInWithProvider";
 import { colors } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
@@ -33,6 +34,7 @@ function getErrorMessage(error: unknown) {
 
 export function OAuthButtons() {
   const router = useRouter();
+  const onboarding = useOnboarding();
   const [loadingProvider, setLoadingProvider] = useState<OAuthButtonProvider | null>(null);
 
   const handlePress = async (provider: OAuthButtonProvider) => {
@@ -42,6 +44,12 @@ export function OAuthButtons() {
       const session = await signInWithProvider(provider);
 
       if (session) {
+        try {
+          await saveCompletedOnboarding(onboarding);
+        } catch (saveError) {
+          Alert.alert("Card save failed", getErrorMessage(saveError));
+        }
+
         router.replace(APP_ROUTES.tabs.home);
       }
     } catch (error) {

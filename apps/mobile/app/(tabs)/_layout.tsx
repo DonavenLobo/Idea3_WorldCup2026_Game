@@ -1,19 +1,66 @@
-import { Tabs } from "expo-router";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { APP_ROUTES } from "@world-cup-game/config";
+import { Tabs, useRouter } from "expo-router";
 import { Alert, Image, Pressable, StyleSheet, Text } from "react-native";
 import { useOnboarding } from "../../src/features/onboarding";
+import { useCard } from "../../src/hooks/useCard";
+import { useProfile } from "../../src/hooks/useProfile";
+import { supabase } from "../../src/lib/supabase";
 import { colors } from "../../src/theme/colors";
 
 function ProfileButton() {
-  const { displayName, photoSource } = useOnboarding();
-  const initial = displayName.trim().charAt(0).toUpperCase() || "?";
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const { displayName, photoSource, reset } = useOnboarding();
+  const { card } = useCard();
+  const { profile } = useProfile();
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const savedImageUrl = profile?.avatarUrl ?? card?.avatarSourceUrl;
+  const imageUri = savedImageUrl ?? photoSource?.uri;
+  const effectiveName = profile?.displayName || card?.displayName || displayName;
+  const initial = effectiveName.trim().charAt(0).toUpperCase() || "?";
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+
+    try {
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        throw error;
+      }
+
+      reset();
+      queryClient.clear();
+      router.replace(APP_ROUTES.onboarding.selectNation);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Please try again.";
+      Alert.alert("Sign-out failed", message);
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
+
+  const showAccountMenu = () => {
+    Alert.alert("Account", effectiveName || "GoGaffa account", [
+      { text: "Cancel", style: "cancel" },
+      {
+        onPress: () => void handleSignOut(),
+        style: "destructive",
+        text: isSigningOut ? "Signing out..." : "Sign out"
+      }
+    ]);
+  };
 
   return (
     <Pressable
       style={profileStyles.root}
-      onPress={() => Alert.alert("Profile", "Profile settings coming soon.")}
+      disabled={isSigningOut}
+      onPress={showAccountMenu}
     >
-      {photoSource?.uri ? (
-        <Image source={{ uri: photoSource.uri }} style={profileStyles.image} />
+      {imageUri ? (
+        <Image source={{ uri: imageUri }} style={profileStyles.image} />
       ) : (
         <Text style={profileStyles.initial}>{initial}</Text>
       )}
