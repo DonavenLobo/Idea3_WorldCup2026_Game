@@ -83,6 +83,19 @@ export default function HomeScreen() {
         </View>
         <Text style={styles.ctaArrow}>›</Text>
       </Pressable>
+
+      <Pressable
+        style={styles.ctaCard}
+        onPress={() => router.push(APP_ROUTES.leaderboard)}
+      >
+        <View style={styles.ctaText}>
+          <Text style={styles.ctaTitle}>View Leaderboard</Text>
+          <Text style={styles.ctaBody}>
+            See where you rank globally. Filter by country or stage.
+          </Text>
+        </View>
+        <Text style={styles.ctaArrow}>›</Text>
+      </Pressable>
     </ScrollView>
   );
 }

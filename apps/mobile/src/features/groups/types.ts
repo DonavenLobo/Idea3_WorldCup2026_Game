@@ -12,4 +12,4 @@ export interface JoinedGroup {
   inviteCode?: string;
 }
 
-export type GroupsSubTab = "my" | "discover";
+export type GroupsSubTab = "my" | "discover" | "leaderboard";

@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
-import { Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { PUBLIC_GROUPS } from "@world-cup-game/config";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { LEADERBOARD_STAGES, PUBLIC_GROUPS, SUPPORTED_NATIONS } from "@world-cup-game/config";
+import type { LeaderboardStage } from "@world-cup-game/config";
 import {
   CreateGroupSheet,
   EmptyGroupsState,
@@ -10,6 +11,16 @@ import {
   useGroups
 } from "../../src/features/groups";
 import type { GroupsSubTab, JoinedGroup, PublicGroup } from "../../src/features/groups";
+import {
+  COUNTRY_ALL,
+  FilterDropdown,
+  LeaderboardRow,
+  buildLeaderboardRows,
+  uniqueCountryCodes
+} from "../../src/features/leaderboard";
+import type { CountryFilter, FilterOption } from "../../src/features/leaderboard";
+import { useOnboarding } from "../../src/features/onboarding";
+import { useTrivia } from "../../src/features/trivia";
 import { colors } from "../../src/theme/colors";
 import { radius } from "../../src/theme/radius";
 import { spacing } from "../../src/theme/spacing";
@@ -78,11 +89,19 @@ export default function GroupsScreen() {
             Discover
           </Text>
         </Pressable>
+        <Pressable
+          style={[styles.subTab, subTab === "leaderboard" ? styles.subTabActive : null]}
+          onPress={() => setSubTab("leaderboard")}
+        >
+          <Text style={[styles.subTabText, subTab === "leaderboard" ? styles.subTabTextActive : null]}>
+            Leaderboard
+          </Text>
+        </Pressable>
       </View>
 
       <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
-        {subTab === "my" ? (
-          joinedGroups.length === 0 ? (
+        {subTab === "my" &&
+          (joinedGroups.length === 0 ? (
             <EmptyGroupsState
               onJoinByCode={() => setSheet("join")}
               onBrowse={() => setSubTab("discover")}
@@ -95,8 +114,9 @@ export default function GroupsScreen() {
               onJoinByCode={() => setSheet("join")}
               onCreate={() => setSheet("create")}
             />
-          )
-        ) : (
+          ))}
+
+        {subTab === "discover" && (
           <DiscoverPanel
             featured={featured}
             standard={standard}
@@ -109,6 +129,8 @@ export default function GroupsScreen() {
             onCode={() => setSheet("join")}
           />
         )}
+
+        {subTab === "leaderboard" && <LeaderboardPanel />}
       </ScrollView>
 
       <JoinByCodeSheet
@@ -242,6 +264,86 @@ function DiscoverPanel({
   );
 }
 
+function LeaderboardPanel() {
+  const { displayName, nation } = useOnboarding();
+  const { totalPoints } = useTrivia();
+  const [stage, setStage] = useState<LeaderboardStage>("overall");
+  const [country, setCountry] = useState<CountryFilter>(COUNTRY_ALL);
+
+  const stageOptions: FilterOption<LeaderboardStage>[] = useMemo(
+    () => LEADERBOARD_STAGES.map((s) => ({ id: s.id, label: s.label })),
+    []
+  );
+
+  const countryOptions: FilterOption<CountryFilter>[] = useMemo(() => {
+    const codes = uniqueCountryCodes();
+    const opts: FilterOption<CountryFilter>[] = [{ id: COUNTRY_ALL, label: "All" }];
+    for (const code of codes) {
+      const nationConfig = SUPPORTED_NATIONS.find((n) => n.code === code);
+      opts.push({
+        id: code,
+        label: nationConfig ? `${nationConfig.flagEmoji} ${nationConfig.name}` : code
+      });
+    }
+    return opts;
+  }, []);
+
+  const rows = useMemo(() => {
+    const name = displayName.trim() || "You";
+    const countryCode = nation?.code ?? "USA";
+    return buildLeaderboardRows(stage, country, {
+      id: "me",
+      displayName: name,
+      countryCode,
+      scores: {
+        overall: totalPoints,
+        trivia: totalPoints,
+        prediction: 0,
+        showcase: 0,
+        bracket: 0
+      }
+    });
+  }, [displayName, nation, totalPoints, stage, country]);
+
+  return (
+    <View style={styles.padded}>
+      <View style={lbStyles.filterRow}>
+        <FilterDropdown<CountryFilter>
+          label="Country"
+          value={country}
+          options={countryOptions}
+          onSelect={setCountry}
+        />
+        <FilterDropdown<LeaderboardStage>
+          label="Stage"
+          value={stage}
+          options={stageOptions}
+          onSelect={setStage}
+        />
+      </View>
+
+      <View style={lbStyles.tableHeader}>
+        <Text style={lbStyles.colRank}>Rank</Text>
+        <Text style={lbStyles.colName}>Display Name</Text>
+        <Text style={lbStyles.colScore}>Total Pts</Text>
+      </View>
+
+      <View style={lbStyles.table}>
+        {rows.map((row) => (
+          <LeaderboardRow
+            key={row.id}
+            rank={row.rank}
+            displayName={row.displayName}
+            countryCode={row.countryCode}
+            score={row.score}
+            isCurrentUser={row.isCurrentUser}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   actionPrimary: {
     alignItems: "center",
@@ -365,10 +467,52 @@ const styles = StyleSheet.create({
   },
   subTabText: {
     color: "rgba(255, 248, 234, 0.6)",
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "900"
   },
   subTabTextActive: {
     color: colors.cream
+  }
+});
+
+const lbStyles = StyleSheet.create({
+  colName: {
+    color: "rgba(12, 59, 46, 0.7)",
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "900",
+    marginLeft: spacing.md + 44
+  },
+  colRank: {
+    color: "rgba(12, 59, 46, 0.7)",
+    fontSize: 13,
+    fontWeight: "900",
+    minWidth: 28,
+    textAlign: "center"
+  },
+  colScore: {
+    color: "rgba(12, 59, 46, 0.7)",
+    fontSize: 13,
+    fontWeight: "900",
+    minWidth: 70,
+    textAlign: "right"
+  },
+  filterRow: {
+    flexDirection: "row",
+    gap: spacing.sm
+  },
+  table: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: radius.lg,
+    overflow: "hidden"
+  },
+  tableHeader: {
+    alignItems: "center",
+    backgroundColor: "rgba(255, 248, 234, 0.85)",
+    borderRadius: radius.sm,
+    flexDirection: "row",
+    marginVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm
   }
 });
