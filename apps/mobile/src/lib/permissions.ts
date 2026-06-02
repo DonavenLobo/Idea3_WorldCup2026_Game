@@ -1,4 +1,4 @@
 export async function requestCameraPermission(): Promise<boolean> {
-  // TODO: Use expo-camera permission helpers in the photo booth flow.
+  // TODO: Centralize expo-image-picker camera permission handling here.
   return true;
 }

@@ -1,8 +1,11 @@
-import { useEffect, useState } from "react";
-import { useRouter } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { APP_ROUTES } from "@world-cup-game/config";
-import { MockPlayerCard, useOnboarding } from "../../src/features/onboarding";
+import { RenderedPlayerCard } from "../../src/features/card";
+import { useOnboarding } from "../../src/features/onboarding";
+import { useCard } from "../../src/hooks/useCard";
+import { useProfile } from "../../src/hooks/useProfile";
 import { colors } from "../../src/theme/colors";
 import { radius } from "../../src/theme/radius";
 import { spacing } from "../../src/theme/spacing";
@@ -32,12 +35,35 @@ function pad(value: number) {
 export default function HomeScreen() {
   const router = useRouter();
   const { nation, displayName, photoSource } = useOnboarding();
+  const { card } = useCard();
+  const { profile } = useProfile();
   const { days, hours, minutes, seconds } = useCountdown(KICKOFF_DATE);
+  const selectedNationCode =
+    profile?.selectedNationCode ?? card?.selectedNationCode ?? nation?.code;
+  const cardDisplayName = profile?.displayName || card?.displayName || displayName;
+  const savedPhotoUrl = profile?.avatarUrl ?? card?.avatarSourceUrl;
+  const cardPhotoSource = savedPhotoUrl
+    ? { type: "upload" as const, uri: savedPhotoUrl }
+    : photoSource;
+  const scrollRef = useRef<ScrollView>(null);
+
+  // Reset scroll to top whenever the Home tab gets focused.
+  useFocusEffect(
+    useCallback(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+    <ScrollView ref={scrollRef} style={styles.root} contentContainerStyle={styles.content}>
       <Text style={styles.eyebrow}>YOUR CARD</Text>
-      <MockPlayerCard nation={nation} displayName={displayName} photoSource={photoSource} />
+      <RenderedPlayerCard
+        card={card}
+        displayName={cardDisplayName}
+        photoSource={cardPhotoSource}
+        selectedNationCode={selectedNationCode}
+        stats={card?.stats}
+      />
 
       <View style={styles.countdownCard}>
         <Text style={styles.countdownLabel}>Kickoff in</Text>

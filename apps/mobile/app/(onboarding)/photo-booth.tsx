@@ -27,6 +27,7 @@ export default function PhotoBoothScreen() {
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ["images"],
       allowsEditing: true,
+      base64: true,
       quality: 0.7
     });
 
@@ -36,7 +37,11 @@ export default function PhotoBoothScreen() {
 
     const asset = result.assets[0];
     if (asset) {
-      setPhotoSource({ type: "selfie", uri: asset.uri });
+      setPhotoSource({
+        base64: asset.base64 ?? undefined,
+        type: "selfie",
+        uri: asset.uri
+      });
       goToCreateCard();
     }
   };
@@ -45,6 +50,7 @@ export default function PhotoBoothScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsEditing: true,
+      base64: true,
       quality: 0.7
     });
 
@@ -54,7 +60,11 @@ export default function PhotoBoothScreen() {
 
     const asset = result.assets[0];
     if (asset) {
-      setPhotoSource({ type: "upload", uri: asset.uri });
+      setPhotoSource({
+        base64: asset.base64 ?? undefined,
+        type: "upload",
+        uri: asset.uri
+      });
       goToCreateCard();
     }
   };

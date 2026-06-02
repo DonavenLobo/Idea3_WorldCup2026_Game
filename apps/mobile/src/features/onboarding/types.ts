@@ -4,6 +4,7 @@ export type PhotoSourceType = "selfie" | "upload" | "random";
 
 export interface PhotoSource {
   type: PhotoSourceType;
+  base64?: string;
   uri?: string;
 }
 

@@ -8,19 +8,43 @@ export interface PlayerStatsLayerProps {
 }
 
 export function PlayerStatsLayer({ stats, layer }: PlayerStatsLayerProps) {
+  const showLabels = layer.showLabels ?? true;
+
   return (
     <>
       {layer.columns.map((column) => {
         const stat = CARD_STATS.find((candidate) => candidate.key === column.key);
 
         return (
-          <View key={column.key} style={[styles.stat, { left: column.x, top: layer.y }]}>
-            <Text style={[styles.value, { color: layer.color, fontSize: layer.valueFontSize }]}>
+          <View
+            key={column.key}
+            style={[
+              styles.stat,
+              {
+                left: column.x,
+                top: layer.y,
+                width: column.width
+              }
+            ]}
+          >
+            <Text
+              style={[
+                styles.value,
+                {
+                  color: layer.color,
+                  fontSize: layer.valueFontSize,
+                  fontWeight: (layer.fontWeight ?? "900") as "900",
+                  textAlign: layer.align
+                }
+              ]}
+            >
               {stats[column.key]}
             </Text>
-            <Text style={[styles.label, { color: layer.color, fontSize: layer.labelFontSize }]}>
-              {stat?.label ?? column.key.toUpperCase()}
-            </Text>
+            {showLabels ? (
+              <Text style={[styles.label, { color: layer.color, fontSize: layer.labelFontSize }]}>
+                {stat?.label ?? column.key.toUpperCase()}
+              </Text>
+            ) : null}
           </View>
         );
       })}

@@ -7,6 +7,7 @@ export * from "./components/CardShareButton";
 export * from "./components/CardStatsGrid";
 export * from "./components/CardTemplatePicker";
 export * from "./components/RegenerationPicker";
+export * from "./components/RenderedPlayerCard";
 export * from "./hooks/useCard";
 export * from "./hooks/useCardTemplates";
 export * from "./hooks/useCreateCard";

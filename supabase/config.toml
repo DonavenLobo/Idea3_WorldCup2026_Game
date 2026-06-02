@@ -1,4 +1,4 @@
-project_id = "world-cup-game"
+project_id = "gogaffa"
 
 [api]
 enabled = true
@@ -28,11 +28,16 @@ file_size_limit = "50MiB"
 
 [auth]
 enabled = true
-site_url = "http://localhost:3000"
+site_url = "gogaffa://auth/callback"
 additional_redirect_urls = [
-  "http://localhost:3000",
-  "worldcupgame://",
-  "exp://127.0.0.1:8081"
+  "gogaffa://auth/callback",
+  "gogaffa://**",
+  "exp://**/--/auth/callback",
+  "exps://**/--/auth/callback",
+  "exp://127.0.0.1:8081/--/auth/callback",
+  "exp://localhost:8081/--/auth/callback",
+  "https://gogaffa.com",
+  "https://gogaffa.com/**"
 ]
 jwt_expiry = 3600
 enable_signup = true

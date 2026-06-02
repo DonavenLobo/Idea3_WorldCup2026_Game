@@ -54,13 +54,19 @@ export default function SelectNationScreen() {
         )}
       />
 
-      <Pressable
-        style={[styles.button, !nation ? styles.buttonDisabled : null]}
-        onPress={() => router.push(APP_ROUTES.onboarding.photoBooth)}
-        disabled={!nation}
-      >
-        <Text style={styles.buttonText}>Continue</Text>
-      </Pressable>
+      <View style={styles.footer}>
+        <Pressable onPress={() => router.push(APP_ROUTES.auth.signIn)}>
+          <Text style={styles.signInLink}>I already have an account</Text>
+        </Pressable>
+
+        <Pressable
+          style={[styles.button, !nation ? styles.buttonDisabled : null]}
+          onPress={() => router.push(APP_ROUTES.onboarding.photoBooth)}
+          disabled={!nation}
+        >
+          <Text style={styles.buttonText}>Continue</Text>
+        </Pressable>
+      </View>
     </SafeAreaView>
   );
 }
@@ -70,7 +76,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.pitch,
     borderRadius: radius.pill,
-    margin: spacing.lg,
     padding: spacing.md
   },
   buttonDisabled: {
@@ -85,6 +90,11 @@ const styles = StyleSheet.create({
     color: "rgba(12, 59, 46, 0.5)",
     fontSize: 15,
     textAlign: "center"
+  },
+  footer: {
+    gap: spacing.md,
+    padding: spacing.lg,
+    paddingTop: spacing.sm
   },
   eyebrow: {
     color: colors.gold,
@@ -115,6 +125,12 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.lg,
     marginTop: spacing.md,
     padding: spacing.md
+  },
+  signInLink: {
+    color: colors.pitch,
+    fontSize: 15,
+    fontWeight: "800",
+    textAlign: "center"
   },
   tagline: {
     color: "rgba(12, 59, 46, 0.75)",

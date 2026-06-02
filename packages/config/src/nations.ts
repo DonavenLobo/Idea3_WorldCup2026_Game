@@ -29,7 +29,7 @@ export const SUPPORTED_NATIONS: NationConfig[] = [
   { code: "PER", name: "Peru", flagEmoji: "🇵🇪", confederation: "CONMEBOL", primaryColor: "#D91023", secondaryColor: "#FFFFFF" },
   { code: "PAR", name: "Paraguay", flagEmoji: "🇵🇾", confederation: "CONMEBOL", primaryColor: "#D52B1E", secondaryColor: "#0038A8" },
   // UEFA
-  { code: "ENG", name: "England", flagEmoji: "🏴", confederation: "UEFA", primaryColor: "#FFFFFF", secondaryColor: "#C8102E" },
+  { code: "ENG", name: "England", flagEmoji: "\u{1F3F4}\u{E0067}\u{E0062}\u{E0065}\u{E006E}\u{E0067}\u{E007F}", confederation: "UEFA", primaryColor: "#FFFFFF", secondaryColor: "#C8102E" },
   { code: "FRA", name: "France", flagEmoji: "🇫🇷", confederation: "UEFA", primaryColor: "#1D3F8F", secondaryColor: "#EF4135" },
   { code: "ESP", name: "Spain", flagEmoji: "🇪🇸", confederation: "UEFA", primaryColor: "#C60B1E", secondaryColor: "#FFC400" },
   { code: "GER", name: "Germany", flagEmoji: "🇩🇪", confederation: "UEFA", primaryColor: "#000000", secondaryColor: "#DD0000" },

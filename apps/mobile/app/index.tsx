@@ -2,15 +2,20 @@ import { useEffect, useRef } from "react";
 import { useRouter } from "expo-router";
 import { Animated, Easing, Pressable, StyleSheet } from "react-native";
 import { APP_ROUTES } from "@world-cup-game/config";
+import { useSession } from "../src/hooks/useSession";
 import { colors } from "../src/theme/colors";
 
 const SPLASH_MS = 2400;
 
 export default function IndexRoute() {
   const router = useRouter();
+  const { isLoading, session } = useSession();
   const scale = useRef(new Animated.Value(0.5)).current;
   const numberOpacity = useRef(new Animated.Value(0)).current;
   const taglineOpacity = useRef(new Animated.Value(0)).current;
+  const destinationRoute = session
+    ? APP_ROUTES.tabs.home
+    : APP_ROUTES.onboarding.selectNation;
 
   useEffect(() => {
     Animated.parallel([
@@ -52,18 +57,31 @@ export default function IndexRoute() {
       useNativeDriver: true
     }).start();
 
+    return undefined;
+  }, [numberOpacity, scale, taglineOpacity]);
+
+  useEffect(() => {
+    if (isLoading) {
+      return undefined;
+    }
+
     const timer = setTimeout(() => {
-      router.replace(APP_ROUTES.onboarding.selectNation);
+      router.replace(destinationRoute);
     }, SPLASH_MS);
 
     return () => clearTimeout(timer);
-  }, [numberOpacity, router, scale, taglineOpacity]);
+  }, [destinationRoute, isLoading, router]);
+
+  const handlePress = () => {
+    if (isLoading) {
+      return;
+    }
+
+    router.replace(destinationRoute);
+  };
 
   return (
-    <Pressable
-      style={styles.root}
-      onPress={() => router.replace(APP_ROUTES.onboarding.selectNation)}
-    >
+    <Pressable style={styles.root} onPress={handlePress}>
       <Animated.Text
         style={[styles.number, { opacity: numberOpacity, transform: [{ scale }] }]}
       >

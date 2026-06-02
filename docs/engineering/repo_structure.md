@@ -5,7 +5,6 @@ This repo is scaffolded as a mobile-first monorepo.
 ```txt
 apps/
   mobile/        Expo + React Native app
-  web/           Next.js web app for landing, invite, card share, and download pages
 
 packages/
   config/        Shared product constants and feature flags
@@ -34,5 +33,5 @@ This first pass creates package boundaries, route placeholders, env examples, in
 Build toward:
 
 ```txt
-Anonymous open -> select nation -> capture/upload photo -> create card -> account required -> save card -> share public card link
+Anonymous open -> select nation -> capture/upload photo -> create card -> account required -> save card -> share card/app invite
 ```
