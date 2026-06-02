@@ -4,6 +4,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useAuthRedirectHandler } from "../src/features/auth";
 import { BracketProvider } from "../src/features/bracket";
 import { OnboardingProvider } from "../src/features/onboarding";
+import { TriviaProvider } from "../src/features/trivia";
 import { queryClient } from "../src/lib/queryClient";
 
 function RootStack() {
@@ -18,7 +19,9 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <OnboardingProvider>
           <BracketProvider>
-            <RootStack />
+            <TriviaProvider>
+              <RootStack />
+            </TriviaProvider>
           </BracketProvider>
         </OnboardingProvider>
       </SafeAreaProvider>

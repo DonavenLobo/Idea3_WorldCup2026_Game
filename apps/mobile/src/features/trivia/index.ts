@@ -1,5 +1,12 @@
-export * from "./api/submitTriviaAttempt";
-export * from "./components/TriviaResultShare";
-export * from "./hooks/useDailyTrivia";
-export * from "./schemas/triviaSchema";
-export * from "./types";
+export { TriviaProvider, useTrivia } from "./TriviaContext";
+export { QuestionCard } from "./components/QuestionCard";
+export { CelebrationOverlay } from "./components/CelebrationOverlay";
+export { CompletedView } from "./components/CompletedView";
+export { calculateTriviaAnswerPoints, dateKey } from "./utils";
+export type {
+  DailyAnswer,
+  DailyTriviaQuestion,
+  DailyTriviaStatus,
+  ScoredTriviaAttempt,
+  TriviaResult
+} from "./types";
