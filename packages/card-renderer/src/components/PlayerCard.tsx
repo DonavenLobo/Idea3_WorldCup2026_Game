@@ -1,4 +1,5 @@
 import { StyleSheet, Text } from "react-native";
+import { SUPPORTED_NATIONS } from "@world-cup-game/config";
 import type { PlayerCardRenderData } from "../types";
 import { BadgeLayer } from "./BadgeLayer";
 import { PlayerAvatarLayer } from "./PlayerAvatarLayer";
@@ -8,33 +9,63 @@ import { PlayerStatsLayer } from "./PlayerStatsLayer";
 
 export function PlayerCard({ card, template }: PlayerCardRenderData) {
   const avatarUrl = card.avatarGeneratedUrl ?? card.avatarSourceUrl;
+  const nation = SUPPORTED_NATIONS.find((candidate) => candidate.code === card.selectedNationCode);
+  const overallLayer = template.metadata.layers.overall;
+  const overallLabelFontSize = overallLayer.labelFontSize ?? 24;
 
   return (
     <PlayerCardTemplate template={template}>
+      <PlayerAvatarLayer imageUrl={avatarUrl} layer={template.metadata.layers.avatar} />
+      {overallLayer.label ? (
+        <Text
+          style={[
+            styles.overallLabel,
+            {
+              color: overallLayer.labelColor ?? overallLayer.color,
+              fontSize: overallLabelFontSize,
+              fontWeight: (overallLayer.fontWeight ?? "900") as "900",
+              left: overallLayer.labelX ?? overallLayer.x,
+              textAlign: overallLayer.align,
+              top: overallLayer.labelY ?? Math.max(0, overallLayer.y - overallLabelFontSize - 6),
+              width: overallLayer.width
+            }
+          ]}
+        >
+          {overallLayer.label}
+        </Text>
+      ) : null}
       <Text
+        numberOfLines={1}
         style={[
           styles.overall,
           {
-            color: template.metadata.layers.overall.color,
-            fontSize: template.metadata.layers.overall.fontSize,
-            fontWeight: template.metadata.layers.overall.fontWeight as "900",
-            left: template.metadata.layers.overall.x,
-            top: template.metadata.layers.overall.y
+            color: overallLayer.color,
+            fontSize: overallLayer.fontSize,
+            fontWeight: (overallLayer.fontWeight ?? "900") as "900",
+            left: overallLayer.x,
+            textAlign: overallLayer.align,
+            top: overallLayer.y,
+            width: overallLayer.width
           }
         ]}
       >
         {card.overall}
       </Text>
-      <PlayerAvatarLayer imageUrl={avatarUrl} layer={template.metadata.layers.avatar} />
       <PlayerNameLayer displayName={card.displayName} layer={template.metadata.layers.displayName} />
       <PlayerStatsLayer stats={card.stats} layer={template.metadata.layers.stats} />
-      <BadgeLayer label={card.selectedNationCode} layer={template.metadata.layers.badge} />
+      <BadgeLayer
+        label={nation?.flagEmoji ?? card.selectedNationCode}
+        layer={template.metadata.layers.badge}
+      />
     </PlayerCardTemplate>
   );
 }
 
 const styles = StyleSheet.create({
   overall: {
+    position: "absolute"
+  },
+  overallLabel: {
     position: "absolute"
   }
 });

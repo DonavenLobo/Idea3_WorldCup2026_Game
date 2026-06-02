@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect, useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { APP_ROUTES, SUPPORTED_NATIONS } from "@world-cup-game/config";
-import { MockPlayerCard, useOnboarding } from "../../src/features/onboarding";
+import { APP_ROUTES } from "@world-cup-game/config";
+import { RenderedPlayerCard } from "../../src/features/card";
+import { useOnboarding } from "../../src/features/onboarding";
 import { useCard } from "../../src/hooks/useCard";
 import { useProfile } from "../../src/hooks/useProfile";
 import { colors } from "../../src/theme/colors";
@@ -39,9 +40,6 @@ export default function HomeScreen() {
   const { days, hours, minutes, seconds } = useCountdown(KICKOFF_DATE);
   const selectedNationCode =
     profile?.selectedNationCode ?? card?.selectedNationCode ?? nation?.code;
-  const savedNation = selectedNationCode
-    ? SUPPORTED_NATIONS.find((item) => item.code === selectedNationCode)
-    : null;
   const cardDisplayName = profile?.displayName || card?.displayName || displayName;
   const savedPhotoUrl = profile?.avatarUrl ?? card?.avatarSourceUrl;
   const cardPhotoSource = savedPhotoUrl
@@ -59,10 +57,11 @@ export default function HomeScreen() {
   return (
     <ScrollView ref={scrollRef} style={styles.root} contentContainerStyle={styles.content}>
       <Text style={styles.eyebrow}>YOUR CARD</Text>
-      <MockPlayerCard
+      <RenderedPlayerCard
+        card={card}
         displayName={cardDisplayName}
-        nation={savedNation ?? nation}
         photoSource={cardPhotoSource}
+        selectedNationCode={selectedNationCode}
         stats={card?.stats}
       />
 

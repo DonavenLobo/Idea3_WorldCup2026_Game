@@ -7,6 +7,9 @@ node_modules/
 dist/
 .output/
 .turbo/
+.playwright-expo-web/
+playwright-report/
+test-results/
 *.tsbuildinfo
 
 # env files

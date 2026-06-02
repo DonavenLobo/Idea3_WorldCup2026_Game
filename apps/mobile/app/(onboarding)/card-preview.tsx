@@ -2,7 +2,8 @@ import { useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { APP_ROUTES } from "@world-cup-game/config";
-import { MockPlayerCard, useOnboarding } from "../../src/features/onboarding";
+import { RenderedPlayerCard } from "../../src/features/card";
+import { useOnboarding } from "../../src/features/onboarding";
 import { colors } from "../../src/theme/colors";
 import { radius } from "../../src/theme/radius";
 import { spacing } from "../../src/theme/spacing";
@@ -24,7 +25,11 @@ export default function CardPreviewScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Meet {friendlyName}</Text>
 
-        <MockPlayerCard nation={nation} displayName={displayName} photoSource={photoSource} />
+        <RenderedPlayerCard
+          displayName={displayName}
+          photoSource={photoSource}
+          selectedNationCode={nation?.code}
+        />
 
         <Pressable
           style={styles.button}

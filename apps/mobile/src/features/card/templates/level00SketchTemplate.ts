@@ -1,0 +1,93 @@
+import { loadTemplate } from "@world-cup-game/card-renderer";
+import type { PlayerCardRenderTemplate } from "@world-cup-game/card-renderer";
+import type { CardTemplateMetadata } from "@world-cup-game/types";
+import type { ImageSourcePropType } from "react-native";
+
+export const LEVEL_00_SKETCH_TEMPLATE_KEY = "level-00-sketch-v1";
+
+export const LEVEL_00_SKETCH_SOURCE = require("../../../../assets/card-templates/level-00-sketch-v1.png") as ImageSourcePropType;
+
+export const LEVEL_00_SKETCH_METADATA = {
+  id: LEVEL_00_SKETCH_TEMPLATE_KEY,
+  name: "Sketch Card Level 00",
+  version: 1,
+  width: 1024,
+  height: 1536,
+  safeArea: {
+    x: 94,
+    y: 96,
+    width: 836,
+    height: 1344
+  },
+  layers: {
+    overall: {
+      x: 120,
+      y: 185,
+      width: 150,
+      fontSize: 84,
+      fontWeight: "900",
+      color: "#2C2923",
+      align: "center",
+      label: "OVR",
+      labelFontSize: 26,
+      labelX: 120,
+      labelY: 150
+    },
+    avatar: {
+      x: 235,
+      y: 220,
+      width: 565,
+      height: 735,
+      fit: "cover"
+    },
+    displayName: {
+      x: 205,
+      y: 1034,
+      width: 614,
+      height: 70,
+      fontSize: 46,
+      fontWeight: "900",
+      color: "#2C2923",
+      align: "center"
+    },
+    stats: {
+      x: 0,
+      y: 1272,
+      columns: [
+        { key: "hyp", x: 154, width: 82 },
+        { key: "frm", x: 278, width: 82 },
+        { key: "atk", x: 402, width: 82 },
+        { key: "ast", x: 526, width: 82 },
+        { key: "wal", x: 650, width: 82 },
+        { key: "lck", x: 774, width: 82 }
+      ],
+      labelFontSize: 0,
+      valueFontSize: 42,
+      fontWeight: "900",
+      color: "#2C2923",
+      align: "center",
+      showLabels: false
+    },
+    badge: {
+      x: 754,
+      y: 161,
+      width: 150,
+      height: 132,
+      fontSize: 76,
+      backgroundColor: "transparent",
+      color: "#2C2923"
+    }
+  }
+} satisfies CardTemplateMetadata;
+
+export const LEVEL_00_SKETCH_TEMPLATE: PlayerCardRenderTemplate = loadTemplate({
+  id: LEVEL_00_SKETCH_TEMPLATE_KEY,
+  templateKey: LEVEL_00_SKETCH_TEMPLATE_KEY,
+  name: "Sketch Card Level 00",
+  baseImageSource: LEVEL_00_SKETCH_SOURCE,
+  metadata: LEVEL_00_SKETCH_METADATA
+});
+
+export function getBundledTemplateSource(templateKey: string): ImageSourcePropType | undefined {
+  return templateKey === LEVEL_00_SKETCH_TEMPLATE_KEY ? LEVEL_00_SKETCH_SOURCE : undefined;
+}

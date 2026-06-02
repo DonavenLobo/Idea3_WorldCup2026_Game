@@ -6,7 +6,8 @@
     "version": "0.0.1",
     "platforms": [
       "ios",
-      "android"
+      "android",
+      "web"
     ],
     "orientation": "portrait",
     "userInterfaceStyle": "light",

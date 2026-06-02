@@ -35,11 +35,21 @@ Future agents should read [.agent/gogaffa-start-here/SKILL.md](.agent/gogaffa-st
 
 For substantial new features, product surfaces, backend workflows, monetization paths, schema expansions, or architecture changes, agents should invoke [.agent/grill-me/SKILL.md](.agent/grill-me/SKILL.md) before implementation. Use it to pressure-test the plan one question at a time and record locked decisions before writing code.
 
+## Local Dev Setup
+
+New to the repo and want to run the app on your iPhone? Follow
+[docs/engineering/dev-setup.md](docs/engineering/dev-setup.md). It covers Node/nvm,
+env files, the Expo Go vs development-build decision, and iOS device registration.
+
+Node is pinned in [.nvmrc](.nvmrc) — run `nvm use` from the repo root before any
+`pnpm` command.
+
 ## Commands
 
 These commands are scaffolded. Install dependencies before running them.
 
 ```sh
+nvm use            # match the pinned Node version (.nvmrc)
 pnpm install
 pnpm dev
 pnpm dev:mobile

@@ -38,6 +38,13 @@ export interface CardTemplateLayerMetadata {
   fontSize?: number;
   fontWeight?: string;
   color?: string;
+  backgroundColor?: string;
+  borderRadius?: number;
+  label?: string;
+  labelColor?: string;
+  labelFontSize?: number;
+  labelX?: number;
+  labelY?: number;
   align?: "left" | "center" | "right";
   fit?: "cover" | "contain";
 }
@@ -59,9 +66,10 @@ export interface CardTemplateMetadata {
     avatar: CardTemplateLayerMetadata;
     displayName: CardTemplateLayerMetadata;
     stats: CardTemplateLayerMetadata & {
-      columns: Array<{ key: CardStatKey; x: number }>;
+      columns: Array<{ key: CardStatKey; x: number; width?: number }>;
       labelFontSize: number;
       valueFontSize: number;
+      showLabels?: boolean;
     };
     badge?: CardTemplateLayerMetadata;
   };

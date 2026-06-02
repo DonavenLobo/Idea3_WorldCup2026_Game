@@ -19,6 +19,7 @@ export function PlayerAvatarLayer({ imageUrl, layer }: PlayerAvatarLayerProps) {
         {
           height: layer.height,
           left: layer.x,
+          resizeMode: layer.fit ?? "contain",
           top: layer.y,
           width: layer.width
         }
@@ -29,7 +30,6 @@ export function PlayerAvatarLayer({ imageUrl, layer }: PlayerAvatarLayerProps) {
 
 const styles = StyleSheet.create({
   avatar: {
-    position: "absolute",
-    resizeMode: "contain"
+    position: "absolute"
   }
 });
