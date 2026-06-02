@@ -16,7 +16,8 @@
       "supportsTablet": false,
       "infoPlist": {
         "NSCameraUsageDescription": "GoGaffa uses your camera so you can capture a photo for your tournament card.",
-        "NSPhotoLibraryUsageDescription": "GoGaffa uses your photo library so you can choose a photo for your tournament card."
+        "NSPhotoLibraryUsageDescription": "GoGaffa uses your photo library so you can choose a photo for your tournament card.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -24,7 +25,8 @@
       "versionCode": 1,
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.POST_NOTIFICATIONS"
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECORD_AUDIO"
       ],
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO"
