@@ -22,7 +22,8 @@ export const APP_ROUTES = {
     card: "/(tabs)/card",
     schedule: "/(tabs)/schedule",
     lockerRoom: "/(tabs)/locker-room"
-  }
+  },
+  leaderboard: "/leaderboard"
 } as const;
 
 export const WEB_ROUTES = {
