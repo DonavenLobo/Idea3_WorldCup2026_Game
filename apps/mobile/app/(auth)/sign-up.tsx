@@ -1,7 +1,8 @@
 import { useRouter } from "expo-router";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { APP_ROUTES } from "@world-cup-game/config";
+import { AuthLegalLinks, OAuthButtons } from "../../src/features/auth";
 import { colors } from "../../src/theme/colors";
 import { radius } from "../../src/theme/radius";
 import { spacing } from "../../src/theme/spacing";
@@ -25,6 +26,8 @@ export default function SignUpScreen() {
             Verification takes you straight to your home screen.
           </Text>
 
+          <OAuthButtons />
+
           <Pressable
             style={styles.primaryButton}
             onPress={() => router.push(APP_ROUTES.auth.enterPhone)}
@@ -39,16 +42,11 @@ export default function SignUpScreen() {
             <Text style={styles.goldButtonText}>✉️  Use Email</Text>
           </Pressable>
 
-          <Pressable
-            onPress={() =>
-              Alert.alert(
-                "Coming soon",
-                "Sign-in for existing accounts arrives once accounts are wired up."
-              )
-            }
-          >
+          <Pressable onPress={() => router.push(APP_ROUTES.auth.signIn)}>
             <Text style={styles.linkText}>I already have an account</Text>
           </Pressable>
+
+          <AuthLegalLinks />
         </View>
 
         <View style={styles.card}>

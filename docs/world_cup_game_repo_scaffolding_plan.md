@@ -19,17 +19,17 @@ The current example cards should be treated as **manual base card templates** th
 Use a cross-platform mobile-first architecture:
 
 - **Mobile app:** Expo + React Native + TypeScript
-- **Web/landing/share pages:** Next.js + TypeScript
+- **Public website:** External waitlist/legal/support site at `https://gogaffa.com`
 - **Backend:** Supabase
 - **Database:** Supabase Postgres
 - **Auth:** Supabase Auth
 - **File storage:** Supabase Storage
 - **Server-side workflows:** Supabase Edge Functions
 - **Styling:** NativeWind or Tailwind-inspired tokens
-- **Animations:** React Native Reanimated for mobile interactions; GSAP only for web/landing if needed
+- **Animations:** React Native Reanimated for mobile interactions
 - **AI image generation:** OpenAI API or another image model provider behind a backend function
 
-This lets the team build one mobile app for iOS and Android while still having a lightweight web layer for viral card sharing and invite links.
+This lets the team build one mobile app for iOS and Android while relying on the existing `gogaffa.com` site for waitlist, legal, support, and app-download surfaces.
 
 ---
 
@@ -41,7 +41,6 @@ Recommended top-level structure:
 world-cup-game/
   apps/
     mobile/
-    web/
 
   packages/
     config/
@@ -76,8 +75,8 @@ world-cup-game/
 ## Why this structure works
 
 - `apps/mobile` contains the actual iOS/Android app.
-- `apps/web` powers shareable card pages, referral links, landing pages, and app download redirects.
-- `packages/card-renderer` keeps the card rendering logic shared between mobile previews and web/share outputs.
+- `https://gogaffa.com` powers the public waitlist, legal, support, and download surfaces outside this repo.
+- `packages/card-renderer` keeps the card rendering logic shared between mobile previews and generated/share outputs.
 - `packages/game-engine` keeps trivia scoring, bracket scoring, XP logic, and card progression rules out of the UI.
 - `supabase` keeps migrations and backend functions version-controlled.
 - `design` preserves manually created base card assets, exports, template metadata, and brand tokens.
@@ -201,70 +200,20 @@ This prevents the route files from becoming huge and messy.
 
 ---
 
-# 4. Web App Structure
+# 4. Public Website Scope
 
-Recommended structure inside `apps/web`:
+There is no repo-owned web app in the current architecture.
 
-```txt
-apps/web/
-  app/
-    page.tsx
-    layout.tsx
-
-    card/
-      [slug]/
-        page.tsx
-        opengraph-image.tsx
-
-    invite/
-      [inviteCode]/
-        page.tsx
-
-    download/
-      page.tsx
-
-  src/
-    components/
-      landing/
-      card/
-      invite/
-
-    lib/
-      supabase.ts
-      metadata.ts
-      redirects.ts
-
-  public/
-    social/
-    previews/
-
-  package.json
-  next.config.ts
-  tsconfig.json
-```
-
-## Web app purpose
-
-The web app should not duplicate the whole mobile app. It should focus on acquisition and sharing:
-
-- Public card preview pages
-- Invite links
-- Social preview images
-- App download redirects
-- Landing page
-- Terms/privacy pages
-
-Example use case:
-
-A user shares their card on Instagram or iMessage. The recipient taps the link and lands on:
+Use the external website for public surfaces:
 
 ```txt
-/card/kerry-7h2k
+Waitlist / marketing: https://gogaffa.com
+Privacy Policy: https://gogaffa.com/privacy
+Terms of Service: https://gogaffa.com/terms
+Support: https://gogaffa.com/support
 ```
 
-That page shows a polished public card preview and a CTA:
-
-**Create your tournament card**
+Do not reintroduce `apps/web`, Next.js, or Vercel unless the team explicitly changes this decision.
 
 ---
 
@@ -272,7 +221,7 @@ That page shows a polished public card preview and a CTA:
 
 ## `packages/types`
 
-Shared TypeScript types used across mobile, web, and backend functions.
+Shared TypeScript types used across mobile and backend functions.
 
 ```txt
 packages/types/
@@ -330,7 +279,7 @@ export const CARD_STATS = [
 
 ## `packages/ui`
 
-Shared UI primitives that can be used in mobile and web where practical.
+Shared UI primitives for the mobile app where practical.
 
 ```txt
 packages/ui/
@@ -359,7 +308,7 @@ Purpose:
 - Render a user’s card preview
 - Apply template metadata
 - Position avatar, stats, display name, badges, and cosmetics
-- Produce consistent card outputs across mobile and web
+- Produce consistent card outputs in mobile and generated/share assets
 - Support future template changes without rewriting the app
 
 Suggested structure:
@@ -970,7 +919,6 @@ Tasks:
 
 - Create monorepo
 - Set up Expo app
-- Set up Next.js app
 - Set up Supabase project
 - Add Supabase local development
 - Add TypeScript configs
@@ -983,7 +931,6 @@ Tasks:
 Done when:
 
 - Mobile app opens locally
-- Web app opens locally
 - Supabase runs locally
 - Mobile app can connect to Supabase
 - Auth works locally
@@ -1010,7 +957,7 @@ Done when:
 
 - A user can create a card from start to finish
 - The card can be shared via link
-- The shared page displays the card
+- The app can render and share the card
 - The card image is stored and stable
 
 ---
@@ -1032,7 +979,7 @@ Done when:
 
 - A user can invite friends into a group
 - Group members can see each other’s cards
-- Invite links work from web to app
+- Invite links or codes work from `gogaffa.com`/external surfaces into the app when supported
 
 ---
 
@@ -1116,19 +1063,9 @@ Each app should have its own `.env.example`.
 ```txt
 EXPO_PUBLIC_SUPABASE_URL=
 EXPO_PUBLIC_SUPABASE_ANON_KEY=
-EXPO_PUBLIC_WEB_URL=
+EXPO_PUBLIC_WEB_URL=https://gogaffa.com
 EXPO_PUBLIC_APP_SCHEME=
 EXPO_PUBLIC_ENVIRONMENT=development
-```
-
-## `apps/web/.env.example`
-
-```txt
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-NEXT_PUBLIC_APP_STORE_URL=
-NEXT_PUBLIC_PLAY_STORE_URL=
-NEXT_PUBLIC_WEB_URL=
 ```
 
 ## `supabase/functions/.env.example`
@@ -1143,7 +1080,7 @@ PURCHASE_WEBHOOK_SECRET=
 
 Rule:
 
-**Never expose service-role keys or AI provider keys in the mobile app or web client.**
+**Never expose service-role keys or AI provider keys in the mobile app or any public client.**
 
 ---
 
@@ -1153,11 +1090,10 @@ Root `package.json` scripts:
 
 ```json
 {
-  "scripts": {
-    "dev": "turbo dev",
-    "dev:mobile": "pnpm --filter mobile start",
-    "dev:web": "pnpm --filter web dev",
-    "lint": "turbo lint",
+    "scripts": {
+      "dev": "turbo dev",
+      "dev:mobile": "pnpm --filter mobile start",
+      "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "supabase:start": "supabase start",
@@ -1410,7 +1346,7 @@ The reason: the AI card is the viral hook. Do not spend weeks on scoring systems
 
 The first milestone should be:
 
-**A user can create a card, see it rendered inside the app, save it, and share a public link.**
+**A user can create a card, see it rendered inside the app, save it, and share it.**
 
 That requires:
 
@@ -1422,7 +1358,7 @@ That requires:
 - Image upload
 - Card creation screen
 - Card renderer
-- Shareable web page
+- Shareable card/app invite surface
 
 Do not build trivia, brackets, bounties, or purchases until this milestone works.
 
@@ -1434,7 +1370,6 @@ Do not build trivia, brackets, bounties, or purchases until this milestone works
 
 - [ ] Create GitHub repo
 - [ ] Add `apps/mobile`
-- [ ] Add `apps/web`
 - [ ] Add `packages/types`
 - [ ] Add `packages/config`
 - [ ] Add `packages/card-renderer`
@@ -1466,8 +1401,7 @@ Do not build trivia, brackets, bounties, or purchases until this milestone works
 ## Share system setup
 
 - [ ] Create card share slug
-- [ ] Create `/card/[slug]` web page
-- [ ] Display saved card on web
+- [ ] Decide whether sharing uses a generated image, external `gogaffa.com` route, or mobile-only invite flow
 - [ ] Add share CTA in mobile app
 - [ ] Test link sharing from phone
 
@@ -1495,7 +1429,7 @@ These should be decided before build starts:
 The project should be scaffolded as a mobile-first monorepo with a clean separation between:
 
 - **Mobile experience:** card creation, games, groups, Locker Room
-- **Web experience:** shared cards, invites, landing pages
+- **Public website:** external waitlist, legal, support, and download surfaces at `https://gogaffa.com`
 - **Backend:** auth, database, storage, scoring, image generation, purchases
 - **Shared packages:** types, config, card rendering, game rules
 - **Design assets:** manually created base card templates and metadata
@@ -1503,4 +1437,3 @@ The project should be scaffolded as a mobile-first monorepo with a clean separat
 The key architectural choice is to make the player card system template-driven. Your manually created base cards should not be hardcoded into screens. Each card should have a base image, metadata, versioning, and dynamic layers. That keeps the design flexible as the visual direction changes and lets you add card tiers, limited drops, nation-specific cards, and paid cosmetics without rebuilding the core app.
 
 The first product milestone should not be a full World Cup game. It should be a shareable card creator with enough backend structure to support groups, XP, and future monetization.
-

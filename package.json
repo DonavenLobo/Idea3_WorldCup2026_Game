@@ -6,9 +6,11 @@
   "scripts": {
     "dev": "turbo dev",
     "dev:mobile": "pnpm --filter mobile start",
-    "dev:web": "pnpm --filter web dev",
+    "dev:mobile:client": "pnpm --filter mobile start:dev-client",
     "build": "turbo build",
     "mobile:eas:build:dev": "pnpm --filter mobile eas:build:dev",
+    "mobile:eas:build:dev:ios": "pnpm --filter mobile eas:build:dev:ios",
+    "mobile:eas:build:dev:android": "pnpm --filter mobile eas:build:dev:android",
     "mobile:eas:build:preview": "pnpm --filter mobile eas:build:preview",
     "mobile:eas:build:production": "pnpm --filter mobile eas:build:production",
     "mobile:eas:build:ios": "pnpm --filter mobile eas:build:ios",

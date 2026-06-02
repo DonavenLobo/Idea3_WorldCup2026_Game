@@ -45,4 +45,3 @@ secrets/
 *.keystore
 *.jks
 .pnpm-store/
-.vercel/

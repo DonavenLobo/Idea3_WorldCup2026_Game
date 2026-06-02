@@ -3,16 +3,37 @@
   "compilerOptions": {
     "declaration": false,
     "jsx": "react-jsx",
-    "types": ["react"],
+    "types": [
+      "react"
+    ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@world-cup-game/card-renderer": ["../../packages/card-renderer/src"],
-      "@world-cup-game/config": ["../../packages/config/src"],
-      "@world-cup-game/game-engine": ["../../packages/game-engine/src"],
-      "@world-cup-game/types": ["../../packages/types/src"],
-      "@world-cup-game/ui": ["../../packages/ui/src"]
+      "@/*": [
+        "src/*"
+      ],
+      "@world-cup-game/card-renderer": [
+        "../../packages/card-renderer/src"
+      ],
+      "@world-cup-game/config": [
+        "../../packages/config/src"
+      ],
+      "@world-cup-game/game-engine": [
+        "../../packages/game-engine/src"
+      ],
+      "@world-cup-game/types": [
+        "../../packages/types/src"
+      ],
+      "@world-cup-game/ui": [
+        "../../packages/ui/src"
+      ]
     }
   },
-  "include": ["app/**/*.ts", "app/**/*.tsx", "src/**/*.ts", "src/**/*.tsx"]
+  "include": [
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ]
 }

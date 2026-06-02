@@ -1,6 +1,6 @@
 # Store Release Readiness Plan
 
-Last updated: May 31, 2026
+Last updated: June 1, 2026
 
 This plan prepares the Expo mobile app for Apple App Store and Google Play submission. It is not a claim that the app is ready to submit today. It documents what must be true before the first TestFlight, internal Play test, and public launch.
 
@@ -27,8 +27,6 @@ Official references:
 - Android App Bundle format: https://developer.android.com/guide/app-bundle
 - Google Play Data safety: https://support.google.com/googleplay/android-developer/answer/10787469
 - Google Play target audience and app content: https://support.google.com/googleplay/android-developer/answer/9867159
-- Vercel monorepo deployments: https://vercel.com/docs/monorepos
-- Vercel CLI deployments: https://vercel.com/docs/cli/deploy
 
 ## Current Confirmed Setup
 
@@ -46,16 +44,14 @@ Confirmed setup details:
 - Supabase project exists: `GoGaffa` / `hnwrhkrzvjesjrtjpjtm` in `us-east-1`.
 - Supabase Auth providers configured: Email, Google, Apple.
 - AI provider: Anthropic through server-side Supabase Edge Functions only.
-- Vercel project exists: `gogaffa` / `prj_hmrALSf2Kt62HIAOCT1YpsTMZeHi`.
-- Vercel team: `denshimdon-5307s-projects` / `team_lBY9AzfREi5PixiToVkPOZUr`.
-- Vercel preview deployment verified: `https://gogaffa-nqgt6mnw6-denshimdon-5307s-projects.vercel.app`.
-- Vercel public Supabase env configured: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-- Vercel production deployment/custom domain is not finalized yet.
-- Website privacy, Terms of Service, and support URLs are not ready yet.
+- Public website/waitlist: `https://gogaffa.com`.
+- Privacy Policy URL: `https://gogaffa.com/privacy`.
+- Terms of Service URL: `https://gogaffa.com/terms`.
+- Support URL: `https://gogaffa.com/support`.
 
-Do not call Anthropic directly from the mobile or web clients. Store `ANTHROPIC_API_KEY` only in Supabase Edge Function secrets/local function env, call Anthropic from the relevant Edge Function, and return only the app-safe result to the client.
+Do not call Anthropic directly from the mobile client. Store `ANTHROPIC_API_KEY` only in Supabase Edge Function secrets/local function env, call Anthropic from the relevant Edge Function, and return only the app-safe result to the client.
 
-The missing website URLs block public App Store submission, but they do not block the work below:
+The public website URLs are now available. The app is still not ready for public submission until the app implementation, credentials, privacy answers, screenshots, and review metadata are complete.
 
 - Registering/configuring Apple identifiers and capabilities.
 - Creating and refining the App Store Connect record.
@@ -72,7 +68,6 @@ The repo now includes baseline release configuration:
 - `apps/mobile/eas.json`: EAS build and submit profiles.
 - `apps/mobile/app.json`: iOS bundle identifier, Android package, build numbers, and permission copy.
 - `apps/mobile/package.json`: EAS build and submit scripts.
-- `apps/web/vercel.json`: Vercel monorepo build settings for the Next.js web app.
 - Root `package.json`: forwarded EAS scripts.
 - `.env.example` and `apps/mobile/.env.example`: app-store identifier placeholders.
 
@@ -92,9 +87,10 @@ EAS project: @internationalventurestudio/gogaffa
 EAS project ID: b9b7a050-9841-4ed5-9154-eafed8a84bab
 Supabase project ref: hnwrhkrzvjesjrtjpjtm
 Supabase URL: https://hnwrhkrzvjesjrtjpjtm.supabase.co
-Vercel team ID: team_lBY9AzfREi5PixiToVkPOZUr
-Vercel project ID: prj_hmrALSf2Kt62HIAOCT1YpsTMZeHi
-Vercel preview URL: https://gogaffa-nqgt6mnw6-denshimdon-5307s-projects.vercel.app
+Public website: https://gogaffa.com
+Privacy Policy URL: https://gogaffa.com/privacy
+Terms of Service URL: https://gogaffa.com/terms
+Support URL: https://gogaffa.com/support
 ```
 
 Finalize these before the first store upload. Apple says the Bundle ID cannot be changed after uploading a build to App Store Connect. Google Play also treats the Android package as the app identity.
@@ -115,6 +111,11 @@ Avoid FIFA, World Cup official, FUT, or other protected/official-affiliation lan
 - `preview`: internal production-like build for stakeholder testing.
 - `production`: store distribution build.
 
+Development builds include `expo-dev-client`, use the stable native scheme
+`gogaffa://auth/callback`, and are the preferred way to test OAuth on physical
+devices. Expo Go can use changing `exp://...` callback URLs, so do not treat Expo
+Go redirect behavior as the production auth baseline.
+
 Android production builds use `app-bundle`, which produces the `.aab` format Google Play expects for publishing.
 
 ## Commands
@@ -132,10 +133,18 @@ Install or run EAS CLI:
 pnpm dlx eas-cli@latest login
 ```
 
-Build preview binaries:
+Build development and preview binaries:
 
 ```sh
+pnpm mobile:eas:build:dev:ios
+pnpm mobile:eas:build:dev:android
 pnpm mobile:eas:build:preview
+```
+
+After installing a development build, run the JavaScript bundler for that build:
+
+```sh
+pnpm dev:mobile:client
 ```
 
 Build production binaries:
@@ -164,23 +173,19 @@ Complete before TestFlight or Play internal testing:
 - [x] Apply initial Supabase schema, storage buckets, RLS policies, and advisor fixes.
 - [x] Configure Supabase Auth providers for Email, Google, and Apple.
 - [x] Create and link EAS project: `@internationalventurestudio/gogaffa`.
-- [x] Create and link Vercel project: `gogaffa`.
-- [x] Verify Vercel preview source deploy.
-- [x] Add public Supabase env values to Vercel.
-- [ ] Deploy or promote the web app to production after the public web copy is acceptable.
-- [ ] Add a custom web domain when the team has one.
-- [ ] Add Privacy Policy, Terms of Service, and support URLs to the deployed website.
-- [ ] Add final web/deep-link redirect URLs to Supabase Auth after the production domain is chosen.
+- [x] Confirm public website: `https://gogaffa.com`.
+- [x] Confirm Privacy Policy, Terms of Service, and support URLs.
+- [ ] Add final mobile OAuth/deep-link redirect URLs to Supabase Auth: `gogaffa://auth/callback`, `gogaffa://**`, `exp://**/--/auth/callback`, `exps://**/--/auth/callback`, and `https://gogaffa.com/**`.
 - [ ] Configure Anthropic API usage behind Supabase Edge Functions only.
-- [ ] Replace mock auth with real Supabase auth.
+- [ ] Finish all auth modes. Google/Apple OAuth is wired in the mobile app; email/phone screens remain scaffolded.
 - [ ] Persist created card, profile, onboarding completion, and session state.
 - [ ] Gate full app access behind completed base card.
 - [ ] Wire privacy-safe analytics or defer analytics entirely.
 - [ ] Ensure photo upload, AI generation, moderation, and fallback card flows work.
 - [ ] Ensure push notification permission is requested contextually, not on first launch.
 - [ ] Add account deletion and data deletion request flow.
-- [ ] Add Terms of Service and Privacy Policy web pages.
-- [ ] Add support/contact URL.
+- [x] Add Terms of Service and Privacy Policy web pages.
+- [x] Add support/contact URL.
 - [x] Confirm support email: `denshimdon@gmail.com`.
 - [ ] Add crash reporting only after privacy disclosure is updated.
 - [ ] Replace provisional nation/team data with official sourced data.
@@ -195,7 +200,7 @@ Complete before public launch:
 - [ ] Test denied camera/photo permissions.
 - [ ] Test app restart after card creation.
 - [ ] Test app deletion/reinstall behavior.
-- [ ] Test deep links from public card and invite URLs.
+- [ ] Test mobile auth, app invite, and download links.
 - [ ] Test push notification opt-in, receipt, and opt-out.
 - [ ] Test purchase sandbox flows if paid cosmetics/regeneration are included at launch.
 - [ ] Confirm purchases never affect Competitive Points.
@@ -227,7 +232,7 @@ Store content:
 - [ ] App name: 2-30 characters.
 - [ ] Subtitle: up to 30 characters.
 - [ ] Promotional text, description, keywords, support URL, marketing URL.
-- [ ] Privacy Policy URL.
+- [x] Privacy Policy URL: `https://gogaffa.com/privacy`.
 - [ ] Screenshots for required iPhone sizes.
 - [ ] App Review notes, demo account, and feature explanation.
 - [ ] Privacy Nutrition Label with all collected/shared data.
@@ -265,7 +270,7 @@ Store content:
 
 - [ ] App name, short description, full description.
 - [ ] App icon, feature graphic, phone screenshots.
-- [ ] Privacy Policy URL.
+- [x] Privacy Policy URL: `https://gogaffa.com/privacy`.
 - [ ] Data safety form.
 - [ ] Target audience and app content form.
 - [ ] Content rating questionnaire.
@@ -324,9 +329,9 @@ Accounts to create:
 
 Legal/content assets to prepare:
 
-- Privacy Policy URL. Required for App Store submission.
-- Terms of Service URL.
-- Support URL. Required for App Store submission and must lead to real contact information.
+- Privacy Policy URL: `https://gogaffa.com/privacy`.
+- Terms of Service URL: `https://gogaffa.com/terms`.
+- Support URL: `https://gogaffa.com/support`.
 - Account/data deletion instructions.
 - App screenshots and preview media.
 - Store descriptions and review notes.
@@ -353,5 +358,5 @@ The current app should not be submitted publicly yet because these are still unr
 - Card creation is in-memory and not persisted.
 - AI generation is not wired.
 - App access is not gated by a saved card/session.
-- Store icons/screenshots/privacy/legal pages are missing.
+- Store icons/screenshots and final privacy answers are missing.
 - App Store/Google Play records and credentials are not configured.

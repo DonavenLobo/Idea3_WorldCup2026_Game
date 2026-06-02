@@ -1,6 +1,6 @@
 ---
 name: gogaffa-start-here
-description: Start-here repo onboarding guide for the GoGaffa monorepo. Use first when an agent begins work in this repository, initially explores the repo, adds features, fills scaffolded modules, updates Supabase schema/functions, wires mobile or web routes, adjusts shared packages, or makes product/engineering decisions that must respect the MVP guardrails.
+description: Start-here repo onboarding guide for the GoGaffa monorepo. Use first when an agent begins work in this repository, initially explores the repo, adds features, fills scaffolded modules, updates Supabase schema/functions, wires mobile routes, adjusts shared packages, or makes product/engineering decisions that must respect the MVP guardrails.
 ---
 
 # GoGaffa Start Here
@@ -38,11 +38,6 @@ apps/mobile/              Expo + React Native app
   src/features/           Feature logic, hooks, API calls, components
   src/lib/                Supabase, analytics, uploads, permissions, notifications
   src/theme/              Mobile design tokens
-
-apps/web/                 Next.js app for landing, public card pages, invites, download redirects
-  app/                    App Router routes
-  src/components/         Landing, card, and invite UI
-  src/lib/                Web Supabase client, metadata, redirects
 
 packages/types/           Shared domain and generated database types
 packages/config/          Product constants, nations, card stats, feature flags, XP rules
@@ -107,10 +102,11 @@ Card template work:
 - Keep template positioning in `metadata.json`; do not hard-code template coordinates in app screens.
 - Do not silently overwrite templates. Create a new version folder for material design or placement changes.
 
-Web app scope:
+Public website scope:
 
-- Keep web focused on acquisition: landing page, public card preview, invite links, download redirects, and social preview images.
-- Do not duplicate the full mobile app on web unless the product direction changes.
+- The public waitlist, legal, support, and marketing site is external to this repo at `https://gogaffa.com`.
+- Do not add a repo-owned web app or Vercel deployment unless the product direction changes explicitly.
+- Use `https://gogaffa.com/privacy`, `https://gogaffa.com/terms`, and `https://gogaffa.com/support` for store metadata.
 
 Dependencies:
 

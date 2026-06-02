@@ -11,15 +11,14 @@ Create AI footballer card -> join a group -> play daily games -> earn XP/credits
 ## Stack Direction
 
 - Mobile: Expo, React Native, TypeScript
-- Web: Next.js, TypeScript
 - Backend: Supabase Postgres, Auth, Storage, Edge Functions
 - Monorepo: pnpm workspaces and Turborepo
+- Public site/legal pages: hosted externally at `https://gogaffa.com`
 
 ## Workspace
 
 ```txt
 apps/mobile
-apps/web
 packages/config
 packages/types
 packages/ui
@@ -44,7 +43,7 @@ These commands are scaffolded. Install dependencies before running them.
 pnpm install
 pnpm dev
 pnpm dev:mobile
-pnpm dev:web
+pnpm dev:mobile:client
 pnpm lint
 pnpm typecheck
 pnpm supabase:start
@@ -56,10 +55,30 @@ pnpm supabase:reset
 Use [.env.example](.env.example) as the master checklist for required environment values. Copy the relevant sections into the files each runtime actually reads:
 
 - `apps/mobile/.env` for Expo public variables.
-- `apps/web/.env.local` for Next.js public variables.
 - `supabase/functions/.env` for server-only Edge Function secrets.
 
 Do not commit real secrets. `.env.local` and other real env files are intentionally ignored.
+
+For Supabase OAuth on mobile, allow these redirect URLs in Supabase Auth URL Configuration:
+
+```txt
+gogaffa://auth/callback
+gogaffa://**
+exp://**/--/auth/callback
+exps://**/--/auth/callback
+https://gogaffa.com/**
+```
+
+The OAuth provider callback configured in Google/Apple remains the Supabase callback URL:
+
+```txt
+https://hnwrhkrzvjesjrtjpjtm.supabase.co/auth/v1/callback
+```
+
+For Expo Go testing, Supabase may need the current `exp://.../--/auth/callback`
+URL as the temporary Site URL. For EAS development builds, set Supabase Site URL
+back to `https://gogaffa.com` and use the stable native callback
+`gogaffa://auth/callback`.
 
 ## Store Release
 
@@ -67,22 +86,25 @@ The mobile app is intended to ship to both the Apple App Store and Google Play t
 
 The baseline EAS config lives at [apps/mobile/eas.json](apps/mobile/eas.json). Finalize the iOS bundle ID and Android package before the first store upload.
 
-## Web Deployment
-
-The web app is linked to Vercel project `gogaffa` (`prj_hmrALSf2Kt62HIAOCT1YpsTMZeHi`) under team `denshimdon-5307s-projects` (`team_lBY9AzfREi5PixiToVkPOZUr`).
-
-Current verified preview:
-
-```txt
-https://gogaffa-nqgt6mnw6-denshimdon-5307s-projects.vercel.app
-```
-
-Vercel is configured to use `apps/web` as the root directory while installing from the monorepo root. Keep web framework dependencies pinned in [apps/web/package.json](apps/web/package.json); broad `*` ranges can make Vercel misclassify the Next.js app as legacy.
-
-Deploy a preview from the repo root:
+Development builds use the native GoGaffa URL scheme and should be used for
+OAuth testing once installed on a device:
 
 ```sh
-pnpm dlx vercel@latest deploy --target preview --scope denshimdon-5307s-projects
+pnpm mobile:eas:build:dev:ios
+pnpm dev:mobile:client
+```
+
+## Public Website
+
+The public waitlist, Privacy Policy, Terms of Service, and support pages live outside this repo at `https://gogaffa.com`.
+
+Use these URLs for store metadata:
+
+```txt
+Marketing/support site: https://gogaffa.com
+Privacy Policy: https://gogaffa.com/privacy
+Terms of Service: https://gogaffa.com/terms
+Support: https://gogaffa.com/support
 ```
 
 ## Important Product Rules
