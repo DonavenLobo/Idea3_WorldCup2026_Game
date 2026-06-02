@@ -16,10 +16,11 @@ import { spacing } from "../../src/theme/spacing";
 import { typography } from "../../src/theme/typography";
 
 export default function BracketScreen() {
-  const { isCreated, start, picks, isLoadingSavedBracket } = useBracket();
+  const { isCreated, start, picks, isLoadingSavedBracket, lastSavedAt } = useBracket();
   const [subTab, setSubTab] = useState<SubTab>("groups");
   const [groupIndex, setGroupIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
+  const shouldShowSavedSummary = isCreated && !isLoadingSavedBracket && Boolean(lastSavedAt);
 
   // Track the previous pick counts so auto-advance only fires on the
   // transition from incomplete -> complete (not every time a complete
@@ -67,12 +68,28 @@ export default function BracketScreen() {
   }, [subTab]);
 
   // Reset the vertical scroll to the top whenever this tab gets focused
-  // (so coming back from another bottom tab lands at the top).
+  // (so coming back from another bottom tab lands at the top). Saved
+  // brackets open to the summary instead of restarting the edit flow.
   useFocusEffect(
     useCallback(() => {
+      if (shouldShowSavedSummary) {
+        setSubTab("summary");
+      }
       scrollRef.current?.scrollTo({ y: 0, animated: false });
-    }, [])
+    }, [shouldShowSavedSummary])
   );
+
+  useEffect(() => {
+    if (shouldShowSavedSummary) {
+      setSubTab("summary");
+    }
+  }, [shouldShowSavedSummary]);
+
+  const handleStart = () => {
+    setGroupIndex(0);
+    setSubTab("groups");
+    start();
+  };
 
   if (isLoadingSavedBracket) {
     return (
@@ -94,7 +111,7 @@ export default function BracketScreen() {
         <Text style={styles.emptyBody}>
           Predict the group winners, then call every knockout from the Round of 32 to the Final.
         </Text>
-        <Pressable style={styles.cta} onPress={start}>
+        <Pressable style={styles.cta} onPress={handleStart}>
           <Text style={styles.ctaText}>Create Your Bracket</Text>
         </Pressable>
       </View>
