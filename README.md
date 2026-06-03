@@ -56,8 +56,23 @@ pnpm dev:mobile
 pnpm dev:mobile:client
 pnpm lint
 pnpm typecheck
+pnpm preview:card
+pnpm test:visual
 pnpm supabase:start
 pnpm supabase:reset
+```
+
+## Visual Inspection
+
+For card template/layout work, use `pnpm preview:card` first. It renders the
+card at native template coordinates from `design/card-templates/<template>/` and
+is the ground truth for overlay placement.
+
+Use `pnpm test:visual` for Playwright web smoke checks and screenshot artifacts.
+If the browser binary is missing, run:
+
+```sh
+pnpm exec playwright install chromium
 ```
 
 ## Environment

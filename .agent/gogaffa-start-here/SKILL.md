@@ -101,6 +101,8 @@ Card template work:
 - Add manual card assets under `design/card-templates/<template-key>-vN/`.
 - Keep template positioning in `metadata.json`; do not hard-code template coordinates in app screens.
 - Do not silently overwrite templates. Create a new version folder for material design or placement changes.
+- For card layout changes, use `pnpm preview:card` as the native-coordinate visual ground truth. It composites overlays onto `design/card-templates/<template-key>/base-card.png` from `metadata.json` and avoids React Native Web scaling artifacts.
+- Use `pnpm test:visual` for Playwright route/screenshot checks, but treat it as a web smoke test, not the source of truth for precise card coordinate tuning.
 
 Public website scope:
 
@@ -121,6 +123,15 @@ Run relevant checks after edits:
 ```sh
 pnpm typecheck
 ```
+
+For card renderer or template metadata changes, also run:
+
+```sh
+pnpm preview:card
+pnpm test:visual
+```
+
+If Playwright browsers are missing locally, install them with `pnpm exec playwright install chromium`.
 
 For dependency or workspace changes, also run:
 

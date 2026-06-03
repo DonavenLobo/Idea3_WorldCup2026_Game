@@ -1,0 +1,27 @@
+revoke execute on function public.group_member_count(uuid) from anon;
+revoke execute on function public.list_my_groups() from anon;
+revoke execute on function public.list_public_groups() from anon;
+revoke execute on function public.create_user_group(text, text) from anon;
+revoke execute on function public.join_group_by_invite_code(text) from anon;
+revoke execute on function public.join_public_group(uuid) from anon;
+revoke execute on function public.leave_group(uuid) from anon;
+revoke execute on function public.list_group_leaderboard(uuid, text) from anon;
+revoke execute on function public.locker_tier_rank(text) from anon;
+revoke execute on function public.locker_tier_for_owned_count(integer) from anon;
+revoke execute on function public.get_locker_wallet() from anon;
+revoke execute on function public.list_locker_room_items() from anon;
+revoke execute on function public.redeem_locker_item(text) from anon;
+
+grant execute on function public.group_member_count(uuid) to authenticated;
+grant execute on function public.list_my_groups() to authenticated;
+grant execute on function public.list_public_groups() to authenticated;
+grant execute on function public.create_user_group(text, text) to authenticated;
+grant execute on function public.join_group_by_invite_code(text) to authenticated;
+grant execute on function public.join_public_group(uuid) to authenticated;
+grant execute on function public.leave_group(uuid) to authenticated;
+grant execute on function public.list_group_leaderboard(uuid, text) to authenticated;
+grant execute on function public.locker_tier_rank(text) to authenticated;
+grant execute on function public.locker_tier_for_owned_count(integer) to authenticated;
+grant execute on function public.get_locker_wallet() to authenticated;
+grant execute on function public.list_locker_room_items() to authenticated;
+grant execute on function public.redeem_locker_item(text) to authenticated;
