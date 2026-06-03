@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { APP_ROUTES } from "@world-cup-game/config";
 import { useOnboarding } from "../../src/features/onboarding";
+import { BackButton } from "../../src/components/common/BackButton";
 import { colors } from "../../src/theme/colors";
 import { radius } from "../../src/theme/radius";
 import { spacing } from "../../src/theme/spacing";
@@ -50,6 +51,7 @@ export default function CreateCardScreen() {
   return (
     <SafeAreaView style={styles.root}>
       <View style={styles.content}>
+        <BackButton variant="dark" />
         <Text style={styles.eyebrow}>Step 3 of 3</Text>
         <Text style={styles.title}>Name Your Card</Text>
         <Text style={styles.subtitle}>This name appears on your footballer card.</Text>

@@ -1,9 +1,10 @@
 import { useRouter } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { APP_ROUTES } from "@world-cup-game/config";
 import { RenderedPlayerCard } from "../../src/features/card";
 import { useOnboarding } from "../../src/features/onboarding";
+import { BackButton } from "../../src/components/common/BackButton";
 import { colors } from "../../src/theme/colors";
 import { radius } from "../../src/theme/radius";
 import { spacing } from "../../src/theme/spacing";
@@ -16,13 +17,27 @@ export default function CardPreviewScreen() {
   const friendlyName = displayName.trim() || "Your Footballer";
 
   const handleStartOver = () => {
-    reset();
-    router.navigate(APP_ROUTES.onboarding.selectNation);
+    Alert.alert(
+      "Start over?",
+      "This clears your nation, photo, and name. You can rebuild your card from scratch.",
+      [
+        { text: "Keep this card", style: "cancel" },
+        {
+          text: "Start over",
+          style: "destructive",
+          onPress: () => {
+            reset();
+            router.navigate(APP_ROUTES.onboarding.selectNation);
+          }
+        }
+      ]
+    );
   };
 
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.content}>
+        <BackButton variant="dark" />
         <Text style={styles.title}>Meet {friendlyName}</Text>
 
         <RenderedPlayerCard

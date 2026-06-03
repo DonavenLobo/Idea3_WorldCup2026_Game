@@ -1,4 +1,5 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
+import { Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import type { DailyTriviaQuestion, ScoredTriviaAttempt } from "../types";
 import { colors } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
@@ -11,7 +12,27 @@ interface CompletedViewProps {
 }
 
 export function CompletedView({ attempt, questions }: CompletedViewProps) {
+  const router = useRouter();
   const questionsById = Object.fromEntries(questions.map((question) => [question.id, question]));
+
+  const handleShare = async () => {
+    // Spoiler-safe Wordle-like format per MVP decision #17 — never leaks answers.
+    const grid = attempt.answers.map((a) => (a.isCorrect ? "🟩" : "⬛")).join("");
+    const message = [
+      "GoGaffa Daily Trivia",
+      `${grid} ${attempt.correctAnswers}/${attempt.totalQuestions}`,
+      `+${attempt.competitivePoints} pts`
+    ].join("\n");
+    try {
+      await Share.share({ message });
+    } catch {
+      // user cancelled or share failed — no-op
+    }
+  };
+
+  const handleViewLeaderboard = () => {
+    router.push("/leaderboard");
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
@@ -60,6 +81,14 @@ export function CompletedView({ attempt, questions }: CompletedViewProps) {
         <Text style={styles.totalLabel}>CARD XP EARNED</Text>
         <Text style={styles.totalValue}>+{attempt.earnedCardXp}</Text>
       </View>
+
+      <Pressable style={styles.primaryCta} onPress={handleShare}>
+        <Text style={styles.primaryCtaText}>📤  Share my score</Text>
+      </Pressable>
+
+      <Pressable style={styles.secondaryCta} onPress={handleViewLeaderboard}>
+        <Text style={styles.secondaryCtaText}>🏆  View Leaderboard</Text>
+      </Pressable>
 
       <Text style={styles.comeBack}>Come back tomorrow for fresh questions.</Text>
     </ScrollView>
@@ -110,6 +139,18 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     marginTop: spacing.sm
   },
+  primaryCta: {
+    alignItems: "center",
+    backgroundColor: colors.gold,
+    borderRadius: radius.pill,
+    marginTop: spacing.lg,
+    padding: spacing.md
+  },
+  primaryCtaText: {
+    color: colors.pitch,
+    fontSize: 16,
+    fontWeight: "900"
+  },
   resultBadge: {
     alignItems: "center",
     borderRadius: 999,
@@ -127,6 +168,19 @@ const styles = StyleSheet.create({
   },
   resultBadgeWrong: {
     backgroundColor: "#C8102E"
+  },
+  secondaryCta: {
+    alignItems: "center",
+    borderColor: colors.gold,
+    borderRadius: radius.pill,
+    borderWidth: 2,
+    marginTop: spacing.sm,
+    padding: spacing.md
+  },
+  secondaryCtaText: {
+    color: colors.gold,
+    fontSize: 16,
+    fontWeight: "900"
   },
   summaryCard: {
     backgroundColor: "rgba(255, 248, 234, 0.06)",

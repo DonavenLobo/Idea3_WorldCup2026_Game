@@ -78,6 +78,17 @@ export function BracketSummary({ onGroupTap }: BracketSummaryProps) {
     router.push(APP_ROUTES.tabs.groups);
   };
 
+  const handleResetPress = () => {
+    Alert.alert(
+      "Reset your bracket?",
+      "This clears every group pick, knockout result, and final. You can't undo this.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Reset bracket", style: "destructive", onPress: resetAll }
+      ]
+    );
+  };
+
   return (
     <View style={styles.root}>
       <View style={styles.championCard}>
@@ -150,7 +161,7 @@ export function BracketSummary({ onGroupTap }: BracketSummaryProps) {
         <Text style={styles.secondaryButtonText}>👥  Create or Join a Group</Text>
       </Pressable>
 
-      <Pressable style={styles.resetButton} onPress={resetAll}>
+      <Pressable style={styles.resetButton} onPress={handleResetPress}>
         <Text style={styles.resetText}>Reset bracket</Text>
       </Pressable>
     </View>
