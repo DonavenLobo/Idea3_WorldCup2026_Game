@@ -4,6 +4,7 @@ export * from "./cardTiers";
 export * from "./featureFlags";
 export * from "./groups";
 export * from "./leaderboard";
+export * from "./locker";
 export * from "./nations";
 export * from "./routes";
 export * from "./trivia";
