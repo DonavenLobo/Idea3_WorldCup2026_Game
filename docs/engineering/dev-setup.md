@@ -176,6 +176,9 @@ No device registration. Login won't work.
 
 ## Related docs
 
+- [Card generation and push notifications](./card-generation-and-push.md) —
+  OpenAI prompt edits, Supabase Edge Function flow, Expo push setup, and
+  diagnostics.
 - [Store release readiness](../release/store_release_plan.md) — TestFlight, Play,
   submission, and the canonical list of project identifiers.
 - [Repo structure](./repo_structure.md) — monorepo layout.

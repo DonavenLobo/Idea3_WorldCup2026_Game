@@ -12,6 +12,8 @@ Deno.test("edit prompt names the nation and forbids text", () => {
   assertStringIncludes(prompt, "yellow and green kit");
   assertStringIncludes(prompt, "no text");
   assertStringIncludes(prompt, "no crests");
+  assertStringIncludes(prompt, "Follow the input photo's pose");
+  assertStringIncludes(prompt, "same face, hairstyle, skin tone, expression, and silhouette");
 });
 
 Deno.test("generate prompt does not assume an input photo", () => {
@@ -22,4 +24,5 @@ Deno.test("generate prompt does not assume an input photo", () => {
   });
 
   assertStringIncludes(prompt, "Invent");
+  assertStringIncludes(prompt, "confident hero pose");
 });
