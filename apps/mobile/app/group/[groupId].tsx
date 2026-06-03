@@ -1,5 +1,3 @@
-import { ScreenPlaceholder } from "../../src/components/layout/ScreenPlaceholder";
+import { GroupDetailScreen } from "../../src/features/groups";
 
-export default function GroupDetailScreen() {
-  return <ScreenPlaceholder title="Group Detail" body="Members, cards, chat/activity, and leaderboards." />;
-}
+export default GroupDetailScreen;
