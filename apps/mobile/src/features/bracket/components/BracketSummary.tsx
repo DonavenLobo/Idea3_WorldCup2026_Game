@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { Pressable, Share, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, Share, StyleSheet, Text, View } from "react-native";
 import { APP_ROUTES, GROUP_IDS, SUPPORTED_NATIONS } from "@world-cup-game/config";
 import type { GroupId } from "@world-cup-game/config";
 import { useBracket } from "../BracketContext";
@@ -67,6 +67,17 @@ export function BracketSummary({ onGroupTap }: BracketSummaryProps) {
     router.push(APP_ROUTES.tabs.groups);
   };
 
+  const handleReset = () => {
+    Alert.alert(
+      "Reset bracket?",
+      "Every group ranking and knockout pick will be cleared. This can't be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Reset", style: "destructive", onPress: resetAll }
+      ]
+    );
+  };
+
   return (
     <View style={styles.root}>
       <View style={styles.championCard}>
@@ -124,7 +135,7 @@ export function BracketSummary({ onGroupTap }: BracketSummaryProps) {
         <Text style={styles.secondaryButtonText}>👥  Create or Join a Group</Text>
       </Pressable>
 
-      <Pressable style={styles.resetButton} onPress={resetAll}>
+      <Pressable style={styles.resetButton} onPress={handleReset}>
         <Text style={styles.resetText}>Reset bracket</Text>
       </Pressable>
     </View>

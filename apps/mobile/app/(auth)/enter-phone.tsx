@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { APP_ROUTES } from "@world-cup-game/config";
+import { BackButton } from "../../src/components/common/BackButton";
 import { colors } from "../../src/theme/colors";
 import { radius } from "../../src/theme/radius";
 import { spacing } from "../../src/theme/spacing";
@@ -33,6 +34,7 @@ export default function EnterPhoneScreen() {
 
   return (
     <SafeAreaView style={styles.root}>
+      <BackButton tint="light" />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.kav}
@@ -96,7 +98,8 @@ const styles = StyleSheet.create({
     padding: spacing.lg
   },
   content: {
-    padding: spacing.lg
+    padding: spacing.lg,
+    paddingTop: 64
   },
   eyebrow: {
     color: colors.gold,

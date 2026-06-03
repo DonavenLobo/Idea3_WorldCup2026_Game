@@ -1,9 +1,15 @@
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import type { PropsWithChildren } from "react";
 import { COSMETIC_ITEMS, LOCKER_TIERS } from "@world-cup-game/config";
-import type { CosmeticItem, LockerTier } from "@world-cup-game/config";
+import type { CosmeticCategory, CosmeticItem, LockerTier } from "@world-cup-game/config";
 import { useTrivia } from "../trivia";
 import type { LockerProgress } from "./types";
+
+interface ActiveCosmetics {
+  frame: string | null;
+  badge: string | null;
+  background: string | null;
+}
 
 interface LockerRoomContextValue {
   ownedIds: Set<string>;
@@ -12,10 +18,16 @@ interface LockerRoomContextValue {
   earnedCredits: number;
   balance: number;
   progress: LockerProgress;
+  active: ActiveCosmetics;
+  activeFrame: CosmeticItem | null;
+  activeBadge: CosmeticItem | null;
+  activeBackground: CosmeticItem | null;
   isOwned: (itemId: string) => boolean;
   canRedeem: (itemId: string) => boolean;
   redeem: (itemId: string) => { ok: boolean; reason?: string };
   buyCreditPack: (credits: number) => void;
+  setActive: (category: CosmeticCategory, itemId: string | null) => void;
+  resetAll: () => void;
 }
 
 const LockerRoomContext = createContext<LockerRoomContextValue | null>(null);
@@ -64,11 +76,18 @@ function findItem(id: string): CosmeticItem | undefined {
   return COSMETIC_ITEMS.find((i) => i.id === id);
 }
 
+const EMPTY_ACTIVE: ActiveCosmetics = {
+  frame: null,
+  badge: null,
+  background: null
+};
+
 export function LockerRoomProvider({ children }: PropsWithChildren) {
   const { totalPoints } = useTrivia();
   const [ownedIds, setOwnedIds] = useState<Set<string>>(() => new Set());
   const [extraCredits, setExtraCredits] = useState(0);
   const [spentCredits, setSpentCredits] = useState(0);
+  const [active, setActiveState] = useState<ActiveCosmetics>(EMPTY_ACTIVE);
 
   const earnedCredits = totalPoints + extraCredits;
   const balance = Math.max(0, earnedCredits - spentCredits);
@@ -114,6 +133,11 @@ export function LockerRoomProvider({ children }: PropsWithChildren) {
         next.add(itemId);
         return next;
       });
+      // Auto-equip if no active item in this category yet.
+      setActiveState((prev) => {
+        if (prev[item.category]) return prev;
+        return { ...prev, [item.category]: item.id };
+      });
       return { ok: true };
     },
     [ownedIds, balance, progress.tier]
@@ -123,6 +147,24 @@ export function LockerRoomProvider({ children }: PropsWithChildren) {
     setExtraCredits((prev) => prev + credits);
   }, []);
 
+  const setActive = useCallback(
+    (category: CosmeticCategory, itemId: string | null) => {
+      setActiveState((prev) => ({ ...prev, [category]: itemId }));
+    },
+    []
+  );
+
+  const resetAll = useCallback(() => {
+    setOwnedIds(new Set());
+    setExtraCredits(0);
+    setSpentCredits(0);
+    setActiveState(EMPTY_ACTIVE);
+  }, []);
+
+  const activeFrame = active.frame ? findItem(active.frame) ?? null : null;
+  const activeBadge = active.badge ? findItem(active.badge) ?? null : null;
+  const activeBackground = active.background ? findItem(active.background) ?? null : null;
+
   const value = useMemo<LockerRoomContextValue>(
     () => ({
       ownedIds,
@@ -131,10 +173,16 @@ export function LockerRoomProvider({ children }: PropsWithChildren) {
       earnedCredits,
       balance,
       progress,
+      active,
+      activeFrame,
+      activeBadge,
+      activeBackground,
       isOwned,
       canRedeem,
       redeem,
-      buyCreditPack
+      buyCreditPack,
+      setActive,
+      resetAll
     }),
     [
       ownedIds,
@@ -143,10 +191,16 @@ export function LockerRoomProvider({ children }: PropsWithChildren) {
       earnedCredits,
       balance,
       progress,
+      active,
+      activeFrame,
+      activeBadge,
+      activeBackground,
       isOwned,
       canRedeem,
       redeem,
-      buyCreditPack
+      buyCreditPack,
+      setActive,
+      resetAll
     ]
   );
 

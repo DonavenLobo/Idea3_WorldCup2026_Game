@@ -17,20 +17,25 @@ interface GroupsContextValue {
   leaveGroup: (id: string) => void;
   joinByCode: (code: string) => JoinedGroup | null;
   createGroup: (input: CreateGroupInput) => JoinedGroup;
+  getGroupById: (id: string) => JoinedGroup | null;
+  resetAll: () => void;
 }
 
 const GroupsContext = createContext<GroupsContextValue | null>(null);
 
-function publicGroupToJoined(id: string): JoinedGroup | null {
-  const pg = PUBLIC_GROUPS.find((p) => p.id === id);
-  if (!pg) return null;
-  return {
-    id: pg.id,
-    name: pg.name,
-    memberCount: pg.memberCount,
-    visibility: pg.visibility,
-    isFeatured: pg.isFeatured
-  };
+function generateInviteCode(seed: string): string {
+  // Deterministic 6-char A-Z/0-9 invite code from the seed string.
+  const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  let out = "";
+  for (let i = 0; i < 6; i++) {
+    out += alphabet.charAt(hash % alphabet.length);
+    hash = Math.floor(hash / alphabet.length) || hash * 17;
+  }
+  return out;
 }
 
 export function GroupsProvider({ children }: PropsWithChildren) {
@@ -88,13 +93,16 @@ export function GroupsProvider({ children }: PropsWithChildren) {
 
   const createGroup = useCallback((input: CreateGroupInput): JoinedGroup => {
     const safeName = input.name.trim() || "New Group";
-    const id = `custom-${Date.parse("2026-01-01") + customGroups.length}-${safeName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+    const idStub = `${safeName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${customGroups.length}`;
+    const id = `custom-${idStub}`;
+    const inviteCode = generateInviteCode(idStub);
     const newGroup: JoinedGroup = {
       id,
       name: safeName,
       memberCount: 1,
       visibility: input.visibility,
-      isCustom: true
+      isCustom: true,
+      inviteCode
     };
     setCustomGroups((prev) => [...prev, newGroup]);
     setJoinedIds((prev) => {
@@ -116,6 +124,28 @@ export function GroupsProvider({ children }: PropsWithChildren) {
     return [...fromPublic, ...customGroups.filter((g) => joinedIds.has(g.id))];
   }, [joinedIds, customGroups]);
 
+  const getGroupById = useCallback(
+    (id: string): JoinedGroup | null => {
+      const pg = PUBLIC_GROUPS.find((p) => p.id === id);
+      if (pg) {
+        return {
+          id: pg.id,
+          name: pg.name,
+          memberCount: pg.memberCount,
+          visibility: pg.visibility,
+          isFeatured: pg.isFeatured
+        };
+      }
+      return customGroups.find((g) => g.id === id) ?? null;
+    },
+    [customGroups]
+  );
+
+  const resetAll = useCallback(() => {
+    setJoinedIds(new Set());
+    setCustomGroups([]);
+  }, []);
+
   const value = useMemo<GroupsContextValue>(
     () => ({
       joinedGroups,
@@ -124,9 +154,21 @@ export function GroupsProvider({ children }: PropsWithChildren) {
       joinPublicGroup,
       leaveGroup,
       joinByCode,
-      createGroup
+      createGroup,
+      getGroupById,
+      resetAll
     }),
-    [joinedGroups, joinedIds, isJoined, joinPublicGroup, leaveGroup, joinByCode, createGroup]
+    [
+      joinedGroups,
+      joinedIds,
+      isJoined,
+      joinPublicGroup,
+      leaveGroup,
+      joinByCode,
+      createGroup,
+      getGroupById,
+      resetAll
+    ]
   );
 
   return <GroupsContext.Provider value={value}>{children}</GroupsContext.Provider>;
@@ -137,5 +179,3 @@ export function useGroups(): GroupsContextValue {
   if (!ctx) throw new Error("useGroups must be used within a GroupsProvider.");
   return ctx;
 }
-
-export { publicGroupToJoined };

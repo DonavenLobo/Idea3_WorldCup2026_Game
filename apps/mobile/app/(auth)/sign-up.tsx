@@ -1,7 +1,8 @@
 import { useRouter } from "expo-router";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { APP_ROUTES } from "@world-cup-game/config";
+import { BackButton } from "../../src/components/common/BackButton";
 import { colors } from "../../src/theme/colors";
 import { radius } from "../../src/theme/radius";
 import { spacing } from "../../src/theme/spacing";
@@ -12,6 +13,7 @@ export default function SignUpScreen() {
 
   return (
     <SafeAreaView style={styles.root}>
+      <BackButton tint="light" />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.eyebrow}>SAVE YOUR CARD</Text>
         <Text style={styles.title}>Save Your Footballer</Text>
@@ -39,14 +41,7 @@ export default function SignUpScreen() {
             <Text style={styles.goldButtonText}>✉️  Use Email</Text>
           </Pressable>
 
-          <Pressable
-            onPress={() =>
-              Alert.alert(
-                "Coming soon",
-                "Sign-in for existing accounts arrives once accounts are wired up."
-              )
-            }
-          >
+          <Pressable onPress={() => router.push(APP_ROUTES.auth.signIn)}>
             <Text style={styles.linkText}>I already have an account</Text>
           </Pressable>
         </View>
@@ -114,7 +109,8 @@ const styles = StyleSheet.create({
     ...typography.title
   },
   content: {
-    padding: spacing.lg
+    padding: spacing.lg,
+    paddingTop: 64
   },
   eyebrow: {
     color: colors.gold,

@@ -1,6 +1,6 @@
 import { Image, StyleSheet, Text, View } from "react-native";
 import { BASE_CARD_STATS, CARD_STATS } from "@world-cup-game/config";
-import type { NationConfig } from "@world-cup-game/config";
+import type { CosmeticItem, NationConfig } from "@world-cup-game/config";
 import { colors } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
@@ -10,18 +10,41 @@ interface MockPlayerCardProps {
   nation: NationConfig | null;
   displayName: string;
   photoSource: PhotoSource | null;
+  activeFrame?: CosmeticItem | null;
+  activeBadge?: CosmeticItem | null;
+  activeBackground?: CosmeticItem | null;
+  ovrBonus?: number;
 }
 
 const MOCK_OVERALL = 50;
 
-export function MockPlayerCard({ nation, displayName, photoSource }: MockPlayerCardProps) {
+export function MockPlayerCard({
+  nation,
+  displayName,
+  photoSource,
+  activeFrame,
+  activeBadge,
+  activeBackground,
+  ovrBonus = 0
+}: MockPlayerCardProps) {
   const name = displayName.trim() || "Rookie";
 
+  const borderColor =
+    activeFrame?.meta?.color ?? nation?.primaryColor ?? colors.gold;
+  const cardBackground =
+    activeBackground?.meta?.backgroundColor ?? colors.cream;
+  const overall = MOCK_OVERALL + ovrBonus;
+
   return (
-    <View style={[styles.card, nation ? { borderColor: nation.primaryColor } : null]}>
+    <View
+      style={[
+        styles.card,
+        { borderColor, backgroundColor: cardBackground }
+      ]}
+    >
       <View style={styles.topRow}>
         <View>
-          <Text style={styles.overall}>{MOCK_OVERALL}</Text>
+          <Text style={styles.overall}>{overall}</Text>
           <Text style={styles.overallLabel}>OVR</Text>
         </View>
         <Text style={styles.flag}>{nation?.flagEmoji ?? "⚽️"}</Text>
@@ -33,6 +56,11 @@ export function MockPlayerCard({ nation, displayName, photoSource }: MockPlayerC
         ) : (
           <Text style={styles.avatarEmoji}>{nation?.flagEmoji ?? "⚽️"}</Text>
         )}
+        {activeBadge ? (
+          <View style={styles.badgeOverlay}>
+            <Text style={styles.badgeOverlayEmoji}>{activeBadge.emoji}</Text>
+          </View>
+        ) : null}
       </View>
 
       <Text style={styles.name}>{name}</Text>
@@ -62,6 +90,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginVertical: spacing.md,
     overflow: "hidden",
+    position: "relative",
     width: 180
   },
   avatarEmoji: {
@@ -84,9 +113,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: 4
   },
-  card: {
+  badgeOverlay: {
+    alignItems: "center",
     backgroundColor: colors.cream,
     borderColor: colors.gold,
+    borderRadius: 999,
+    borderWidth: 2,
+    height: 44,
+    justifyContent: "center",
+    position: "absolute",
+    right: -6,
+    top: -6,
+    width: 44
+  },
+  badgeOverlayEmoji: {
+    fontSize: 22
+  },
+  card: {
     borderRadius: radius.lg,
     borderWidth: 3,
     padding: spacing.lg

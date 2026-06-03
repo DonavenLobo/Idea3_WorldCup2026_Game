@@ -1,7 +1,8 @@
 import { useRouter } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { APP_ROUTES } from "@world-cup-game/config";
+import { BackButton } from "../../src/components/common/BackButton";
 import { MockPlayerCard, useOnboarding } from "../../src/features/onboarding";
 import { colors } from "../../src/theme/colors";
 import { radius } from "../../src/theme/radius";
@@ -15,12 +16,26 @@ export default function CardPreviewScreen() {
   const friendlyName = displayName.trim() || "Your Footballer";
 
   const handleStartOver = () => {
-    reset();
-    router.navigate(APP_ROUTES.onboarding.selectNation);
+    Alert.alert(
+      "Start over?",
+      "You'll lose your nation, photo, and name. This can't be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Start Over",
+          style: "destructive",
+          onPress: () => {
+            reset();
+            router.navigate(APP_ROUTES.onboarding.selectNation);
+          }
+        }
+      ]
+    );
   };
 
   return (
     <SafeAreaView style={styles.root}>
+      <BackButton tint="dark" />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Meet {friendlyName}</Text>
 
@@ -55,7 +70,8 @@ const styles = StyleSheet.create({
     fontWeight: "900"
   },
   content: {
-    padding: spacing.lg
+    padding: spacing.lg,
+    paddingTop: 64
   },
   root: {
     backgroundColor: colors.cream,

@@ -1,17 +1,20 @@
+import { useState } from "react";
 import { Tabs } from "expo-router";
-import { Alert, Image, Pressable, StyleSheet, Text } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { ProfileSheet } from "../../src/components/profile/ProfileSheet";
 import { useOnboarding } from "../../src/features/onboarding";
 import { colors } from "../../src/theme/colors";
 
-function ProfileButton() {
+interface ProfileButtonProps {
+  onPress: () => void;
+}
+
+function ProfileButton({ onPress }: ProfileButtonProps) {
   const { displayName, photoSource } = useOnboarding();
   const initial = displayName.trim().charAt(0).toUpperCase() || "?";
 
   return (
-    <Pressable
-      style={profileStyles.root}
-      onPress={() => Alert.alert("Profile", "Profile settings coming soon.")}
-    >
+    <Pressable style={profileStyles.root} onPress={onPress}>
       {photoSource?.uri ? (
         <Image source={{ uri: photoSource.uri }} style={profileStyles.image} />
       ) : (
@@ -51,31 +54,43 @@ const tabIcon = (emoji: string) =>
   );
 
 export default function TabsLayout() {
+  const [profileOpen, setProfileOpen] = useState(false);
+
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: true,
-        headerStyle: { backgroundColor: colors.pitch },
-        headerTitleStyle: { color: colors.cream, fontWeight: "900" },
-        headerTitleAlign: "center",
-        headerTintColor: colors.cream,
-        headerLeft: () => <ProfileButton />,
-        tabBarStyle: {
-          backgroundColor: colors.pitch,
-          borderTopColor: "rgba(255, 248, 234, 0.1)"
-        },
-        tabBarActiveTintColor: colors.gold,
-        tabBarInactiveTintColor: "rgba(255, 248, 234, 0.55)",
-        tabBarLabelStyle: { fontWeight: "700", fontSize: 11 }
-      }}
-    >
-      <Tabs.Screen name="home" options={{ title: "Home", tabBarIcon: tabIcon("🏠") }} />
-      <Tabs.Screen name="bracket" options={{ title: "Bracket", tabBarIcon: tabIcon("🏆") }} />
-      <Tabs.Screen name="groups" options={{ title: "Groups", tabBarIcon: tabIcon("👥") }} />
-      <Tabs.Screen name="trivia" options={{ title: "Trivia", tabBarIcon: tabIcon("❓") }} />
-      <Tabs.Screen name="card" options={{ title: "Card", tabBarIcon: tabIcon("⚽") }} />
-      <Tabs.Screen name="schedule" options={{ title: "Schedule", tabBarIcon: tabIcon("📅") }} />
-      <Tabs.Screen name="locker-room" options={{ href: null }} />
-    </Tabs>
+    <View style={styles.root}>
+      <Tabs
+        screenOptions={{
+          headerShown: true,
+          headerStyle: { backgroundColor: colors.pitch },
+          headerTitleStyle: { color: colors.cream, fontWeight: "900" },
+          headerTitleAlign: "center",
+          headerTintColor: colors.cream,
+          headerLeft: () => <ProfileButton onPress={() => setProfileOpen(true)} />,
+          tabBarStyle: {
+            backgroundColor: colors.pitch,
+            borderTopColor: "rgba(255, 248, 234, 0.1)"
+          },
+          tabBarActiveTintColor: colors.gold,
+          tabBarInactiveTintColor: "rgba(255, 248, 234, 0.55)",
+          tabBarLabelStyle: { fontWeight: "700", fontSize: 11 }
+        }}
+      >
+        <Tabs.Screen name="home" options={{ title: "Home", tabBarIcon: tabIcon("🏠") }} />
+        <Tabs.Screen name="bracket" options={{ title: "Bracket", tabBarIcon: tabIcon("🏆") }} />
+        <Tabs.Screen name="groups" options={{ title: "Groups", tabBarIcon: tabIcon("👥") }} />
+        <Tabs.Screen name="trivia" options={{ title: "Trivia", tabBarIcon: tabIcon("❓") }} />
+        <Tabs.Screen name="card" options={{ title: "Card", tabBarIcon: tabIcon("⚽") }} />
+        <Tabs.Screen name="schedule" options={{ title: "Schedule", tabBarIcon: tabIcon("📅") }} />
+        <Tabs.Screen name="locker-room" options={{ href: null }} />
+      </Tabs>
+
+      <ProfileSheet visible={profileOpen} onDismiss={() => setProfileOpen(false)} />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1
+  }
+});

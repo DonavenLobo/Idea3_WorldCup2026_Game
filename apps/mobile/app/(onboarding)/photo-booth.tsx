@@ -3,6 +3,7 @@ import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import { APP_ROUTES } from "@world-cup-game/config";
+import { BackButton } from "../../src/components/common/BackButton";
 import { PhotoChoiceButton, useOnboarding } from "../../src/features/onboarding";
 import { colors } from "../../src/theme/colors";
 import { spacing } from "../../src/theme/spacing";
@@ -66,6 +67,7 @@ export default function PhotoBoothScreen() {
 
   return (
     <SafeAreaView style={styles.root}>
+      <BackButton tint="dark" />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.eyebrow}>Step 2 of 3</Text>
         <Text style={styles.tagline}>Create your avatar</Text>
@@ -98,7 +100,8 @@ export default function PhotoBoothScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    padding: spacing.lg
+    padding: spacing.lg,
+    paddingTop: 64
   },
   eyebrow: {
     color: colors.gold,

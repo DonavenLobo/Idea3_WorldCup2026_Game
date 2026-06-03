@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { APP_ROUTES } from "@world-cup-game/config";
+import { BackButton } from "../../src/components/common/BackButton";
 import { colors } from "../../src/theme/colors";
 import { radius } from "../../src/theme/radius";
 import { spacing } from "../../src/theme/spacing";
@@ -38,6 +39,7 @@ export default function VerifyScreen() {
 
   return (
     <SafeAreaView style={styles.root}>
+      <BackButton tint="light" />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.kav}
@@ -53,6 +55,7 @@ export default function VerifyScreen() {
           <Text style={styles.subtitle}>
             Code sent to {value}. Verification takes you to your home screen.
           </Text>
+          <Text style={styles.mockHint}>Mock — any 6-digit code verifies.</Text>
 
           <View style={styles.card}>
             <Text style={styles.label}>Verification code</Text>
@@ -118,6 +121,12 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     textAlign: "center"
   },
+  mockHint: {
+    color: colors.gold,
+    fontSize: 12,
+    fontStyle: "italic",
+    marginTop: spacing.xs
+  },
   box: {
     alignItems: "center",
     backgroundColor: "#FFF3DD",
@@ -166,7 +175,8 @@ const styles = StyleSheet.create({
     padding: spacing.lg
   },
   content: {
-    padding: spacing.lg
+    padding: spacing.lg,
+    paddingTop: 64
   },
   eyebrow: {
     color: colors.gold,

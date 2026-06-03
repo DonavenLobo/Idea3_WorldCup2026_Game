@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { useFocusEffect } from "expo-router";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useFocusEffect, useRouter } from "expo-router";
+import { Alert, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from "react-native";
 import { LEADERBOARD_STAGES, PUBLIC_GROUPS, SUPPORTED_NATIONS } from "@world-cup-game/config";
 import type { LeaderboardStage } from "@world-cup-game/config";
 import {
@@ -28,6 +28,7 @@ import { spacing } from "../../src/theme/spacing";
 type SheetState = "none" | "join" | "create";
 
 export default function GroupsScreen() {
+  const router = useRouter();
   const { joinedGroups, isJoined, joinPublicGroup, leaveGroup, joinByCode, createGroup } = useGroups();
   const [subTab, setSubTab] = useState<GroupsSubTab>("my");
   const [sheet, setSheet] = useState<SheetState>("none");
@@ -61,8 +62,30 @@ export default function GroupsScreen() {
   const handleCreate = (input: { name: string; visibility: "public" | "private" }) => {
     const group = createGroup(input);
     setSheet("none");
-    Alert.alert("Group created", `"${group.name}" is ready. Share the link to invite friends.`);
     setSubTab("my");
+    if (group.inviteCode) {
+      Alert.alert(
+        "Group created!",
+        `"${group.name}" is ready.\n\nInvite code: ${group.inviteCode}\n\nShare it with friends so they can join.`,
+        [
+          { text: "Done", style: "cancel" },
+          {
+            text: "Share invite",
+            onPress: async () => {
+              try {
+                await Share.share({
+                  message: `Join my group "${group.name}" with invite code ${group.inviteCode}`
+                });
+              } catch {
+                // user cancelled
+              }
+            }
+          }
+        ]
+      );
+    } else {
+      Alert.alert("Group created", `"${group.name}" is ready.`);
+    }
   };
 
   const handlePublicJoin = (g: PublicGroup) => {
@@ -110,7 +133,7 @@ export default function GroupsScreen() {
           ) : (
             <MyGroupsList
               groups={joinedGroups}
-              onLeave={(id) => leaveGroup(id)}
+              onOpenDetail={(id) => router.push(`/group/${id}`)}
               onJoinByCode={() => setSheet("join")}
               onCreate={() => setSheet("create")}
             />
@@ -149,12 +172,12 @@ export default function GroupsScreen() {
 
 function MyGroupsList({
   groups,
-  onLeave,
+  onOpenDetail,
   onJoinByCode,
   onCreate
 }: {
   groups: JoinedGroup[];
-  onLeave: (id: string) => void;
+  onOpenDetail: (id: string) => void;
   onJoinByCode: () => void;
   onCreate: () => void;
 }) {
@@ -162,15 +185,15 @@ function MyGroupsList({
     <View style={styles.padded}>
       <Text style={styles.sectionTitle}>Joined ({groups.length})</Text>
       {groups.map((g) => (
-        <GroupListItem
-          key={g.id}
-          name={g.name}
-          memberCount={g.memberCount}
-          isFeatured={g.isFeatured}
-          isJoined
-          onPressJoin={() => undefined}
-          onPressLeave={() => onLeave(g.id)}
-        />
+        <Pressable key={g.id} onPress={() => onOpenDetail(g.id)}>
+          <GroupListItem
+            name={g.name}
+            memberCount={g.memberCount}
+            isFeatured={g.isFeatured}
+            isJoined
+            onPressJoin={() => undefined}
+          />
+        </Pressable>
       ))}
 
       <View style={styles.actionsRow}>

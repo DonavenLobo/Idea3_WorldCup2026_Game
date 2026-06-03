@@ -14,6 +14,7 @@ interface TriviaContextValue {
   startToday: () => void;
   submitAnswer: (selectedIndex: number) => TriviaResult;
   advance: () => void;
+  resetAll: () => void;
 }
 
 const TriviaContext = createContext<TriviaContextValue | null>(null);
@@ -58,6 +59,14 @@ export function TriviaProvider({ children }: PropsWithChildren) {
     setTodayCurrentIndex((i) => i + 1);
   }, []);
 
+  const resetAll = useCallback(() => {
+    setTotalPoints(0);
+    setTodayDateKey(null);
+    setTodayQuestions([]);
+    setTodayAttempts([]);
+    setTodayCurrentIndex(0);
+  }, []);
+
   const value = useMemo<TriviaContextValue>(
     () => ({
       totalPoints,
@@ -67,7 +76,8 @@ export function TriviaProvider({ children }: PropsWithChildren) {
       todayCurrentIndex,
       startToday,
       submitAnswer,
-      advance
+      advance,
+      resetAll
     }),
     [
       totalPoints,
@@ -77,7 +87,8 @@ export function TriviaProvider({ children }: PropsWithChildren) {
       todayCurrentIndex,
       startToday,
       submitAnswer,
-      advance
+      advance,
+      resetAll
     ]
   );
 

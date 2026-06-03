@@ -1,4 +1,6 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
+import { APP_ROUTES } from "@world-cup-game/config";
 import type { TriviaQuestion } from "@world-cup-game/config";
 import type { DailyAttempt } from "../types";
 import { colors } from "../../../theme/colors";
@@ -12,8 +14,27 @@ interface CompletedViewProps {
 }
 
 export function CompletedView({ totalPoints, questions, attempts }: CompletedViewProps) {
+  const router = useRouter();
   const dayPoints = attempts.reduce((acc, a) => acc + a.points, 0);
   const correctCount = attempts.filter((a) => a.correct).length;
+
+  const handleShare = async () => {
+    const lines = [
+      `🎯 Today's trivia: ${correctCount}/${questions.length} correct, +${dayPoints} pts`,
+      `Lifetime: ${totalPoints} pts`,
+      "",
+      "How did you do?"
+    ];
+    try {
+      await Share.share({ message: lines.join("\n") });
+    } catch {
+      // user cancelled - no-op
+    }
+  };
+
+  const handleLeaderboard = () => {
+    router.push(APP_ROUTES.leaderboard);
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
@@ -31,6 +52,7 @@ export function CompletedView({ totalPoints, questions, attempts }: CompletedVie
           const attempt = attempts[i];
           const correct = attempt?.correct ?? false;
           const points = attempt?.points ?? 0;
+          const correctOption = q.options[q.correctIndex] ?? "—";
           return (
             <View key={q.id} style={styles.summaryRow}>
               <View
@@ -44,6 +66,9 @@ export function CompletedView({ totalPoints, questions, attempts }: CompletedVie
               <View style={styles.summaryText}>
                 <Text style={styles.summaryQ} numberOfLines={2}>
                   {q.question}
+                </Text>
+                <Text style={styles.summaryAnswer} numberOfLines={1}>
+                  Answer: {correctOption}
                 </Text>
                 <Text style={styles.summaryMeta}>
                   {q.difficulty.toUpperCase()}  •  +{points} pts
@@ -59,6 +84,16 @@ export function CompletedView({ totalPoints, questions, attempts }: CompletedVie
         <Text style={styles.totalValue}>{totalPoints}</Text>
       </View>
 
+      <Text style={styles.nextHeader}>What&apos;s next?</Text>
+
+      <Pressable style={styles.primaryButton} onPress={handleShare}>
+        <Text style={styles.primaryButtonText}>📤  Share my score</Text>
+      </Pressable>
+
+      <Pressable style={styles.secondaryButton} onPress={handleLeaderboard}>
+        <Text style={styles.secondaryButtonText}>📊  View Leaderboard</Text>
+      </Pressable>
+
       <Text style={styles.comeBack}>Come back tomorrow for fresh questions.</Text>
     </ScrollView>
   );
@@ -66,14 +101,15 @@ export function CompletedView({ totalPoints, questions, attempts }: CompletedVie
 
 const styles = StyleSheet.create({
   comeBack: {
-    color: "rgba(255, 248, 234, 0.65)",
-    fontSize: 14,
+    color: "rgba(255, 248, 234, 0.55)",
+    fontSize: 13,
     fontStyle: "italic",
     marginTop: spacing.lg,
     textAlign: "center"
   },
   content: {
-    padding: spacing.lg
+    padding: spacing.lg,
+    paddingBottom: spacing.xl
   },
   hero: {
     alignItems: "center",
@@ -102,6 +138,26 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     marginTop: spacing.sm
   },
+  nextHeader: {
+    color: "rgba(255, 248, 234, 0.7)",
+    fontSize: 12,
+    fontWeight: "900",
+    letterSpacing: 1,
+    marginBottom: spacing.sm,
+    marginTop: spacing.lg,
+    textTransform: "uppercase"
+  },
+  primaryButton: {
+    alignItems: "center",
+    backgroundColor: colors.gold,
+    borderRadius: radius.pill,
+    padding: spacing.md
+  },
+  primaryButtonText: {
+    color: colors.pitch,
+    fontSize: 16,
+    fontWeight: "900"
+  },
   resultBadge: {
     alignItems: "center",
     borderRadius: 999,
@@ -119,6 +175,25 @@ const styles = StyleSheet.create({
   },
   resultBadgeWrong: {
     backgroundColor: "#C8102E"
+  },
+  secondaryButton: {
+    alignItems: "center",
+    borderColor: colors.gold,
+    borderRadius: radius.pill,
+    borderWidth: 2,
+    marginTop: spacing.sm,
+    padding: spacing.md
+  },
+  secondaryButtonText: {
+    color: colors.gold,
+    fontSize: 16,
+    fontWeight: "900"
+  },
+  summaryAnswer: {
+    color: "#1F9D55",
+    fontSize: 12,
+    fontWeight: "800",
+    marginTop: 2
   },
   summaryCard: {
     backgroundColor: "rgba(255, 248, 234, 0.06)",
@@ -159,6 +234,7 @@ const styles = StyleSheet.create({
     borderColor: colors.gold,
     borderRadius: radius.lg,
     borderWidth: 2,
+    marginBottom: spacing.lg,
     marginTop: spacing.lg,
     padding: spacing.lg
   },

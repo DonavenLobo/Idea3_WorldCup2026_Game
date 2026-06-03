@@ -31,7 +31,19 @@ const CATEGORY_ORDER: CosmeticCategory[] = ["frame", "badge", "background"];
 
 export default function CardScreen() {
   const { nation, displayName, photoSource } = useOnboarding();
-  const { balance, progress, isOwned, canRedeem, redeem, buyCreditPack } = useLockerRoom();
+  const {
+    balance,
+    progress,
+    active,
+    activeFrame,
+    activeBadge,
+    activeBackground,
+    isOwned,
+    canRedeem,
+    redeem,
+    buyCreditPack,
+    setActive
+  } = useLockerRoom();
   const [subTab, setSubTab] = useState<CardSubTab>("card");
   const scrollRef = useRef<ScrollView>(null);
 
@@ -53,10 +65,46 @@ export default function CardScreen() {
     return map;
   }, []);
 
-  const handleRedeem = (item: CosmeticItem) => {
+  const handleItemPress = (item: CosmeticItem) => {
+    const owned = isOwned(item.id);
+    if (owned) {
+      // Equip / unequip.
+      const isCurrentlyActive = active[item.category] === item.id;
+      if (isCurrentlyActive) {
+        setActive(item.category, null);
+      } else {
+        setActive(item.category, item.id);
+      }
+      return;
+    }
+
+    // Locked by tier — explain why.
+    if (item.requiredTier && !canRedeem(item.id)) {
+      const tierIdx = LOCKER_TIERS.findIndex((t) => t.id === item.requiredTier);
+      const tierCfg = LOCKER_TIERS[tierIdx];
+      if (tierCfg) {
+        const itemsToNext = Math.max(0, tierCfg.minItemsOwned - progress.ownedCount);
+        Alert.alert(
+          "Locked",
+          `Reach ${tierCfg.label} tier first. Own ${itemsToNext} more cosmetic${itemsToNext === 1 ? "" : "s"} to unlock this.`
+        );
+        return;
+      }
+    }
+
+    // Not enough credits — explain.
+    if (!canRedeem(item.id)) {
+      Alert.alert(
+        "Not enough credits",
+        `You need ${item.priceCredits} credits. Earn more via Trivia + Bracket, or buy a credit pack below.`
+      );
+      return;
+    }
+
+    // Affordable + unlocked — confirm redeem.
     Alert.alert(
       `Redeem ${item.name}?`,
-      `${item.priceCredits} credits will be deducted.`,
+      `${item.priceCredits} credits will be deducted. This is permanent.`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -64,7 +112,7 @@ export default function CardScreen() {
           onPress: () => {
             const result = redeem(item.id);
             if (result.ok) {
-              Alert.alert("Unlocked!", `${item.name} is now part of your locker.`);
+              Alert.alert("Unlocked!", `${item.name} is now equipped on your card.`);
             } else if (result.reason) {
               Alert.alert("Can't redeem yet", result.reason);
             }
@@ -76,15 +124,15 @@ export default function CardScreen() {
 
   const handleBuyPack = (credits: number, label: string) => {
     Alert.alert(
-      "Buy Credit Pack",
-      `Real in-app purchases need the dev build. For the mock, "${label}" instantly adds ${credits} credits to your balance.`,
+      "Buy Credit Pack — MOCK",
+      `🚧 NO REAL CHARGE — this is a mock.\n\nIn production, "${label}" would charge via Apple/Google IAP (which needs the dev build). The mock will instantly credit ${credits} credits to your balance.`,
       [
         { text: "Cancel", style: "cancel" },
         {
           text: "Mock Buy",
           onPress: () => {
             buyCreditPack(credits);
-            Alert.alert("Credits added", `+${credits} credits.`);
+            Alert.alert("Credits added", `+${credits} credits (mock — no money charged).`);
           }
         }
       ]
@@ -121,15 +169,19 @@ export default function CardScreen() {
             progress={progress}
             ownedCount={progress.ownedCount}
             onOpenLocker={() => setSubTab("locker")}
+            activeFrame={activeFrame}
+            activeBadge={activeBadge}
+            activeBackground={activeBackground}
           />
         ) : (
           <LockerRoomPanel
             balance={balance}
             progress={progress}
             grouped={grouped}
+            active={active}
             isOwned={isOwned}
             canRedeem={canRedeem}
-            onRedeem={handleRedeem}
+            onItemPress={handleItemPress}
             onBuyPack={handleBuyPack}
           />
         )}
@@ -144,7 +196,10 @@ function MyCardPanel({
   photoSource,
   progress,
   ownedCount,
-  onOpenLocker
+  onOpenLocker,
+  activeFrame,
+  activeBadge,
+  activeBackground
 }: {
   nation: ReturnType<typeof useOnboarding>["nation"];
   displayName: string;
@@ -152,12 +207,23 @@ function MyCardPanel({
   progress: LockerProgress;
   ownedCount: number;
   onOpenLocker: () => void;
+  activeFrame: CosmeticItem | null;
+  activeBadge: CosmeticItem | null;
+  activeBackground: CosmeticItem | null;
 }) {
   const tierConfig = LOCKER_TIERS.find((t) => t.id === progress.tier);
   return (
     <View>
       <Text style={styles.eyebrow}>YOUR CARD</Text>
-      <MockPlayerCard nation={nation} displayName={displayName} photoSource={photoSource} />
+      <MockPlayerCard
+        nation={nation}
+        displayName={displayName}
+        photoSource={photoSource}
+        activeFrame={activeFrame}
+        activeBadge={activeBadge}
+        activeBackground={activeBackground}
+        ovrBonus={tierConfig?.ovrBonus ?? 0}
+      />
 
       <View style={styles.tierCard}>
         <View
@@ -198,17 +264,19 @@ function LockerRoomPanel({
   balance,
   progress,
   grouped,
+  active,
   isOwned,
   canRedeem,
-  onRedeem,
+  onItemPress,
   onBuyPack
 }: {
   balance: number;
   progress: LockerProgress;
   grouped: Record<CosmeticCategory, CosmeticItem[]>;
+  active: { frame: string | null; badge: string | null; background: string | null };
   isOwned: (id: string) => boolean;
   canRedeem: (id: string) => boolean;
-  onRedeem: (item: CosmeticItem) => void;
+  onItemPress: (item: CosmeticItem) => void;
   onBuyPack: (credits: number, label: string) => void;
 }) {
   return (
@@ -224,8 +292,9 @@ function LockerRoomPanel({
                 <CosmeticItemCard
                   item={item}
                   isOwned={isOwned(item.id)}
+                  isActive={active[cat] === item.id}
                   canRedeem={canRedeem(item.id)}
-                  onPress={() => onRedeem(item)}
+                  onPress={() => onItemPress(item)}
                 />
               </View>
             ))}
@@ -249,7 +318,7 @@ function LockerRoomPanel({
           ))}
         </View>
         <Text style={styles.iapNote}>
-          Real in-app purchases need the development build (Expo Go can&apos;t process IAP).
+          🚧 MOCK — no real charge. Real IAP needs the development build.
         </Text>
       </View>
     </View>
@@ -280,7 +349,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs
   },
   iapNote: {
-    color: "rgba(255, 248, 234, 0.5)",
+    color: colors.gold,
     fontSize: 11,
     fontStyle: "italic",
     marginTop: spacing.sm,

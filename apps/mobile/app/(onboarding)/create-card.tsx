@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { APP_ROUTES } from "@world-cup-game/config";
+import { BackButton } from "../../src/components/common/BackButton";
 import { useOnboarding } from "../../src/features/onboarding";
 import { colors } from "../../src/theme/colors";
 import { radius } from "../../src/theme/radius";
@@ -49,6 +50,7 @@ export default function CreateCardScreen() {
 
   return (
     <SafeAreaView style={styles.root}>
+      <BackButton tint="dark" />
       <View style={styles.content}>
         <Text style={styles.eyebrow}>Step 3 of 3</Text>
         <Text style={styles.title}>Name Your Card</Text>
@@ -102,7 +104,8 @@ const styles = StyleSheet.create({
     justifyContent: "center"
   },
   content: {
-    padding: spacing.lg
+    padding: spacing.lg,
+    paddingTop: 64
   },
   cookingBody: {
     color: "rgba(12, 59, 46, 0.65)",
