@@ -11,6 +11,9 @@ dist/
 playwright-report/
 test-results/
 *.tsbuildinfo
+supabase/.branches/
+supabase/.temp/*
+!supabase/.temp/cli-latest
 
 # env files
 .env

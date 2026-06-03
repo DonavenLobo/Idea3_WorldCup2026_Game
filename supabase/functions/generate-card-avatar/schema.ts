@@ -1,17 +1,16 @@
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export interface GenerateCardAvatarRequest {
   cardId: string;
-  userId: string;
-  displayName: string;
-  nationCode: string;
-  sourceImageUrl: string;
 }
 
 export function parseGenerateCardAvatarRequest(value: unknown): GenerateCardAvatarRequest {
-  const input = value as Partial<GenerateCardAvatarRequest>;
+  const input = (value ?? {}) as Partial<GenerateCardAvatarRequest>;
 
-  if (!input.cardId || !input.userId || !input.displayName || !input.nationCode || !input.sourceImageUrl) {
-    throw new Error("Invalid generate-card-avatar request.");
+  if (typeof input.cardId !== "string" || !UUID_RE.test(input.cardId)) {
+    throw new Error("Invalid generate-card-avatar request: cardId must be a UUID.");
   }
 
-  return input as GenerateCardAvatarRequest;
+  return { cardId: input.cardId };
 }

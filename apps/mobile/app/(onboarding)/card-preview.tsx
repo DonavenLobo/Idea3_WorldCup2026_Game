@@ -26,10 +26,12 @@ export default function CardPreviewScreen() {
         <Text style={styles.title}>Meet {friendlyName}</Text>
 
         <RenderedPlayerCard
+          concealUntilGenerated
           displayName={displayName}
           photoSource={photoSource}
           selectedNationCode={nation?.code}
         />
+        <Text style={styles.pending}>Sign up to generate your AI card</Text>
 
         <Pressable
           style={styles.button}
@@ -61,6 +63,13 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.lg
+  },
+  pending: {
+    color: "rgba(12, 59, 46, 0.7)",
+    fontSize: 14,
+    fontWeight: "800",
+    marginTop: spacing.md,
+    textAlign: "center"
   },
   root: {
     backgroundColor: colors.cream,
