@@ -71,6 +71,27 @@ export default function CardScreen() {
   }, [items]);
 
   const handleRedeem = (item: LockerItem) => {
+    if (isOwned(item.id)) {
+      return;
+    }
+    if (!canRedeem(item.id)) {
+      // Locked by tier requirement — explain how to unlock instead of doing nothing.
+      const tierConfig = item.requiredTier
+        ? LOCKER_TIERS.find((tier) => tier.id === item.requiredTier)
+        : null;
+      const tierLabel = tierConfig?.label ?? item.requiredTier ?? "the next tier";
+      const remaining = progress.ownedToNextTier ?? 0;
+      const remainingHint =
+        progress.nextTierLabel === tierLabel && remaining > 0
+          ? `Own ${remaining} more cosmetic${remaining === 1 ? "" : "s"} to unlock ${tierLabel}.`
+          : `Reach ${tierLabel} to unlock this item.`;
+      Alert.alert(
+        `${item.name} is locked`,
+        `${remainingHint} Locker tier gates cosmetics — it does not affect competitive points.`,
+        [{ text: "Got it" }]
+      );
+      return;
+    }
     Alert.alert(
       `Redeem ${item.name}?`,
       `${item.priceCredits} credits will be deducted from your wallet.`,

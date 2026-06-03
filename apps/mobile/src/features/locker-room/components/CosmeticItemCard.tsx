@@ -26,7 +26,7 @@ export function CosmeticItemCard({
         isOwned ? styles.cardOwned : null,
         locked ? styles.cardLocked : null
       ]}
-      disabled={isOwned || locked}
+      disabled={isOwned}
       onPress={onPress}
     >
       <View style={styles.mark}>

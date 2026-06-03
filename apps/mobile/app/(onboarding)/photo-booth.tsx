@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import { APP_ROUTES } from "@world-cup-game/config";
 import { PhotoChoiceButton, useOnboarding } from "../../src/features/onboarding";
+import { BackButton } from "../../src/components/common/BackButton";
 import { colors } from "../../src/theme/colors";
 import { spacing } from "../../src/theme/spacing";
 import { typography } from "../../src/theme/typography";
@@ -77,6 +78,7 @@ export default function PhotoBoothScreen() {
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.content}>
+        <BackButton variant="dark" />
         <Text style={styles.eyebrow}>Step 2 of 3</Text>
         <Text style={styles.tagline}>Create your avatar</Text>
         <Text style={styles.title}>Choose how your footballer avatar gets made</Text>

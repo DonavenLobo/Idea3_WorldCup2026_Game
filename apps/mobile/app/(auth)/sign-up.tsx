@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { APP_ROUTES } from "@world-cup-game/config";
 import { AuthLegalLinks, OAuthButtons } from "../../src/features/auth";
+import { BackButton } from "../../src/components/common/BackButton";
 import { colors } from "../../src/theme/colors";
 import { radius } from "../../src/theme/radius";
 import { spacing } from "../../src/theme/spacing";
@@ -14,6 +15,7 @@ export default function SignUpScreen() {
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.content}>
+        <BackButton variant="light" />
         <Text style={styles.eyebrow}>SAVE YOUR CARD</Text>
         <Text style={styles.title}>Save Your Footballer</Text>
         <Text style={styles.subtitle}>

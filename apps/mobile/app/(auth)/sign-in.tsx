@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { APP_ROUTES } from "@world-cup-game/config";
 import { AuthLegalLinks, OAuthButtons } from "../../src/features/auth";
+import { BackButton } from "../../src/components/common/BackButton";
 import { colors } from "../../src/theme/colors";
 import { radius } from "../../src/theme/radius";
 import { spacing } from "../../src/theme/spacing";
@@ -14,6 +15,7 @@ export default function SignInScreen() {
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.content}>
+        <BackButton variant="light" />
         <Text style={styles.eyebrow}>WELCOME BACK</Text>
         <Text style={styles.title}>Sign in to GoGaffa</Text>
         <Text style={styles.subtitle}>

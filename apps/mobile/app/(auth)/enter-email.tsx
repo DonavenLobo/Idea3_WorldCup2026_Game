@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { APP_ROUTES } from "@world-cup-game/config";
+import { BackButton } from "../../src/components/common/BackButton";
 import { colors } from "../../src/theme/colors";
 import { radius } from "../../src/theme/radius";
 import { spacing } from "../../src/theme/spacing";
@@ -43,6 +44,7 @@ export default function EnterEmailScreen() {
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
         >
+          <BackButton variant="light" />
           <Text style={styles.eyebrow}>EMAIL SIGN-UP</Text>
           <Text style={styles.title}>What is your email?</Text>
           <Text style={styles.subtitle}>We will send a 6-digit code to verify.</Text>
