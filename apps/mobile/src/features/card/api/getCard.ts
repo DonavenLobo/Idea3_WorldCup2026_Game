@@ -1,6 +1,6 @@
 import { BASE_CARD_STATS } from "@world-cup-game/config";
 import type { CardStats, CardStatus, CardTier, PlayerCard } from "@world-cup-game/types";
-import { getCardUploadDisplayUrl } from "../../../lib/imageUpload";
+import { getCardGeneratedDisplayUrl, getCardUploadDisplayUrl } from "../../../lib/imageUpload";
 import { supabase } from "../../../lib/supabase";
 
 interface CardRow {
@@ -43,7 +43,7 @@ export async function mapCardRow(row: CardRow): Promise<PlayerCard> {
     overall: row.overall,
     stats: normalizeStats(row.stats),
     avatarSourceUrl: await getCardUploadDisplayUrl(row.avatar_source_url),
-    avatarGeneratedUrl: row.avatar_generated_url ?? undefined,
+    avatarGeneratedUrl: await getCardGeneratedDisplayUrl(row.avatar_generated_url),
     finalCardUrl: row.final_card_url ?? undefined,
     shareSlug: row.share_slug ?? "",
     status: row.status as CardStatus,

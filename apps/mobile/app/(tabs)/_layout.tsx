@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { APP_ROUTES } from "@world-cup-game/config";
 import { Tabs, useRouter } from "expo-router";
 import { Alert, Image, Pressable, StyleSheet, Text } from "react-native";
+import { useCardRealtime } from "../../src/features/card/hooks/useCardRealtime";
 import { useOnboarding } from "../../src/features/onboarding";
 import { useCard } from "../../src/hooks/useCard";
 import { useProfile } from "../../src/hooks/useProfile";
@@ -98,6 +99,8 @@ const tabIcon = (emoji: string) =>
   );
 
 export default function TabsLayout() {
+  useCardRealtime();
+
   return (
     <Tabs
       screenOptions={{

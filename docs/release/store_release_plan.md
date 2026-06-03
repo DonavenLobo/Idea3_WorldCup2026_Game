@@ -43,13 +43,13 @@ Confirmed setup details:
 - EAS project ID: `b9b7a050-9841-4ed5-9154-eafed8a84bab`.
 - Supabase project exists: `GoGaffa` / `hnwrhkrzvjesjrtjpjtm` in `us-east-1`.
 - Supabase Auth providers configured: Email, Google, Apple.
-- AI provider: Anthropic through server-side Supabase Edge Functions only.
+- AI provider: OpenAI through server-side Supabase Edge Functions only.
 - Public website/waitlist: `https://gogaffa.com`.
 - Privacy Policy URL: `https://gogaffa.com/privacy`.
 - Terms of Service URL: `https://gogaffa.com/terms`.
 - Support URL: `https://gogaffa.com/support`.
 
-Do not call Anthropic directly from the mobile client. Store `ANTHROPIC_API_KEY` only in Supabase Edge Function secrets/local function env, call Anthropic from the relevant Edge Function, and return only the app-safe result to the client.
+Do not call OpenAI directly from the mobile client. Store `OPENAI_API_KEY` only in Supabase Edge Function secrets/local function env, call OpenAI from the relevant Edge Function, and return only the app-safe result to the client.
 
 The public website URLs are now available. The app is still not ready for public submission until the app implementation, credentials, privacy answers, screenshots, and review metadata are complete.
 
@@ -176,7 +176,7 @@ Complete before TestFlight or Play internal testing:
 - [x] Confirm public website: `https://gogaffa.com`.
 - [x] Confirm Privacy Policy, Terms of Service, and support URLs.
 - [ ] Add final mobile OAuth/deep-link redirect URLs to Supabase Auth: `gogaffa://auth/callback`, `gogaffa://**`, `exp://**/--/auth/callback`, `exps://**/--/auth/callback`, and `https://gogaffa.com/**`.
-- [ ] Configure Anthropic API usage behind Supabase Edge Functions only.
+- [ ] Configure OpenAI API usage behind Supabase Edge Functions only.
 - [ ] Finish all auth modes. Google/Apple OAuth is wired in the mobile app; email/phone screens remain scaffolded.
 - [ ] Persist created card, profile, onboarding completion, and session state.
 - [ ] Gate full app access behind completed base card.

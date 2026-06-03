@@ -1,5 +1,6 @@
 import { BASE_CARD_STATS } from "@world-cup-game/config";
 import { createCard } from "../../card/api/createCard";
+import { startCardGeneration } from "../../card/api/startCardGeneration";
 import { uploadCardImage } from "../../../lib/imageUpload";
 import { queryClient } from "../../../lib/queryClient";
 import { supabase } from "../../../lib/supabase";
@@ -58,6 +59,10 @@ export async function saveCompletedOnboarding(data: OnboardingData) {
     selectedNationCode: completedData.nation.code,
     stats: BASE_CARD_STATS
   });
+
+  if (card.avatarSourceUrl || completedData.photoSource?.type === "random") {
+    await startCardGeneration(card.id);
+  }
 
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: ["profile", userData.user.id] }),

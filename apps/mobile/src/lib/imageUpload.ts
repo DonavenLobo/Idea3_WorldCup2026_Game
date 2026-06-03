@@ -8,6 +8,7 @@ export interface LocalImageAsset {
 }
 
 const CARD_UPLOAD_BUCKET = "card-uploads";
+const CARD_GENERATED_BUCKET = "card-generated";
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
 
 function isAlreadyResolvableUri(value: string) {
@@ -109,6 +110,28 @@ export async function getCardUploadDisplayUrl(
 
   const { data, error } = await supabase.storage
     .from(CARD_UPLOAD_BUCKET)
+    .createSignedUrl(storedPathOrUrl, SIGNED_URL_TTL_SECONDS);
+
+  if (error) {
+    throw error;
+  }
+
+  return data.signedUrl;
+}
+
+export async function getCardGeneratedDisplayUrl(
+  storedPathOrUrl?: string | null
+): Promise<string | undefined> {
+  if (!storedPathOrUrl) {
+    return undefined;
+  }
+
+  if (isAlreadyResolvableUri(storedPathOrUrl)) {
+    return storedPathOrUrl;
+  }
+
+  const { data, error } = await supabase.storage
+    .from(CARD_GENERATED_BUCKET)
     .createSignedUrl(storedPathOrUrl, SIGNED_URL_TTL_SECONDS);
 
   if (error) {
