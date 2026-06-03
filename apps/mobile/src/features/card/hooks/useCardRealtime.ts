@@ -12,23 +12,36 @@ import { supabase } from "../../../lib/supabase";
 type NotificationSubscription = ReturnType<
   NotificationsModule["addNotificationResponseReceivedListener"]
 >;
+type ReceivedNotificationSubscription = ReturnType<
+  NotificationsModule["addNotificationReceivedListener"]
+>;
 
-async function addCardReadyNotificationListener(
+async function addCardReadyNotificationListeners(
   invalidateCard: () => void
-): Promise<NotificationSubscription | null> {
+): Promise<{
+  received: ReceivedNotificationSubscription;
+  response: NotificationSubscription;
+} | null> {
   try {
     const Notifications = await getNotificationsModule();
     if (!Notifications) {
       return null;
     }
 
-    return Notifications.addNotificationResponseReceivedListener((response) => {
+    const received = Notifications.addNotificationReceivedListener((notification) => {
+      if (notification.request.content.data?.type === "CARD_READY") {
+        invalidateCard();
+      }
+    });
+    const response = Notifications.addNotificationResponseReceivedListener((response) => {
       if (response.notification.request.content.data?.type === "CARD_READY") {
         invalidateCard();
       }
     });
+
+    return { received, response };
   } catch (error) {
-    console.warn("Push notification listener unavailable", error);
+    console.warn("Push notification listeners unavailable", error);
     return null;
   }
 }
@@ -50,9 +63,12 @@ export function useCardRealtime() {
     const invalidateCard = () => {
       void queryClient.invalidateQueries({ queryKey: ["current-card", userId] });
     };
-    let notificationSubscription: NotificationSubscription | null = null;
-    void addCardReadyNotificationListener(invalidateCard).then((subscription) => {
-      notificationSubscription = subscription;
+    let notificationSubscriptions: {
+      received: ReceivedNotificationSubscription;
+      response: NotificationSubscription;
+    } | null = null;
+    void addCardReadyNotificationListeners(invalidateCard).then((subscriptions) => {
+      notificationSubscriptions = subscriptions;
     });
 
     const channel = supabase
@@ -76,7 +92,8 @@ export function useCardRealtime() {
 
     return () => {
       void supabase.removeChannel(channel);
-      notificationSubscription?.remove();
+      notificationSubscriptions?.received.remove();
+      notificationSubscriptions?.response.remove();
       appStateSubscription.remove();
     };
   }, [queryClient, userId]);
