@@ -35,3 +35,9 @@ Build toward:
 ```txt
 Anonymous open -> select nation -> capture/upload photo -> create card -> account required -> save card -> share card/app invite
 ```
+
+## Feature Guides
+
+- [Card generation and push notifications](./card-generation-and-push.md) covers
+  the onboarding AI card flow, prompt editing, Supabase Edge Functions, and Expo
+  push diagnostics.

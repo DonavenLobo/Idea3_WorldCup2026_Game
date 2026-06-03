@@ -29,6 +29,12 @@ interface NationRow {
   secondary_color: string | null;
 }
 
+interface PushSendResult {
+  response?: unknown;
+  statusCode?: number;
+  tokenCount: number;
+}
+
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     headers: {
@@ -253,7 +259,19 @@ async function runGeneration(ctx: {
       console.error("card_generations finalize failed:", generationFinalizeError.message);
     }
 
-    await sendCardReadyPush(admin, userId, cardId);
+    const pushResult = await sendCardReadyPush(admin, userId, cardId);
+    const { error: pushResultError } = await admin
+      .from("card_generations")
+      .update({
+        push_response: pushResult,
+        push_sent_at: new Date().toISOString(),
+        push_token_count: pushResult.tokenCount
+      })
+      .eq("id", generationId);
+
+    if (pushResultError) {
+      console.error("card_generations push result update failed:", pushResultError.message);
+    }
   } catch (error) {
     const status = error instanceof OpenAiModerationError ? "moderation_rejected" : "failed";
     const message = getErrorMessage(error);
@@ -274,7 +292,7 @@ async function sendCardReadyPush(
   admin: ReturnType<typeof createClient>,
   userId: string,
   cardId: string
-): Promise<void> {
+): Promise<PushSendResult> {
   try {
     const { data: tokens, error } = await admin
       .from("device_push_tokens")
@@ -284,11 +302,14 @@ async function sendCardReadyPush(
 
     if (error) {
       console.error("device_push_tokens lookup failed:", error.message);
-      return;
+      return {
+        response: { error: error.message },
+        tokenCount: 0
+      };
     }
 
     if (!tokens?.length) {
-      return;
+      return { tokenCount: 0 };
     }
 
     const response = await fetch("https://exp.host/--/api/v2/push/send", {
@@ -310,11 +331,31 @@ async function sendCardReadyPush(
       },
       method: "POST"
     });
+    const responseText = await response.text();
+    let responseBody: unknown = responseText;
+
+    try {
+      responseBody = JSON.parse(responseText);
+    } catch {
+      // Keep the raw response text.
+    }
 
     if (!response.ok) {
-      console.error("Expo push send failed:", response.status, await response.text());
+      console.error("Expo push send failed:", response.status, responseText);
     }
+
+    return {
+      response: responseBody,
+      statusCode: response.status,
+      tokenCount: tokens.length
+    };
   } catch (error) {
-    console.error("Card ready push failed:", getErrorMessage(error));
+    const message = getErrorMessage(error);
+    console.error("Card ready push failed:", message);
+
+    return {
+      response: { error: message },
+      tokenCount: 0
+    };
   }
 }

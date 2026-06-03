@@ -75,6 +75,10 @@ If the browser binary is missing, run:
 pnpm exec playwright install chromium
 ```
 
+For the onboarding AI card generation flow, prompt edits, and card-ready push
+notifications, see
+[docs/engineering/card-generation-and-push.md](docs/engineering/card-generation-and-push.md).
+
 ## Environment
 
 Use [.env.example](.env.example) as the master checklist for required environment values. Copy the relevant sections into the files each runtime actually reads:
