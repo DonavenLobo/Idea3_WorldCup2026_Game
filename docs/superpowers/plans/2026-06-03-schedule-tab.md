@@ -628,10 +628,49 @@ Then inspect: open `packages/config/src/schedule.data.ts` and confirm the first 
 Run: `pnpm --filter @world-cup-game/config typecheck`
 Expected: PASS (hand files from Task 4 now resolve their generated `*.data.ts`).
 
+- [ ] **Step 4b: Flag drift guard test**
+
+The onboarding nation picker uses `SUPPORTED_NATIONS` (in `nations.ts`, keyed by 3-letter code, with a `flagEmoji` field) while the schedule uses `TEAM_FLAGS` (keyed by the full team name from `worldcup.json`). These are intentionally separate sources, but where a nation appears in BOTH, the emoji must not drift. The generator is plain Node ESM and cannot reliably import the TypeScript `nations.ts` across the supported Node range, so this guard lives as a Vitest test (runs in `pnpm test:unit`).
+
+Create `packages/config/src/teamFlags.drift.test.ts`:
+
+```ts
+import { describe, expect, it } from "vitest";
+import { SUPPORTED_NATIONS } from "./nations";
+import { TEAM_FLAGS } from "./teamFlags";
+
+// The onboarding nation picker (SUPPORTED_NATIONS, keyed by code) and the
+// schedule flag map (TEAM_FLAGS, keyed by full team name from worldcup.json)
+// are intentionally separate sources. This guards against silent drift:
+// wherever a nation name appears in BOTH, the emoji MUST be identical.
+describe("flag consistency between nations.ts and team-flags.json", () => {
+  it("uses the same emoji for nation names present in both sources", () => {
+    const mismatches: string[] = [];
+    for (const nation of SUPPORTED_NATIONS) {
+      const scheduleFlag = TEAM_FLAGS[nation.name];
+      if (scheduleFlag !== undefined && scheduleFlag !== nation.flagEmoji) {
+        mismatches.push(
+          `${nation.name}: nations.ts=${nation.flagEmoji} team-flags.json=${scheduleFlag}`
+        );
+      }
+    }
+    expect(mismatches).toEqual([]);
+  });
+
+  it("overlaps on at least a dozen nations (sanity: the check is actually running)", () => {
+    const overlap = SUPPORTED_NATIONS.filter((n) => n.name in TEAM_FLAGS);
+    expect(overlap.length).toBeGreaterThanOrEqual(12);
+  });
+});
+```
+
+Run: `pnpm vitest run packages/config/src/teamFlags.drift.test.ts`
+Expected: PASS (both cases). The second case guards against the name-keying ever silently diverging so far that nothing overlaps (which would make the first check vacuously pass).
+
 - [ ] **Step 5: Commit**
 
 ```bash
-git add scripts/build-schedule.mjs packages/config/src/schedule.data.ts packages/config/src/stadiums.data.ts packages/config/src/teamFlags.data.ts packages/config/src/data/worldcup.json packages/config/src/data/worldcup.stadiums.json
+git add scripts/build-schedule.mjs packages/config/src/schedule.data.ts packages/config/src/stadiums.data.ts packages/config/src/teamFlags.data.ts packages/config/src/teamFlags.drift.test.ts packages/config/src/data/worldcup.json packages/config/src/data/worldcup.stadiums.json
 git commit -m "feat: generate static world cup schedule + stadium config"
 ```
 
