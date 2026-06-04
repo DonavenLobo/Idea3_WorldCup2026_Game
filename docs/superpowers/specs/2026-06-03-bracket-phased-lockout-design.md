@@ -1,9 +1,53 @@
 # Bracket: Phased Lockout Design
 
-Status: **Spec — awaiting review**
+Status: **Spec — REVISED June 4** (see Revision Note below; original sections kept for context)
 Author: Denver (with Claude)
-Last updated: June 3, 2026
+Last updated: June 4, 2026
 Target branch: `feature/bracket-phased-lockout`
+
+---
+
+## Revision Note — June 4, 2026: Matches Table is the Source of Truth
+
+**This revision supersedes anything contradictory in the sections below.** The original design proposed a static TypeScript `fixtures.ts` file mirrored into the edge function with a parity-check script. We discovered that Donaven had stubbed out `supabase/seed/sample_matches.sql` (orphan — one dummy row, nothing references it). We're promoting that pattern instead.
+
+### Final architecture (after this revision)
+
+- **`public.matches`** is the canonical source of truth. Created and seeded with all 104 World Cup matches (72 group + 32 knockout) by migration `000020_matches_table.sql`. Schema includes `id` (FIFA-style "M01"–"M104"), `round`, `group_id`, `bracket_index`, `home_team_code`, `away_team_code`, `kickoff` (timestamptz), `venue`, `status`, optional `home_score`/`away_score`.
+- **Client reads** via a new `useFixtures()` hook that fetches once per session and caches in memory. Returns the same shapes the lockout logic needs (`groupFirstKickoffs: Record<GroupId, Date>`, `knockoutKickoffs: Array<{round, index, kickoff: Date}>`).
+- **Edge function reads** via a direct Postgres query inside `submit-bracket`. No fixture file copy. No parity script.
+- **Schedule tab** gets a minimal-viable list UI as a bonus (list of matches by date, flags, kickoff time, venue). Drops the `ScreenPlaceholder` stub.
+- **`sample_matches` is left alone** — orphan seed, no references. Not worth removing in this PR.
+- **Migration order:** `000020_matches_table.sql` (table + seed) precedes `000021_bracket_phased_locks.sql` (RLS changes + unique index + `get_server_time` RPC).
+
+### What this changes vs. the original spec sections
+
+| Original section | New direction |
+|---|---|
+| "Source of truth: static fixtures.ts" (Decision #4) | "Source of truth: public.matches table" |
+| `packages/config/src/fixtures.ts` (new file) | Dropped — does not exist |
+| `supabase/functions/submit-bracket/fixtures.ts` (mirror) | Dropped — edge function queries DB directly |
+| `scripts/verify-fixtures.ts` (parity script) | Dropped — no duplication to verify |
+| `pnpm verify:fixtures` | Dropped |
+| Embedded SQL fixture functions in RPC | Dropped — RPC pivot already removed RPC entirely; edge function uses SQL query |
+| Migration `000020_bracket_phased_locks.sql` | Renumbered `000021`; new `000020` creates+seeds matches |
+| `useBracketLockState` derives from imported constants | Now derives from `useFixtures()` async data; emits loading state until matches load |
+
+The original brainstorming, error handling, UX flow, and out-of-scope sections still apply as-written.
+
+### Out-of-scope additions to call out
+
+- **Live match results** — `home_score`/`away_score` columns exist on `matches` but stay NULL in this PR. Result ingest is a future PR.
+- **Schedule tab filtering** ("only my nation", "today only") — basic chronological list only.
+- **Match status transitions** (scheduled → live → completed) — column exists, value stays 'scheduled' for all rows. Manual updates later.
+
+### Decision #4 (revised)
+
+> **Source of truth**: a new Supabase `public.matches` table seeded by migration with all 104 matches (72 group + 32 knockout). Client fetches via `useFixtures()` hook on bracket tab mount and caches in memory. Edge function queries the same table for write validation. **One source of truth — no TS/SQL mirror, no parity script.**
+
+---
+
+## Original spec (June 3) — kept for context
 
 ## Why this exists
 
@@ -32,7 +76,7 @@ Today is **June 3, 2026**. The first World Cup match kicks off **June 11**. We h
 3. **Lockout granularity**:
    - Group rankings → lock per-group at *that group's* first match kickoff.
    - Knockout picks → lock per-match at *that match's* kickoff.
-4. **Source of truth**: static `fixtures.ts` in `packages/config`. No external API. Mirrored as SQL constants in the validating RPC.
+4. **Source of truth**: a new Supabase `public.matches` table seeded by migration with all 104 matches (72 group + 32 knockout). Client fetches via `useFixtures()` hook on bracket tab mount and caches in memory. Edge function queries the same table for write validation. **One source of truth — no TS/SQL mirror, no parity script.**
 5. **Server clock**: read from Supabase `now()`, fall back to device clock if the call fails (with a one-time warning banner).
 6. **Lock state is derived, not stored.** No new columns or tables. The RPC validates each save against fixture kickoffs.
 7. **Lock enforcement**: drop binary `locked_at is null` RLS; route all updates through `update_bracket(jsonb)` RPC that validates per-pick.
