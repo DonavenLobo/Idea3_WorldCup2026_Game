@@ -105,8 +105,19 @@ pnpm dlx eas-cli@latest login          # log in to your Expo account
 pnpm dlx eas-cli@latest device:create  # prints a registration URL + QR code
 ```
 
-Open that URL **on the iPhone**, install the profile it offers, and confirm in
-iOS Settings if prompted. This captures the device UDID into the Apple team.
+Open that URL **on the iPhone** (in real Safari — not an in-app browser like
+Slack/Gmail, which can't install profiles). It downloads a config profile; iOS
+won't auto-install it, so finish in **Settings → General → VPN & Device
+Management → Downloaded Profile → Install**. This captures the device UDID into
+the Apple team.
+
+**Remote teammates:** the same registration URL works from anywhere — just open
+it on the target iPhone. If the profile won't install (work-managed / supervised
+iPhones often block profiles — see [Troubleshooting](#troubleshooting)), send
+your device **UDID** to the owner instead, who can add it from their end via
+`pnpm dlx eas-cli@latest device:create` (manual UDID option) or the Apple
+Developer console (Identifiers → Devices). After a device is added this way, the
+dev client must be rebuilt (A2) so the new UDID is in the profile.
 
 > Apple allows 100 iOS devices per membership year, and removing a device doesn't
 > free the slot until the annual renewal. Don't churn devices needlessly.
@@ -122,6 +133,23 @@ pnpm mobile:eas:build:dev:ios
 
 This runs on EAS and finishes with an install link / QR. (Android equivalent:
 `pnpm mobile:eas:build:dev:android`.)
+
+Notes on the first build:
+
+- The `eas:build:*` iOS scripts set `EXPO_NO_CAPABILITY_SYNC=1`. EAS's automatic
+  capability sync fails for `com.ivs.gogaffa` — the bundle ID has an App Store
+  Connect app attached, so Apple rejects the auto-toggle of Apple Pay / Sign in
+  with Apple (a misleading "bundle … cannot be deleted" error that aborts the
+  build). Skipping the sync does **not** change entitlements — push notifications
+  still work (`aps-environment` comes from the `expo-notifications` plugin and the
+  APNs key is managed in the credentials step). The trade-off: new capabilities
+  must be enabled manually in the Apple Developer console going forward.
+- If prompted **"install the expo-updates package?"**, answer **n** — dev clients
+  don't need OTA updates.
+- When asked, log in to your Apple account, then answer **yes** to adding your
+  registered device to the provisioning profile.
+- `eas.json` sets `requireCommit: true`, so commit (or stash) any working-tree
+  changes before building, or EAS refuses to start.
 
 > If the owner already built a dev client before your device was registered, they
 > need to rebuild so your UDID is included — installing an older build will fail
@@ -173,6 +201,20 @@ No device registration. Login won't work.
   [README](../../README.md#environment) are configured.
 - **Missing/blank data after login** — check `EXPO_PUBLIC_SUPABASE_ANON_KEY` is
   set in `apps/mobile/.env`.
+- **`zsh: command not found: eas`** — this repo never installs `eas` globally.
+  Use `pnpm dlx eas-cli@latest <command>` (the `eas:*` package scripts already do).
+- **"Safari could not install a profile due to an unknown error"** (device
+  registration) — open the registration URL in **real Safari**, not an in-app
+  browser; finish the install in **Settings → General → VPN & Device Management**.
+  Only one downloaded profile can be pending — remove any stale one there first.
+  Turn off **iCloud Private Relay** / VPN and temporarily disable **Screen Time →
+  Content & Privacy Restrictions**, then retry. Work-managed / supervised iPhones
+  block profiles entirely — use the manual-UDID fallback in [A1](#a1-register-your-iphone-one-time-per-device).
+- **EAS build aborts on "Failed to sync capabilities" / "bundle … cannot be
+  deleted"** — use the provided `pnpm mobile:eas:build:*` scripts; they set
+  `EXPO_NO_CAPABILITY_SYNC=1`. A bare `eas build …` won't, and will hit this.
+- **EAS refuses to build: "commit all changes"** — `requireCommit` is on in
+  `eas.json`. Commit or `git stash` your working-tree changes, then rebuild.
 
 ## Related docs
 
