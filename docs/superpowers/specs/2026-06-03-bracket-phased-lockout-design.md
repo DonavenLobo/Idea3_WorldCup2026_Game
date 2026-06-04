@@ -39,7 +39,7 @@ Today is **June 3, 2026**. The first World Cup match kicks off **June 11**. We h
 8. **Times in UI**: countdowns are relative ("locks in 2h 14m"); absolute times use device local timezone.
 9. **Default rankings count as valid picks** — no "are you sure" friction on save.
 10. **Last-save-wins** for concurrent edits across devices. Realtime sync is out of scope.
-11. **Scope: personal brackets only.** The `brackets` table supports both personal (`group_id IS NULL`) and shared group brackets (`group_id` set). This PR applies the phased lockout only to personal brackets. Group brackets keep the existing behavior and are revisited in a later PR.
+11. **Scope: personal + group brackets.** The `brackets` table supports both personal (`group_id IS NULL`) and shared group brackets (`group_id` set). Phased lockout applies to **both** — a pick on a group bracket goes through the same fixture-validated RPC. The RPC accepts an optional `group_id` argument and upserts on `(user_id, group_id)` with NULLs-not-distinct semantics.
 
 ## Architecture
 
@@ -91,8 +91,9 @@ Today is **June 3, 2026**. The first World Cup match kicks off **June 11**. We h
 | Path | Change |
 |---|---|
 | `packages/config/src/index.ts` | Re-export fixture constants and types |
-| `apps/mobile/src/features/bracket/BracketContext.tsx` | Add lock helpers; route `saveBracket` through RPC; handle `PICK_PAST_LOCKOUT` partial save |
-| `apps/mobile/src/features/bracket/api/brackets.ts` | New `updateBracket(picks)` calling the RPC |
+| `apps/mobile/src/features/bracket/BracketContext.tsx` | Add lock helpers; route `saveBracket` through RPC; handle `PICK_PAST_LOCKOUT` partial save; pass `group_id` if context is mounted for a group bracket |
+| `apps/mobile/src/features/bracket/api/brackets.ts` | New `updateBracket(picks, groupId?)` calling the RPC |
+| `apps/mobile/src/features/groups/` (group bracket entry point, if separate) | Pass current `group_id` into the bracket flow so `saveBracket` targets the group bracket. Audit whether group brackets reuse `BracketContext` or have a parallel one. |
 | `apps/mobile/src/features/bracket/components/GroupPicker.tsx` | Read-only state when group locked; dual CTA on last group |
 | `apps/mobile/src/features/bracket/components/KnockoutRound.tsx` | Read-only state when match locked |
 | `apps/mobile/src/features/bracket/components/SubTabBar.tsx` | Lock icons + Phase 2 eyebrow |
@@ -117,14 +118,70 @@ export interface KnockoutFixture {
   kickoff: string;
 }
 
+// Sources (June 3, 2026 — verify before merging the implementation PR):
+// ESPN: https://www.espn.com/soccer/story/_/id/48939282/2026-fifa-world-cup-fixtures
+// Wikipedia: https://en.wikipedia.org/wiki/2026_FIFA_World_Cup_knockout_stage
+// All times converted ET (EDT, UTC-4) → UTC. ⚠️ ESPN and Wikipedia disagreed on
+// final + third-place kickoff; we used Wikipedia (7pm ET final, 9pm ET 3rd).
+// Engineer running the impl PR should re-verify against fifa.com day-of.
+
 export const GROUP_FIRST_KICKOFF_UTC: Record<GroupId, string> = {
-  A: "2026-06-11T20:00:00Z",
-  // ... 11 more, sourced from the official FIFA schedule
+  A: "2026-06-11T19:00:00Z",  // Mexico vs South Africa, 3pm ET
+  B: "2026-06-12T19:00:00Z",  // Canada vs Bosnia, 3pm ET
+  C: "2026-06-13T22:00:00Z",  // Brazil vs Morocco, 6pm ET
+  D: "2026-06-13T01:00:00Z",  // USA vs Paraguay, June 12 9pm ET
+  E: "2026-06-14T17:00:00Z",  // Germany vs Curaçao, 1pm ET
+  F: "2026-06-14T20:00:00Z",  // Netherlands vs Japan, 4pm ET
+  G: "2026-06-15T22:00:00Z",  // Belgium vs Egypt, 6pm ET
+  H: "2026-06-15T17:00:00Z",  // Spain vs Cape Verde, 1pm ET
+  I: "2026-06-16T19:00:00Z",  // France vs Senegal, 3pm ET
+  J: "2026-06-17T01:00:00Z",  // Argentina vs Algeria, June 16 9pm ET
+  K: "2026-06-17T17:00:00Z",  // Portugal vs DR Congo, 1pm ET
+  L: "2026-06-17T20:00:00Z",  // England vs Croatia, 4pm ET
 };
 
 export const KNOCKOUT_FIXTURES: readonly KnockoutFixture[] = [
-  { round: "r32", index: 0, kickoff: "2026-06-28T16:00:00Z" },
-  // ... 31 more
+  // Round of 32 (16 matches, indices 0-15, in bracket position order)
+  { round: "r32", index:  0, kickoff: "2026-06-28T19:00:00Z" }, // M73, 3pm ET
+  { round: "r32", index:  1, kickoff: "2026-06-29T17:00:00Z" }, // M76, 1pm ET
+  { round: "r32", index:  2, kickoff: "2026-06-29T20:30:00Z" }, // M74, 4:30pm ET
+  { round: "r32", index:  3, kickoff: "2026-06-30T01:00:00Z" }, // M75, June 29 9pm ET
+  { round: "r32", index:  4, kickoff: "2026-06-30T17:00:00Z" }, // M78, 1pm ET
+  { round: "r32", index:  5, kickoff: "2026-06-30T21:00:00Z" }, // M77, 5pm ET
+  { round: "r32", index:  6, kickoff: "2026-07-01T01:00:00Z" }, // M79, June 30 9pm ET
+  { round: "r32", index:  7, kickoff: "2026-07-01T16:00:00Z" }, // M80, 12pm ET
+  { round: "r32", index:  8, kickoff: "2026-07-01T20:00:00Z" }, // M82, 4pm ET
+  { round: "r32", index:  9, kickoff: "2026-07-02T00:00:00Z" }, // M81, July 1 8pm ET
+  { round: "r32", index: 10, kickoff: "2026-07-02T19:00:00Z" }, // M84, 3pm ET
+  { round: "r32", index: 11, kickoff: "2026-07-02T23:00:00Z" }, // M83, 7pm ET
+  { round: "r32", index: 12, kickoff: "2026-07-03T03:00:00Z" }, // M85, July 2 11pm ET
+  { round: "r32", index: 13, kickoff: "2026-07-03T18:00:00Z" }, // M88, 2pm ET
+  { round: "r32", index: 14, kickoff: "2026-07-03T22:00:00Z" }, // M86, 6pm ET
+  { round: "r32", index: 15, kickoff: "2026-07-04T01:30:00Z" }, // M87, July 3 9:30pm ET
+
+  // Round of 16 (8 matches, indices 0-7)
+  { round: "r16", index: 0, kickoff: "2026-07-04T19:00:00Z" }, // 3pm ET
+  { round: "r16", index: 1, kickoff: "2026-07-05T00:00:00Z" }, // July 4 8pm ET
+  { round: "r16", index: 2, kickoff: "2026-07-05T23:00:00Z" }, // 7pm ET
+  { round: "r16", index: 3, kickoff: "2026-07-06T00:00:00Z" }, // July 5 8pm ET
+  { round: "r16", index: 4, kickoff: "2026-07-06T23:00:00Z" }, // 7pm ET
+  { round: "r16", index: 5, kickoff: "2026-07-07T00:00:00Z" }, // July 6 8pm ET
+  { round: "r16", index: 6, kickoff: "2026-07-07T20:00:00Z" }, // 4pm ET
+  { round: "r16", index: 7, kickoff: "2026-07-07T20:00:00Z" }, // 4pm ET (parallel kickoff)
+
+  // Quarterfinals (4 matches, indices 0-3)
+  { round: "qf",  index: 0, kickoff: "2026-07-10T00:00:00Z" }, // July 9 8pm ET
+  { round: "qf",  index: 1, kickoff: "2026-07-10T19:00:00Z" }, // 3pm ET
+  { round: "qf",  index: 2, kickoff: "2026-07-12T01:00:00Z" }, // July 11 9pm ET
+  { round: "qf",  index: 3, kickoff: "2026-07-12T01:00:00Z" }, // July 11 9pm ET (parallel)
+
+  // Semifinals (2 matches, indices 0-1)
+  { round: "sf",  index: 0, kickoff: "2026-07-14T23:00:00Z" }, // 7pm ET
+  { round: "sf",  index: 1, kickoff: "2026-07-15T23:00:00Z" }, // 7pm ET
+
+  // Third-place + Final (each at index 0 of its single-element round)
+  { round: "third", index: 0, kickoff: "2026-07-19T01:00:00Z" }, // July 18 9pm ET
+  { round: "final", index: 0, kickoff: "2026-07-19T23:00:00Z" }, // 7pm ET
 ];
 
 /** Convenience for the RPC: flat list of every lockable unit. */
@@ -134,7 +191,7 @@ export const ALL_LOCKABLE_UNITS = {
 } as const;
 ```
 
-**Filling in real dates:** Denver pulls the FIFA-published schedule and pastes the 44 ISO timestamps before opening the PR. The dates are public and never change.
+**Date provenance:** All 44 UTC timestamps above were sourced June 3, 2026 from ESPN's schedule article and Wikipedia's knockout-stage page (links inline as comments). The engineer running the implementation PR should re-verify the latest from fifa.com — ESPN listed the Final as 3pm ET and Wikipedia as 7pm ET; we used Wikipedia, but the discrepancy is worth a final check before the migration ships. The fixture file ships with the PR and never updates after merge.
 
 ### `useTournamentClock()`
 
@@ -192,19 +249,19 @@ The `PhaseHeroCard` selects copy + color directly from this discriminator.
 --    The `locked_at` COLUMN stays (nullable, unused). Future PRs may repurpose it.
 drop policy if exists "Users can update unlocked own brackets" on public.brackets;
 
--- 2. Block direct UPDATEs to personal brackets (force through RPC).
---    Group brackets (group_id IS NOT NULL) keep existing UPDATE behavior — they
---    are out of scope for the phased lockout in this PR.
-create policy "No direct personal-bracket updates"
+-- 2. Block ALL direct UPDATEs to brackets (force everything through the RPC).
+--    Both personal (group_id IS NULL) and group brackets go through update_bracket().
+create policy "No direct bracket updates"
   on public.brackets for update
   to authenticated
-  using (group_id is not null and auth.uid() = user_id)
-  with check (group_id is not null and auth.uid() = user_id);
+  using (false);
 
--- 3. Partial unique index so RPC `on conflict (user_id)` works for personal brackets.
-create unique index if not exists brackets_personal_user_unique
-  on public.brackets (user_id)
-  where group_id is null;
+-- 3. Unique constraint on (user_id, group_id) with NULLS NOT DISTINCT so the RPC's
+--    `on conflict` works for both personal (group_id IS NULL) and group brackets.
+--    Requires Postgres 15+, which Supabase uses.
+create unique index if not exists brackets_user_group_unique
+  on public.brackets (user_id, group_id)
+  nulls not distinct;
 
 -- 4. Fixture constants embedded in SQL
 --    Parity with packages/config/src/fixtures.ts enforced by
@@ -225,8 +282,13 @@ create or replace function private.knockout_kickoff(round text, idx int)
   end;
 $$;
 
--- 5. Validating upsert RPC (personal brackets only — group_id IS NULL)
-create or replace function public.update_bracket(new_picks jsonb)
+-- 5. Validating upsert RPC (handles both personal AND group brackets).
+--    Caller passes target_group_id = NULL for personal, or a groups.id UUID
+--    for a shared group bracket.
+create or replace function public.update_bracket(
+  new_picks jsonb,
+  target_group_id uuid default null
+)
   returns jsonb
   language plpgsql
   security definer
@@ -239,13 +301,25 @@ declare
   knockout jsonb;
   current_ts timestamptz := now();
 begin
+  -- If target_group_id is set, confirm caller is a member of that group.
+  -- Membership check uses public.group_members(group_id, user_id) — present
+  -- in migration 000004_groups.sql.
+  if target_group_id is not null then
+    if not exists (
+      select 1 from public.group_members
+       where group_id = target_group_id and user_id = auth.uid()
+    ) then
+      return jsonb_build_object('ok', false, 'code', 'NOT_GROUP_MEMBER');
+    end if;
+  end if;
   -- Validate group rankings: any group whose first kickoff has passed cannot change
   for group_key in select jsonb_object_keys(new_picks->'groupRankings') loop
     if current_ts >= private.group_first_kickoff(group_key) then
-      -- Only flag if this differs from the existing saved value
+      -- Only flag if this differs from the existing saved value for this bracket
       if not exists (
         select 1 from public.brackets
          where user_id = auth.uid()
+           and group_id is not distinct from target_group_id
            and picks->'groupRankings'->group_key = new_picks->'groupRankings'->group_key
       ) then
         invalid_groups := array_append(invalid_groups, group_key);
@@ -265,10 +339,11 @@ begin
     );
   end if;
 
-  -- Personal bracket only (group_id IS NULL). Relies on the partial unique index above.
+  -- Upsert on (user_id, group_id). Works for personal (target_group_id NULL) and
+  -- group brackets, using the NULLS NOT DISTINCT unique index above.
   insert into public.brackets (user_id, group_id, picks)
-       values (auth.uid(), null, new_picks)
-       on conflict (user_id) where group_id is null do update
+       values (auth.uid(), target_group_id, new_picks)
+       on conflict (user_id, group_id) do update
          set picks = excluded.picks,
              updated_at = now()
        returning * into saved_bracket;
@@ -277,10 +352,10 @@ begin
 end;
 $$;
 
-grant execute on function public.update_bracket(jsonb) to authenticated;
+grant execute on function public.update_bracket(jsonb, uuid) to authenticated;
 ```
 
-**Note:** the existing `brackets` table doesn't currently have a unique constraint on `user_id` alone (it includes `group_id`). The migration adds a partial unique index for personal brackets (`group_id IS NULL`) — included in the SQL block above — so the `on conflict` clause works. Group brackets (multi-tenant in a Supabase group) stay as-is; this PR doesn't touch the group bracket flow.
+**Note:** the existing `brackets` table doesn't currently have a unique constraint on `(user_id, group_id)`. The migration adds one with `NULLS NOT DISTINCT` semantics (Postgres 15+, supported by Supabase) so the `on conflict (user_id, group_id)` upsert works for both personal (`group_id IS NULL`) and shared group brackets. The RPC enforces group membership before allowing a write to a group bracket.
 
 ## UX flow
 
@@ -402,6 +477,7 @@ Dismiss state stored in AsyncStorage under `bracket.lateJoinerBannerDismissed`. 
 - A `tournament_fixtures` Supabase table (deferred — TS+SQL duplication is fine for v1)
 - Bracket-result reveal animations
 - Migrating existing brackets (none exist in production)
+- **Phase-locked group bracket UI surface** — phased lockout *enforcement* applies to both personal and group brackets via the RPC, but the UX surface (Phase Hero card, dual CTA, etc.) may live only on the personal bracket tab in this PR if a separate group-bracket UI hasn't been built yet. The implementation PR should audit the current group-bracket entry point in `apps/mobile/src/features/groups/` and either: (a) propagate the same UI components, or (b) explicitly note which UI surfaces don't get the phase treatment in v1, knowing the server enforcement still applies.
 
 ## Rollout
 
