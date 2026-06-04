@@ -9,6 +9,9 @@ drop policy if exists "Users can update unlocked own brackets" on public.bracket
 
 -- 2. Block all direct UPDATEs to brackets. Force everything through the edge
 --    function, which uses the service role to write past RLS.
+--    Drop-then-create so this migration is safe to re-run on Postgres 15
+--    (CREATE POLICY IF NOT EXISTS requires Postgres 16+).
+drop policy if exists "No direct bracket updates" on public.brackets;
 create policy "No direct bracket updates"
   on public.brackets for update
   to authenticated
