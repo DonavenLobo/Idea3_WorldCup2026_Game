@@ -38,12 +38,22 @@ create table if not exists public.matches (
 -- Helpful indices for the access patterns we use
 create index if not exists matches_round_kickoff_idx on public.matches (round, kickoff);
 create index if not exists matches_group_kickoff_idx on public.matches (group_id, kickoff) where group_id is not null;
+-- Chronological scan for the schedule tab ("SELECT * ORDER BY kickoff")
+create index if not exists matches_kickoff_idx on public.matches (kickoff);
+-- Knockout rows must be unique on (round, bracket_index) — partial since
+-- group rows have NULL bracket_index.
+create unique index if not exists matches_round_bracket_uniq
+  on public.matches (round, bracket_index)
+  where round <> 'group';
 
 alter table public.matches enable row level security;
 
 -- Everyone authenticated can read. No write policy — only the service role
 -- (used by edge functions) can mutate. Future PRs that ingest live scores
 -- will go through an admin edge function or a scheduled job.
+-- Drop-then-create so this migration is safe to re-run on Postgres 15
+-- (CREATE POLICY IF NOT EXISTS requires Postgres 16+).
+drop policy if exists "Authenticated read matches" on public.matches;
 create policy "Authenticated read matches"
   on public.matches for select
   to authenticated
