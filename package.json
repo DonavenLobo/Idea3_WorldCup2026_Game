@@ -28,9 +28,11 @@
     "serve:visual:web": "pnpm build:visual:web && node scripts/serve-spa.cjs .playwright-expo-web 19006",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
+    "test:unit": "vitest run --passWithNoTests",
     "test:visual": "playwright test",
     "test:visual:headed": "playwright test --headed",
     "test:visual:ui": "playwright test --ui",
+    "build:schedule": "node scripts/build-schedule.mjs",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "supabase:reset": "supabase db reset",
@@ -41,6 +43,7 @@
     "pngjs": "^7.0.0",
     "sharp": "^0.34.5",
     "turbo": "^2.3.3",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.8"
   }
 }

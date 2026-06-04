@@ -1,10 +1,5 @@
-import { ScreenPlaceholder } from "../../src/components/layout/ScreenPlaceholder";
+import { ScheduleScreen } from "../../src/features/schedule";
 
-export default function ScheduleScreen() {
-  return (
-    <ScreenPlaceholder
-      title="Schedule"
-      body="Tournament fixtures, kickoff times, and your nation's matches."
-    />
-  );
+export default function ScheduleRoute() {
+  return <ScheduleScreen />;
 }
