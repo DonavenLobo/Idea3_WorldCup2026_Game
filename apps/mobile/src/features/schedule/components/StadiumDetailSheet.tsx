@@ -1,4 +1,4 @@
-import { Linking, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Linking, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { getStadiumByCity } from "@world-cup-game/config";
 import { colors } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
@@ -27,7 +27,11 @@ export function StadiumDetailSheet({ city, onClose }: StadiumDetailSheetProps) {
               </View>
               <Pressable
                 style={styles.mapsButton}
-                onPress={() => void Linking.openURL(mapsUrl(stadium.lat, stadium.lng))}
+                onPress={() =>
+                  void Linking.openURL(mapsUrl(stadium.lat, stadium.lng)).catch(() =>
+                    Alert.alert("Unable to open Maps")
+                  )
+                }
               >
                 <Text style={styles.mapsLabel}>Open in Maps</Text>
               </Pressable>

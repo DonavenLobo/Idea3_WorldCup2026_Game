@@ -13,6 +13,7 @@ import {
 interface UseScheduleResult {
   sections: ScheduleSection[];
   showMyTeam: boolean;
+  timeZone: string;
 }
 
 export function useSchedule(filter: ScheduleFilter): UseScheduleResult {
@@ -37,5 +38,5 @@ export function useSchedule(filter: ScheduleFilter): UseScheduleResult {
     [filter, myTeamNames, timeZone]
   );
 
-  return { sections, showMyTeam };
+  return { sections, showMyTeam, timeZone };
 }

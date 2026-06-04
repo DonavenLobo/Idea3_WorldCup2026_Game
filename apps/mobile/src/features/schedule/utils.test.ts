@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { Fixture } from "@world-cup-game/config";
 import {
   filterMatches,
+  formatDayHeader,
+  formatKickoffTime,
   groupByLocalDay,
   localDayKey,
   mapsUrl,
@@ -70,5 +72,21 @@ describe("mapsUrl", () => {
     expect(mapsUrl(49.27667, -123.11194)).toBe(
       "https://www.google.com/maps/search/?api=1&query=49.27667,-123.11194"
     );
+  });
+});
+
+describe("formatKickoffTime", () => {
+  it("renders the kickoff hour in the supplied timezone", () => {
+    const utc = formatKickoffTime("2026-06-11T19:00:00.000Z", "UTC");
+    expect(utc).toMatch(/7.*00/);
+    expect(formatKickoffTime("2026-06-11T19:00:00.000Z", "America/Los_Angeles")).not.toBe(utc);
+  });
+});
+
+describe("formatDayHeader", () => {
+  it("is timezone-aware for the local calendar day", () => {
+    expect(formatDayHeader("2026-06-12T02:00:00.000Z", "UTC")).toContain("Jun");
+    // 02:00 UTC on Jun 12 is still Jun 11 in Los Angeles
+    expect(formatDayHeader("2026-06-12T02:00:00.000Z", "America/Los_Angeles")).toContain("11");
   });
 });

@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SectionList, StyleSheet, Text, View } from "react-native";
 import { colors } from "../../../theme/colors";
 import { spacing } from "../../../theme/spacing";
 import { useSchedule } from "../hooks/useSchedule";
 import type { ScheduleFilter } from "../types";
-import { deviceTimeZone } from "../utils";
 import { DaySectionHeader } from "./DaySectionHeader";
 import { FilterChips } from "./FilterChips";
 import { FixtureRow } from "./FixtureRow";
@@ -13,8 +12,13 @@ import { StadiumDetailSheet } from "./StadiumDetailSheet";
 export function ScheduleScreen() {
   const [filter, setFilter] = useState<ScheduleFilter>("all");
   const [venueCity, setVenueCity] = useState<string | null>(null);
-  const { sections, showMyTeam } = useSchedule(filter);
-  const timeZone = deviceTimeZone();
+  const { sections, showMyTeam, timeZone } = useSchedule(filter);
+
+  useEffect(() => {
+    if (!showMyTeam && filter === "myTeam") {
+      setFilter("all");
+    }
+  }, [showMyTeam, filter]);
 
   return (
     <View style={styles.root}>
