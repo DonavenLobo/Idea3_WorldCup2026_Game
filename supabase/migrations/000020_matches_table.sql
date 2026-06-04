@@ -84,7 +84,7 @@ values
   ('K-R32-7',  'r32', null,  6, null, null, '2026-07-01T01:00:00Z', 'Estadio Azteca, Mexico City',    'scheduled'),
   ('K-R32-8',  'r32', null,  7, null, null, '2026-07-01T16:00:00Z', 'Mercedes-Benz Stadium, Atlanta', 'scheduled'),
   ('K-R32-9',  'r32', null,  8, null, null, '2026-07-01T20:00:00Z', 'Lumen Field, Seattle',           'scheduled'),
-  ('K-R32-10', 'r32', null,  9, null, null, '2026-07-02T00:00:00Z', "Levi's Stadium, San Francisco",  'scheduled'),
+  ('K-R32-10', 'r32', null,  9, null, null, '2026-07-02T00:00:00Z', 'Levi''s Stadium, San Francisco',  'scheduled'),
   ('K-R32-11', 'r32', null, 10, null, null, '2026-07-02T19:00:00Z', 'SoFi Stadium, Los Angeles',      'scheduled'),
   ('K-R32-12', 'r32', null, 11, null, null, '2026-07-02T23:00:00Z', 'BMO Field, Toronto',             'scheduled'),
   ('K-R32-13', 'r32', null, 12, null, null, '2026-07-03T03:00:00Z', 'BC Place, Vancouver',            'scheduled'),
