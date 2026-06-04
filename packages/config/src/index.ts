@@ -7,5 +7,8 @@ export * from "./leaderboard";
 export * from "./locker";
 export * from "./nations";
 export * from "./routes";
+export * from "./schedule";
+export * from "./stadiums";
+export * from "./teamFlags";
 export * from "./trivia";
 export * from "./xpRules";
