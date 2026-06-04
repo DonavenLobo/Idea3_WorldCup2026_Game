@@ -1,0 +1,74 @@
+import { describe, expect, it } from "vitest";
+import type { Fixture } from "@world-cup-game/config";
+import {
+  filterMatches,
+  groupByLocalDay,
+  localDayKey,
+  mapsUrl,
+  matchesMyTeam,
+  myTeamNamesForCode
+} from "./utils";
+
+function fixture(partial: Partial<Fixture> & Pick<Fixture, "num">): Fixture {
+  return {
+    num: partial.num,
+    round: partial.round ?? "Matchday 1",
+    stage: partial.stage ?? "group",
+    group: partial.group ?? "Group A",
+    kickoffUtc: partial.kickoffUtc ?? "2026-06-11T19:00:00.000Z",
+    team1: partial.team1 ?? "Mexico",
+    team2: partial.team2 ?? "South Africa",
+    venueCity: partial.venueCity ?? "Mexico City"
+  };
+}
+
+describe("localDayKey", () => {
+  it("uses the supplied timezone to compute the local day", () => {
+    expect(localDayKey("2026-06-12T02:00:00.000Z", "America/Los_Angeles")).toBe("2026-06-11");
+    expect(localDayKey("2026-06-12T02:00:00.000Z", "UTC")).toBe("2026-06-12");
+  });
+});
+
+describe("filterMatches / matchesMyTeam / myTeamNamesForCode", () => {
+  const matches: Fixture[] = [
+    fixture({ num: 1, stage: "group", team1: "USA", team2: "Paraguay" }),
+    fixture({ num: 73, stage: "r32", group: null, team1: "2A", team2: "2B" })
+  ];
+  it("filters group vs knockouts", () => {
+    expect(filterMatches(matches, "group", new Set()).map((m) => m.num)).toEqual([1]);
+    expect(filterMatches(matches, "knockouts", new Set()).map((m) => m.num)).toEqual([73]);
+  });
+  it("returns everything for the 'all' filter", () => {
+    expect(filterMatches(matches, "all", new Set()).map((m) => m.num)).toEqual([1, 73]);
+  });
+  it("matches my team by nation code", () => {
+    const names = myTeamNamesForCode("USA");
+    expect(matchesMyTeam(matches[0]!, names)).toBe(true);
+    expect(matchesMyTeam(matches[1]!, names)).toBe(false);
+  });
+  it("matches my team by nation name when codes differ", () => {
+    const names = myTeamNamesForCode("KOR");
+    const korea = fixture({ num: 2, team1: "South Korea", team2: "Czech Republic" });
+    expect(matchesMyTeam(korea, names)).toBe(true);
+  });
+});
+
+describe("groupByLocalDay", () => {
+  it("groups chronologically by local day", () => {
+    const matches: Fixture[] = [
+      fixture({ num: 2, kickoffUtc: "2026-06-12T19:00:00.000Z" }),
+      fixture({ num: 1, kickoffUtc: "2026-06-11T19:00:00.000Z" })
+    ];
+    const sections = groupByLocalDay(matches, "UTC");
+    expect(sections).toHaveLength(2);
+    expect(sections[0]!.data[0]!.num).toBe(1);
+  });
+});
+
+describe("mapsUrl", () => {
+  it("builds a universal maps query", () => {
+    expect(mapsUrl(49.27667, -123.11194)).toBe(
+      "https://www.google.com/maps/search/?api=1&query=49.27667,-123.11194"
+    );
+  });
+});
