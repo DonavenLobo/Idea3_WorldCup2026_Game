@@ -676,9 +676,21 @@ git commit -m "feat: generate static world cup schedule + stadium config"
 
 ---
 
-## Task 6: Supabase results overlay migration
+## SCOPE REVISION — 2026-06-04: Phase 1 is static-only
 
-**Files:**
+Per product direction, **Phase 1 ships a purely static schedule** — users open the app and see all 104 fixtures (local kickoff times, grouped by day, tap for stadium details). **No live results, no Supabase results overlay, no React Query for the schedule.**
+
+- **Task 6 (results overlay migration)** and **Task 8 (results read API)** are **DEFERRED to Phase 2 — NOT built now.** Their code below is retained as the documented reference implementation for when the live feed is wired up (see also the design spec's Phase 2 section).
+- **Tasks 7, 9, 10, 11** are executed in their **static variants** (defined inline in each task below under "STATIC VARIANT"), which supersede the results-coupled code. The static variants drop `MatchResult`/`MatchStatus`/`ScheduledMatch`, `mergeFixturesWithResults`, `getMatchResults`, and all score/LIVE/FT UI. Components operate directly on `Fixture`.
+- **Task 12** keeps the `.env.example` Phase 2 placeholders (they document the deferral) and adds a one-line in-code pointer to where results will merge in later.
+
+---
+
+## Task 6: Supabase results overlay migration — ⛔ DEFERRED to Phase 2 (do not build now)
+
+> Phase 2 reference implementation only. Do not create this migration file in Phase 1.
+
+**Files (Phase 2):**
 - Create: `supabase/migrations/000023_match_results.sql`
 
 - [ ] **Step 1: Write the migration**
@@ -747,6 +759,201 @@ git commit -m "feat: match_results + match_events overlay tables (public read RL
 - Create: `apps/mobile/src/features/schedule/types.ts`
 - Create: `apps/mobile/src/features/schedule/utils.ts`
 - Test: `apps/mobile/src/features/schedule/utils.test.ts`
+
+### STATIC VARIANT (Phase 1 — BUILD THIS; supersedes the results-coupled steps below)
+
+TDD: write `utils.test.ts` first (it will fail to resolve `./utils`), then `types.ts` + `utils.ts`, then run `pnpm vitest run apps/mobile/src/features/schedule/utils.test.ts` until green. No `MatchResult`/`ScheduledMatch`/`mergeFixturesWithResults` — utils operate directly on `Fixture`.
+
+`types.ts`:
+```ts
+import type { Fixture } from "@world-cup-game/config";
+
+export type ScheduleFilter = "all" | "group" | "knockouts" | "myTeam";
+
+export interface ScheduleSection {
+  title: string;
+  data: Fixture[];
+}
+```
+
+`utils.test.ts`:
+```ts
+import { describe, expect, it } from "vitest";
+import type { Fixture } from "@world-cup-game/config";
+import {
+  filterMatches,
+  groupByLocalDay,
+  localDayKey,
+  mapsUrl,
+  matchesMyTeam,
+  myTeamNamesForCode
+} from "./utils";
+
+function fixture(partial: Partial<Fixture> & Pick<Fixture, "num">): Fixture {
+  return {
+    num: partial.num,
+    round: partial.round ?? "Matchday 1",
+    stage: partial.stage ?? "group",
+    group: partial.group ?? "Group A",
+    kickoffUtc: partial.kickoffUtc ?? "2026-06-11T19:00:00.000Z",
+    team1: partial.team1 ?? "Mexico",
+    team2: partial.team2 ?? "South Africa",
+    venueCity: partial.venueCity ?? "Mexico City"
+  };
+}
+
+describe("localDayKey", () => {
+  it("uses the supplied timezone to compute the local day", () => {
+    expect(localDayKey("2026-06-12T02:00:00.000Z", "America/Los_Angeles")).toBe("2026-06-11");
+    expect(localDayKey("2026-06-12T02:00:00.000Z", "UTC")).toBe("2026-06-12");
+  });
+});
+
+describe("filterMatches / matchesMyTeam / myTeamNamesForCode", () => {
+  const matches: Fixture[] = [
+    fixture({ num: 1, stage: "group", team1: "USA", team2: "Paraguay" }),
+    fixture({ num: 73, stage: "r32", group: null, team1: "2A", team2: "2B" })
+  ];
+  it("filters group vs knockouts", () => {
+    expect(filterMatches(matches, "group", new Set()).map((m) => m.num)).toEqual([1]);
+    expect(filterMatches(matches, "knockouts", new Set()).map((m) => m.num)).toEqual([73]);
+  });
+  it("returns everything for the 'all' filter", () => {
+    expect(filterMatches(matches, "all", new Set()).map((m) => m.num)).toEqual([1, 73]);
+  });
+  it("matches my team by nation code", () => {
+    const names = myTeamNamesForCode("USA");
+    expect(matchesMyTeam(matches[0]!, names)).toBe(true);
+    expect(matchesMyTeam(matches[1]!, names)).toBe(false);
+  });
+  it("matches my team by nation name when codes differ", () => {
+    const names = myTeamNamesForCode("KOR");
+    const korea = fixture({ num: 2, team1: "South Korea", team2: "Czech Republic" });
+    expect(matchesMyTeam(korea, names)).toBe(true);
+  });
+});
+
+describe("groupByLocalDay", () => {
+  it("groups chronologically by local day", () => {
+    const matches: Fixture[] = [
+      fixture({ num: 2, kickoffUtc: "2026-06-12T19:00:00.000Z" }),
+      fixture({ num: 1, kickoffUtc: "2026-06-11T19:00:00.000Z" })
+    ];
+    const sections = groupByLocalDay(matches, "UTC");
+    expect(sections).toHaveLength(2);
+    expect(sections[0]!.data[0]!.num).toBe(1);
+  });
+});
+
+describe("mapsUrl", () => {
+  it("builds a universal maps query", () => {
+    expect(mapsUrl(49.27667, -123.11194)).toBe(
+      "https://www.google.com/maps/search/?api=1&query=49.27667,-123.11194"
+    );
+  });
+});
+```
+
+`utils.ts`:
+```ts
+import { SUPPORTED_NATIONS } from "@world-cup-game/config";
+import type { Fixture } from "@world-cup-game/config";
+import type { ScheduleFilter, ScheduleSection } from "./types";
+
+export function deviceTimeZone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+}
+
+export function localDayKey(kickoffUtc: string, timeZone: string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(new Date(kickoffUtc));
+}
+
+export function formatDayHeader(kickoffUtc: string, timeZone: string, locale?: string): string {
+  return new Intl.DateTimeFormat(locale ?? "en-US", {
+    timeZone,
+    weekday: "short",
+    month: "short",
+    day: "numeric"
+  }).format(new Date(kickoffUtc));
+}
+
+export function formatKickoffTime(kickoffUtc: string, timeZone: string, locale?: string): string {
+  return new Intl.DateTimeFormat(locale ?? "en-US", {
+    timeZone,
+    hour: "numeric",
+    minute: "2-digit"
+  }).format(new Date(kickoffUtc));
+}
+
+export function myTeamNamesForCode(code: string | null | undefined): Set<string> {
+  const names = new Set<string>();
+  if (!code) return names;
+  names.add(code.toLowerCase());
+  const nation = SUPPORTED_NATIONS.find((n) => n.code === code);
+  if (nation) names.add(nation.name.toLowerCase());
+  return names;
+}
+
+export function matchesMyTeam(fixture: Fixture, names: Set<string>): boolean {
+  if (names.size === 0) return false;
+  return names.has(fixture.team1.toLowerCase()) || names.has(fixture.team2.toLowerCase());
+}
+
+export function filterMatches(
+  fixtures: Fixture[],
+  filter: ScheduleFilter,
+  myTeamNames: Set<string>
+): Fixture[] {
+  switch (filter) {
+    case "group":
+      return fixtures.filter((f) => f.stage === "group");
+    case "knockouts":
+      return fixtures.filter((f) => f.stage !== "group");
+    case "myTeam":
+      return fixtures.filter((f) => matchesMyTeam(f, myTeamNames));
+    case "all":
+    default:
+      return fixtures;
+  }
+}
+
+export function groupByLocalDay(fixtures: Fixture[], timeZone: string): ScheduleSection[] {
+  const sorted = [...fixtures].sort((a, b) =>
+    a.kickoffUtc < b.kickoffUtc ? -1 : a.kickoffUtc > b.kickoffUtc ? 1 : a.num - b.num
+  );
+
+  const sections: ScheduleSection[] = [];
+  const indexByKey = new Map<string, number>();
+
+  for (const fixture of sorted) {
+    const key = localDayKey(fixture.kickoffUtc, timeZone);
+    let index = indexByKey.get(key);
+    if (index === undefined) {
+      index = sections.length;
+      indexByKey.set(key, index);
+      sections.push({ title: formatDayHeader(fixture.kickoffUtc, timeZone), data: [] });
+    }
+    sections[index]!.data.push(fixture);
+  }
+
+  return sections;
+}
+
+export function mapsUrl(lat: number, lng: number): string {
+  return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+}
+```
+
+Commit: `git add apps/mobile/src/features/schedule/types.ts apps/mobile/src/features/schedule/utils.ts apps/mobile/src/features/schedule/utils.test.ts && git commit -m "feat: schedule feature types and pure utils"`
+
+---
+
+### ORIGINAL (Phase 2 reference — superseded by the static variant above; do NOT build now)
 
 - [ ] **Step 1: Create `types.ts`**
 
@@ -1012,9 +1219,11 @@ git commit -m "feat: schedule feature types and pure utils"
 
 ---
 
-## Task 8: Results API (Supabase read)
+## Task 8: Results API (Supabase read) — ⛔ DEFERRED to Phase 2 (do not build now)
 
-**Files:**
+> Phase 2 reference implementation only. Do not create this file in Phase 1.
+
+**Files (Phase 2):**
 - Create: `apps/mobile/src/features/schedule/api/results.ts`
 
 - [ ] **Step 1: Implement the read API**
@@ -1071,6 +1280,61 @@ git commit -m "feat: read match_results overlay from supabase"
 
 **Files:**
 - Create: `apps/mobile/src/features/schedule/hooks/useSchedule.ts`
+
+### STATIC VARIANT (Phase 1 — BUILD THIS; supersedes the results-coupled step below)
+
+No React Query, no `getMatchResults`, no merge. Reads static fixtures from config, derives the "My team" availability from the signed-in profile's nation, and groups by local day. The Phase-2-hookup pointer lives as a comment.
+
+`useSchedule.ts`:
+```ts
+import { useMemo } from "react";
+import { WORLD_CUP_FIXTURES } from "@world-cup-game/config";
+import { useProfile } from "../../../hooks/useProfile";
+import type { ScheduleFilter, ScheduleSection } from "../types";
+import {
+  deviceTimeZone,
+  filterMatches,
+  groupByLocalDay,
+  matchesMyTeam,
+  myTeamNamesForCode
+} from "../utils";
+
+interface UseScheduleResult {
+  sections: ScheduleSection[];
+  showMyTeam: boolean;
+}
+
+export function useSchedule(filter: ScheduleFilter): UseScheduleResult {
+  // Phase 1 is static: fixtures come straight from @world-cup-game/config.
+  // TODO(Phase 2): fetch the live results overlay here (see deferred Task 8)
+  // and merge resolved teams / scores before grouping.
+  const { profile } = useProfile();
+  const timeZone = deviceTimeZone();
+
+  const myTeamNames = useMemo(
+    () => myTeamNamesForCode(profile?.selectedNationCode),
+    [profile?.selectedNationCode]
+  );
+
+  const showMyTeam = useMemo(
+    () => WORLD_CUP_FIXTURES.some((fixture) => matchesMyTeam(fixture, myTeamNames)),
+    [myTeamNames]
+  );
+
+  const sections = useMemo(
+    () => groupByLocalDay(filterMatches(WORLD_CUP_FIXTURES, filter, myTeamNames), timeZone),
+    [filter, myTeamNames, timeZone]
+  );
+
+  return { sections, showMyTeam };
+}
+```
+
+Commit: `git add apps/mobile/src/features/schedule/hooks/useSchedule.ts && git commit -m "feat: static useSchedule hook"`
+
+---
+
+### ORIGINAL (Phase 2 reference — superseded; do NOT build now)
 
 - [ ] **Step 1: Implement the hook**
 
@@ -1162,6 +1426,82 @@ git commit -m "feat: useSchedule hook merging fixtures with overlay"
 - Create: `apps/mobile/src/features/schedule/components/FilterChips.tsx`
 - Create: `apps/mobile/src/features/schedule/components/FixtureRow.tsx`
 - Create: `apps/mobile/src/features/schedule/components/StadiumDetailSheet.tsx`
+
+### STATIC VARIANT NOTE (Phase 1)
+
+`TeamLabel.tsx` (Step 1), `FilterChips.tsx` (Step 2), and `StadiumDetailSheet.tsx` (Step 4) are built **exactly as specified below**. Only `FixtureRow.tsx` changes: build the STATIC VARIANT here instead of Step 3 — it has no `result`/score/LIVE/FT and takes a `Fixture` directly.
+
+`FixtureRow.tsx` (STATIC VARIANT — build this, not Step 3):
+```tsx
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import type { Fixture } from "@world-cup-game/config";
+import { colors } from "../../../theme/colors";
+import { radius } from "../../../theme/radius";
+import { spacing } from "../../../theme/spacing";
+import { formatKickoffTime } from "../utils";
+import { TeamLabel } from "./TeamLabel";
+
+interface FixtureRowProps {
+  fixture: Fixture;
+  timeZone: string;
+  onVenuePress: (city: string) => void;
+}
+
+export function FixtureRow({ fixture, timeZone, onVenuePress }: FixtureRowProps) {
+  return (
+    <View style={styles.row}>
+      <View style={styles.teams}>
+        <TeamLabel name={fixture.team1} align="left" />
+        <View style={styles.center}>
+          <Text style={styles.time}>{formatKickoffTime(fixture.kickoffUtc, timeZone)}</Text>
+        </View>
+        <TeamLabel name={fixture.team2} align="right" />
+      </View>
+      <Pressable onPress={() => onVenuePress(fixture.venueCity)} hitSlop={6}>
+        <Text style={styles.venue} numberOfLines={1}>
+          {fixture.group ? `${fixture.group} · ` : ""}
+          {fixture.venueCity} ›
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  center: {
+    alignItems: "center",
+    minWidth: 64
+  },
+  row: {
+    backgroundColor: "rgba(255, 248, 234, 0.05)",
+    borderRadius: radius.md,
+    gap: spacing.sm,
+    marginHorizontal: spacing.lg,
+    marginVertical: spacing.xs,
+    padding: spacing.md
+  },
+  teams: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.sm
+  },
+  time: {
+    color: colors.gold,
+    fontSize: 14,
+    fontWeight: "800"
+  },
+  venue: {
+    color: "rgba(255, 248, 234, 0.6)",
+    fontSize: 12,
+    fontWeight: "700",
+    textAlign: "center"
+  }
+});
+```
+
+Commit all four components together at the end of the task: `git commit -m "feat: schedule presentational components"`.
+
+---
 
 - [ ] **Step 1: `TeamLabel.tsx`**
 
@@ -1532,6 +1872,75 @@ git commit -m "feat: schedule presentational components"
 - Create: `apps/mobile/src/features/schedule/index.ts`
 - Modify: `apps/mobile/app/(tabs)/schedule.tsx`
 
+### STATIC VARIANT NOTE (Phase 1)
+
+`DaySectionHeader.tsx` (Step 1) and the route wiring (Step 4) are built **exactly as specified below**. `ScheduleScreen.tsx` and the barrel `index.ts` use the STATIC VARIANTS here (no `isRefetching`/`refetch`/pull-to-refresh; `FixtureRow` takes `fixture`; barrel exports only the static types).
+
+`ScheduleScreen.tsx` (STATIC VARIANT — build this, not Step 2):
+```tsx
+import { useState } from "react";
+import { SectionList, StyleSheet, Text, View } from "react-native";
+import { colors } from "../../../theme/colors";
+import { spacing } from "../../../theme/spacing";
+import { useSchedule } from "../hooks/useSchedule";
+import type { ScheduleFilter } from "../types";
+import { deviceTimeZone } from "../utils";
+import { DaySectionHeader } from "./DaySectionHeader";
+import { FilterChips } from "./FilterChips";
+import { FixtureRow } from "./FixtureRow";
+import { StadiumDetailSheet } from "./StadiumDetailSheet";
+
+export function ScheduleScreen() {
+  const [filter, setFilter] = useState<ScheduleFilter>("all");
+  const [venueCity, setVenueCity] = useState<string | null>(null);
+  const { sections, showMyTeam } = useSchedule(filter);
+  const timeZone = deviceTimeZone();
+
+  return (
+    <View style={styles.root}>
+      <FilterChips value={filter} onChange={setFilter} showMyTeam={showMyTeam} />
+      <SectionList
+        sections={sections}
+        keyExtractor={(item) => String(item.num)}
+        renderItem={({ item }) => (
+          <FixtureRow fixture={item} timeZone={timeZone} onVenuePress={setVenueCity} />
+        )}
+        renderSectionHeader={({ section }) => <DaySectionHeader title={section.title} />}
+        stickySectionHeadersEnabled={false}
+        contentContainerStyle={styles.content}
+        ListEmptyComponent={<Text style={styles.empty}>No matches for this filter.</Text>}
+      />
+      <StadiumDetailSheet city={venueCity} onClose={() => setVenueCity(null)} />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  content: {
+    paddingBottom: spacing.xl
+  },
+  empty: {
+    color: "rgba(255, 248, 234, 0.6)",
+    fontSize: 14,
+    padding: spacing.xl,
+    textAlign: "center"
+  },
+  root: {
+    backgroundColor: colors.pitch,
+    flex: 1
+  }
+});
+```
+
+`index.ts` barrel (STATIC VARIANT — build this, not Step 3):
+```ts
+export { ScheduleScreen } from "./components/ScheduleScreen";
+export { useSchedule } from "./hooks/useSchedule";
+export type { ScheduleFilter, ScheduleSection } from "./types";
+```
+
+---
+
 - [ ] **Step 1: `DaySectionHeader.tsx`**
 
 ```tsx
@@ -1713,10 +2122,10 @@ git commit -m "docs: document deferred phase 2 live-feed env placeholders"
 | 48-team emoji flags + knockout placeholder badges | 3, 4 (`flagForTeam`), 10 (`TeamLabel`) |
 | Chronological layout + filter chips (All/Group/Knockouts/My team) | 7 (`filterMatches`), 10 (`FilterChips`), 11 (`ScheduleScreen`) |
 | "My team" appears only when nation is in the field | 7 (`matchesMyTeam`, `myTeamNamesForCode`), 9 (`showMyTeam`) |
-| Supabase overlay `match_results` + `match_events`, public-read RLS, no client writes | 6 |
-| App reads overlay via React Query, merges, refresh | 8, 9 |
-| Live feed Edge Function deferred + documented | (spec only; env placeholders in 12) |
-| Thin route, feature-module structure | 8–11 |
+| Supabase overlay `match_results` + `match_events`, public-read RLS, no client writes | ⛔ DEFERRED Phase 2 (reference impl retained in Task 6) |
+| App reads overlay via React Query, merges, refresh | ⛔ DEFERRED Phase 2 (Task 9 ships a static hook; merge point marked with a TODO comment) |
+| Live feed Edge Function + results read deferred + documented | spec + Task 6/8 reference impls + env placeholders in 12 + `useSchedule` TODO |
+| Thin route, feature-module structure | 7, 9, 10, 11 |
 | TDD on pure logic; typecheck; visual smoke | 1, 2, 7, 12 |
 
 **Placeholder scan:** No `TBD`/`TODO`/"add error handling" left; every code step has complete code. ✅
