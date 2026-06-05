@@ -1,10 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import type { PropsWithChildren } from "react";
 import { BRACKET_GROUPS, GROUP_IDS } from "@world-cup-game/config";
 import type { GroupId } from "@world-cup-game/config";
 import { useSession } from "../../hooks/useSession";
 import { getCurrentBracket, submitCurrentBracket } from "./api/brackets";
 import type { BracketPicks, BracketState, PersistedBracketPicks, PickRound } from "./types";
+import { useBracketLockState } from "./hooks/useBracketLockState";
+import type { KnockoutRoundId } from "./lib/computeBracketLockState";
+import { PickPastLockoutError } from "./types";
 
 function defaultRankings(): Record<GroupId, string[]> {
   const entries = GROUP_IDS.map((g) => [g, [...BRACKET_GROUPS[g]]] as const);
@@ -25,6 +27,13 @@ interface BracketContextValue extends BracketState {
   setPick: (round: PickRound, matchIndex: number, code: string) => void;
   setFinal: (code: string | null) => void;
   setThird: (code: string | null) => void;
+  isGroupLocked: (group: GroupId) => boolean;
+  isMatchLocked: (round: KnockoutRoundId, index: number) => boolean;
+  isClockFallback: boolean;
+  phase: ReturnType<typeof useBracketLockState>["phase"];
+  nextLockAt: Date | null;
+  nextLockLabel: string | null;
+  fixturesLoading: boolean;
 }
 
 const BracketContext = createContext<BracketContextValue | null>(null);
@@ -39,7 +48,12 @@ function swap(arr: string[], i: number, j: number): string[] | null {
   return next;
 }
 
-export function BracketProvider({ children }: PropsWithChildren) {
+interface BracketProviderProps {
+  groupId?: string | null;
+  children: React.ReactNode;
+}
+
+export function BracketProvider({ groupId = null, children }: BracketProviderProps) {
   const { user, isLoading: isSessionLoading } = useSession();
   const [isCreated, setIsCreated] = useState(false);
   const [isLoadingSavedBracket, setIsLoadingSavedBracket] = useState(false);
@@ -48,6 +62,7 @@ export function BracketProvider({ children }: PropsWithChildren) {
   const [saveError, setSaveError] = useState<Error | null>(null);
   const [groupRankings, setGroupRankings] = useState<Record<GroupId, string[]>>(defaultRankings);
   const [picks, setPicks] = useState<BracketPicks>(defaultPicks);
+  const lockState = useBracketLockState();
 
   useEffect(() => {
     let isMounted = true;
@@ -162,25 +177,68 @@ export function BracketProvider({ children }: PropsWithChildren) {
 
   const saveBracket = useCallback(async () => {
     if (!user) {
-      throw new Error("You must be signed in to save a bracket.");
+      setSaveError(new Error("Sign in to save your bracket."));
+      return;
     }
-
-    const payload: PersistedBracketPicks = { groupRankings, picks };
 
     setIsSaving(true);
     setSaveError(null);
 
+    const persisted: PersistedBracketPicks = { groupRankings, picks };
+
     try {
-      const savedBracket = await submitCurrentBracket(payload);
-      setLastSavedAt(savedBracket.updatedAt);
-    } catch (error) {
-      const normalizedError = error instanceof Error ? error : new Error("Failed to save bracket.");
-      setSaveError(normalizedError);
-      throw normalizedError;
+      const saved = await submitCurrentBracket(persisted, groupId);
+      setLastSavedAt(saved.updatedAt);
+    } catch (err) {
+      if (err instanceof PickPastLockoutError) {
+        const fresh = await getCurrentBracket();
+        const revertedRankings = { ...groupRankings };
+        for (const g of err.invalidGroups as GroupId[]) {
+          if (fresh?.picks.groupRankings[g]) {
+            revertedRankings[g] = fresh.picks.groupRankings[g];
+          }
+        }
+        const revertedPicks: BracketPicks = { ...picks };
+        for (const m of err.invalidMatches) {
+          if (m.round === "final") {
+            revertedPicks.final = fresh?.picks.picks.final ?? null;
+          } else if (m.round === "third") {
+            revertedPicks.third = fresh?.picks.picks.third ?? null;
+          } else {
+            const round = m.round as PickRound;
+            const prev = fresh?.picks.picks[round]?.[m.index];
+            if (prev !== undefined) {
+              revertedPicks[round] = { ...revertedPicks[round], [m.index]: prev };
+            } else {
+              const next = { ...revertedPicks[round] };
+              delete next[m.index];
+              revertedPicks[round] = next;
+            }
+          }
+        }
+
+        setGroupRankings(revertedRankings);
+        setPicks(revertedPicks);
+
+        try {
+          const retried = await submitCurrentBracket(
+            { groupRankings: revertedRankings, picks: revertedPicks },
+            groupId
+          );
+          setLastSavedAt(retried.updatedAt);
+          setSaveError(
+            new Error("Some picks were locked while editing — your other picks saved.")
+          );
+        } catch (retryErr) {
+          setSaveError(retryErr instanceof Error ? retryErr : new Error(String(retryErr)));
+        }
+      } else {
+        setSaveError(err instanceof Error ? err : new Error(String(err)));
+      }
     } finally {
       setIsSaving(false);
     }
-  }, [groupRankings, picks, user]);
+  }, [groupRankings, picks, user, groupId]);
 
   const value = useMemo<BracketContextValue>(
     () => ({
@@ -199,12 +257,20 @@ export function BracketProvider({ children }: PropsWithChildren) {
       resetGroup,
       setPick,
       setFinal,
-      setThird
+      setThird,
+      isGroupLocked: lockState.isGroupLocked,
+      isMatchLocked: lockState.isMatchLocked,
+      isClockFallback: lockState.isClockFallback,
+      phase: lockState.phase,
+      nextLockAt: lockState.nextLockAt,
+      nextLockLabel: lockState.nextLockLabel,
+      fixturesLoading: lockState.isLoading
     }),
     [
       isCreated, isLoadingSavedBracket, isSaving, lastSavedAt, saveError,
       groupRankings, picks, start, resetAll, saveBracket,
-      moveTeamUp, moveTeamDown, resetGroup, setPick, setFinal, setThird
+      moveTeamUp, moveTeamDown, resetGroup, setPick, setFinal, setThird,
+      lockState
     ]
   );
 
