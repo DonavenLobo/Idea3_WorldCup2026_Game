@@ -89,6 +89,13 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
     setIsLoadingSavedBracket(true);
     setSaveError(null);
 
+    // Schedule the Phase 2 reminder for any authenticated user who opens the
+    // bracket tab — not just users who already have a saved bracket. The
+    // call is idempotent (won't double-schedule) and permission-gated.
+    void scheduleKnockoutReminder().catch(() => {
+      // best-effort — ignore failures
+    });
+
     void getCurrentBracket()
       .then((savedBracket) => {
         if (!isMounted || !savedBracket) return;
@@ -96,9 +103,6 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
         setPicks(savedBracket.picks.picks);
         setIsCreated(true);
         setLastSavedAt(savedBracket.updatedAt);
-        void scheduleKnockoutReminder().catch(() => {
-          // best-effort — ignore failures
-        });
       })
       .catch((error) => {
         if (!isMounted) return;
