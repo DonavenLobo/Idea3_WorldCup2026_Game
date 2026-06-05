@@ -10,6 +10,7 @@ import {
   useBracket
 } from "../../src/features/bracket";
 import type { SubTab } from "../../src/features/bracket";
+import type { SubTabItem } from "../../src/features/bracket/components/SubTabBar";
 import { PhaseHeroCard } from "../../src/features/bracket/components/PhaseHeroCard";
 import { LateJoinerBanner } from "../../src/features/bracket/components/LateJoinerBanner";
 import { useTournamentClock } from "../../src/features/bracket/hooks/useTournamentClock";
@@ -39,6 +40,26 @@ export default function BracketScreen() {
   const lockedMatchCount = fixtures
     ? fixtures.knockouts.filter((k) => isMatchLocked(k.round, k.index)).length
     : 0;
+
+  const allGroupsLocked = lockedGroupCount === GROUP_IDS.length;
+  const isPhase2HintActive = phase === "pre" || phase === "phase1-closing";
+  const allRoundLocked = (round: "r32" | "r16" | "qf" | "sf" | "final" | "third"): boolean => {
+    if (!fixtures) return false;
+    const inRound = fixtures.knockouts.filter((k) => k.round === round);
+    if (inRound.length === 0) return false;
+    return inRound.every((k) => isMatchLocked(round, k.index));
+  };
+
+  const subTabItems: ReadonlyArray<SubTabItem> = [
+    { id: "groups",  label: "Groups",     isLocked: allGroupsLocked },
+    { id: "r32",     label: "R32",        isLocked: allRoundLocked("r32"),  phase2Hint: isPhase2HintActive },
+    { id: "r16",     label: "R16",        isLocked: allRoundLocked("r16"),  phase2Hint: isPhase2HintActive },
+    { id: "qf",      label: "QF",         isLocked: allRoundLocked("qf"),   phase2Hint: isPhase2HintActive },
+    { id: "sf",      label: "SF",         isLocked: allRoundLocked("sf"),   phase2Hint: isPhase2HintActive },
+    { id: "final",   label: "Final",      isLocked: allRoundLocked("final"),phase2Hint: isPhase2HintActive },
+    { id: "third",   label: "3rd",        isLocked: allRoundLocked("third"),phase2Hint: isPhase2HintActive },
+    { id: "summary", label: "My Bracket" }
+  ];
 
   const [subTab, setSubTab] = useState<SubTab>("groups");
   const [groupIndex, setGroupIndex] = useState(0);
@@ -153,7 +174,7 @@ export default function BracketScreen() {
         lockedGroupCount={lockedGroupCount}
         lockedMatchCount={lockedMatchCount}
       />
-      <SubTabBar value={subTab} onChange={setSubTab} />
+      <SubTabBar value={subTab} onChange={setSubTab} items={subTabItems} />
       <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
         {subTab === "groups" && (
           <GroupPicker

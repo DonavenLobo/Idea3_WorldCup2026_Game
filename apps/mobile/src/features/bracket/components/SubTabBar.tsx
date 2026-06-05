@@ -26,9 +26,12 @@ const TABS: readonly SubTabItem[] = [
 interface SubTabBarProps {
   value: SubTab;
   onChange: (next: SubTab) => void;
+  /** Optional override for tab items. Defaults to the internal TABS constant. */
+  items?: ReadonlyArray<SubTabItem>;
 }
 
-export function SubTabBar({ value, onChange }: SubTabBarProps) {
+export function SubTabBar({ value, onChange, items }: SubTabBarProps) {
+  const tabs = items ?? TABS;
   const scrollRef = useRef<ScrollView>(null);
   const positions = useRef<Record<string, number>>({});
 
@@ -48,7 +51,7 @@ export function SubTabBar({ value, onChange }: SubTabBarProps) {
       style={styles.scroll}
       contentContainerStyle={styles.scrollContent}
     >
-      {TABS.map((tab) => {
+      {tabs.map((tab) => {
         const active = tab.id === value;
         return (
           <Pressable
