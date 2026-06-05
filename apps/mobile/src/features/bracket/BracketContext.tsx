@@ -7,6 +7,7 @@ import type { BracketPicks, BracketState, PersistedBracketPicks, PickRound } fro
 import { useBracketLockState } from "./hooks/useBracketLockState";
 import type { KnockoutRoundId } from "./lib/computeBracketLockState";
 import { PickPastLockoutError } from "./types";
+import { scheduleKnockoutReminder } from "./notifications";
 
 function defaultRankings(): Record<GroupId, string[]> {
   const entries = GROUP_IDS.map((g) => [g, [...BRACKET_GROUPS[g]]] as const);
@@ -95,6 +96,9 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
         setPicks(savedBracket.picks.picks);
         setIsCreated(true);
         setLastSavedAt(savedBracket.updatedAt);
+        void scheduleKnockoutReminder().catch(() => {
+          // best-effort — ignore failures
+        });
       })
       .catch((error) => {
         if (!isMounted) return;
