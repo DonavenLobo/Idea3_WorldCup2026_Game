@@ -10,13 +10,36 @@ import {
   useBracket
 } from "../../src/features/bracket";
 import type { SubTab } from "../../src/features/bracket";
+import { PhaseHeroCard } from "../../src/features/bracket/components/PhaseHeroCard";
+import { LateJoinerBanner } from "../../src/features/bracket/components/LateJoinerBanner";
+import { useTournamentClock } from "../../src/features/bracket/hooks/useTournamentClock";
+import { useFixtures } from "../../src/features/bracket/hooks/useFixtures";
 import { colors } from "../../src/theme/colors";
 import { radius } from "../../src/theme/radius";
 import { spacing } from "../../src/theme/spacing";
 import { typography } from "../../src/theme/typography";
 
 export default function BracketScreen() {
-  const { isCreated, start, picks, isLoadingSavedBracket, lastSavedAt } = useBracket();
+  const {
+    isCreated,
+    start,
+    picks,
+    isLoadingSavedBracket,
+    lastSavedAt,
+    phase,
+    nextLockAt,
+    nextLockLabel,
+    isGroupLocked,
+    isMatchLocked
+  } = useBracket();
+  const { now } = useTournamentClock();
+  const { fixtures } = useFixtures();
+
+  const lockedGroupCount = GROUP_IDS.filter(isGroupLocked).length;
+  const lockedMatchCount = fixtures
+    ? fixtures.knockouts.filter((k) => isMatchLocked(k.round, k.index)).length
+    : 0;
+
   const [subTab, setSubTab] = useState<SubTab>("groups");
   const [groupIndex, setGroupIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
@@ -120,6 +143,16 @@ export default function BracketScreen() {
 
   return (
     <View style={styles.root}>
+      <PhaseHeroCard
+        phase={phase}
+        nextLockAt={nextLockAt}
+        nextLockLabel={nextLockLabel}
+        now={now}
+      />
+      <LateJoinerBanner
+        lockedGroupCount={lockedGroupCount}
+        lockedMatchCount={lockedMatchCount}
+      />
       <SubTabBar value={subTab} onChange={setSubTab} />
       <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
         {subTab === "groups" && (
