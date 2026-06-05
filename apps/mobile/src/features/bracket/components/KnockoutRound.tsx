@@ -35,7 +35,7 @@ interface KnockoutRoundProps {
 }
 
 export function KnockoutRound({ round }: KnockoutRoundProps) {
-  const { groupRankings, picks, setPick, setFinal, setThird } = useBracket();
+  const { groupRankings, picks, setPick, setFinal, setThird, isMatchLocked } = useBracket();
 
   let matches: Match[] = [];
   if (round === "r32") matches = getR32Matches(groupRankings);
@@ -81,18 +81,21 @@ export function KnockoutRound({ round }: KnockoutRoundProps) {
         const pick = getPick(m.index);
         const homeSelected = pick !== null && pick === m.home;
         const awaySelected = pick !== null && pick === m.away;
+        const locked = isMatchLocked(round, m.index);
 
         return (
           <View key={m.index} style={styles.matchCard}>
             <Text style={styles.matchLabel}>Match {m.index + 1}</Text>
+            {locked ? <Text style={styles.lockChip}>🔒 LOCKED</Text> : null}
             <View style={styles.matchRow}>
               <Pressable
                 style={[
                   styles.team,
                   homeSelected ? styles.teamSelected : null,
-                  !m.home ? styles.teamDisabled : null
+                  !m.home ? styles.teamDisabled : null,
+                  locked ? styles.teamLocked : null
                 ]}
-                disabled={!m.home}
+                disabled={!m.home || locked}
                 onPress={() => m.home && handlePick(m.index, m.home)}
               >
                 <Text style={styles.teamFlag}>{home?.flagEmoji ?? "?"}</Text>
@@ -110,9 +113,10 @@ export function KnockoutRound({ round }: KnockoutRoundProps) {
                 style={[
                   styles.team,
                   awaySelected ? styles.teamSelected : null,
-                  !m.away ? styles.teamDisabled : null
+                  !m.away ? styles.teamDisabled : null,
+                  locked ? styles.teamLocked : null
                 ]}
-                disabled={!m.away}
+                disabled={!m.away || locked}
                 onPress={() => m.away && handlePick(m.index, m.away)}
               >
                 <Text style={styles.teamFlag}>{away?.flagEmoji ?? "?"}</Text>
@@ -132,6 +136,12 @@ export function KnockoutRound({ round }: KnockoutRoundProps) {
 }
 
 const styles = StyleSheet.create({
+  lockChip: {
+    color: "rgba(255, 248, 234, 0.6)",
+    fontSize: 11,
+    fontWeight: "900",
+    marginBottom: spacing.sm
+  },
   hint: {
     color: "rgba(255, 248, 234, 0.6)",
     fontSize: 14,
@@ -175,6 +185,9 @@ const styles = StyleSheet.create({
   },
   teamDisabled: {
     opacity: 0.4
+  },
+  teamLocked: {
+    opacity: 0.5
   },
   teamFlag: {
     fontSize: 24
