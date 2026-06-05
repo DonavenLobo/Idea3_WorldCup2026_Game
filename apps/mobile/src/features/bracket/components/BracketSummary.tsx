@@ -23,7 +23,7 @@ interface BracketSummaryProps {
 
 export function BracketSummary({ onGroupTap }: BracketSummaryProps) {
   const router = useRouter();
-  const { groupRankings, picks, resetAll, saveBracket, isSaving, lastSavedAt, saveError } = useBracket();
+  const { groupRankings, picks, resetAll, saveBracket, isSaving, lastSavedAt, saveError, phase, isClockFallback } = useBracket();
 
   const champion = picks.final;
   const third = picks.third;
@@ -89,8 +89,26 @@ export function BracketSummary({ onGroupTap }: BracketSummaryProps) {
     );
   };
 
+  const saveButtonLabel = (() => {
+    switch (phase) {
+      case "pre":
+      case "phase1-closing":
+        return isSaving ? "Saving..." : "Save Group Picks";
+      case "between":
+      case "phase2-closing":
+        return isSaving ? "Saving..." : "Save My Bracket";
+      case "complete":
+        return "Tournament Complete";
+    }
+  })();
+
   return (
     <View style={styles.root}>
+      {isClockFallback ? (
+        <Text style={styles.clockBanner}>
+          ⚠️ Couldn't reach server clock — lock times may drift slightly.
+        </Text>
+      ) : null}
       <View style={styles.championCard}>
         <Text style={styles.championLabel}>🏆 CHAMPION</Text>
         <Text style={styles.championFlag}>{nationFlag(champion)}</Text>
@@ -139,12 +157,12 @@ export function BracketSummary({ onGroupTap }: BracketSummaryProps) {
       <Text style={styles.nextStepsHeader}>What&apos;s next?</Text>
 
       <Pressable
-        disabled={isSaving}
-        style={[styles.primaryButton, isSaving ? styles.disabledButton : null]}
+        disabled={isSaving || phase === "complete"}
+        style={[styles.primaryButton, (isSaving || phase === "complete") ? styles.disabledButton : null]}
         onPress={handleSave}
       >
         <Text style={styles.primaryButtonText}>
-          {isSaving ? "Saving..." : "Save My Bracket"}
+          {saveButtonLabel}
         </Text>
       </Pressable>
 
@@ -169,6 +187,13 @@ export function BracketSummary({ onGroupTap }: BracketSummaryProps) {
 }
 
 const styles = StyleSheet.create({
+  clockBanner: {
+    color: "#F0A500",
+    fontSize: 12,
+    fontWeight: "800",
+    marginBottom: spacing.sm,
+    textAlign: "center"
+  },
   championCard: {
     alignItems: "center",
     backgroundColor: colors.cream,
