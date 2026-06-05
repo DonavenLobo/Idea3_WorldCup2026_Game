@@ -1,11 +1,18 @@
 import { useEffect, useRef } from "react";
-import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { SubTab } from "../types";
 import { colors } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
 
-const TABS: readonly { id: SubTab; label: string }[] = [
+export interface SubTabItem {
+  id: SubTab;
+  label: string;
+  isLocked?: boolean;
+  phase2Hint?: boolean;
+}
+
+const TABS: readonly SubTabItem[] = [
   { id: "groups", label: "Groups" },
   { id: "r32", label: "R32" },
   { id: "r16", label: "R16" },
@@ -52,12 +59,16 @@ export function SubTabBar({ value, onChange }: SubTabBarProps) {
             style={[styles.tab, active ? styles.tabActive : null]}
             onPress={() => onChange(tab.id)}
           >
-            <Text
-              style={[styles.label, active ? styles.labelActive : null]}
-              numberOfLines={1}
-            >
-              {tab.label}
-            </Text>
+            <View style={styles.tabInner}>
+              {tab.phase2Hint ? <Text style={styles.eyebrow}>PHASE 2</Text> : null}
+              <Text
+                style={[styles.label, active ? styles.labelActive : null]}
+                numberOfLines={1}
+              >
+                {tab.label}
+                {tab.isLocked ? <Text style={styles.lockIcon}>  🔒</Text> : null}
+              </Text>
+            </View>
           </Pressable>
         );
       })}
@@ -66,6 +77,12 @@ export function SubTabBar({ value, onChange }: SubTabBarProps) {
 }
 
 const styles = StyleSheet.create({
+  eyebrow: {
+    color: colors.gold,
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 1
+  },
   label: {
     color: "rgba(255, 248, 234, 0.65)",
     fontSize: 13,
@@ -73,6 +90,9 @@ const styles = StyleSheet.create({
   },
   labelActive: {
     color: colors.pitch
+  },
+  lockIcon: {
+    fontSize: 11
   },
   scroll: {
     flexGrow: 0,
@@ -95,5 +115,8 @@ const styles = StyleSheet.create({
   },
   tabActive: {
     backgroundColor: colors.gold
+  },
+  tabInner: {
+    alignItems: "center"
   }
 });
