@@ -1,5 +1,12 @@
-import { useState } from "react";
-import { View, StyleSheet, Text } from "react-native";
+import { useEffect, useState } from "react";
+import { View, StyleSheet, Text, useWindowDimensions, type StyleProp, type ViewStyle } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import { PlayerCard, resolveTemplate } from "@world-cup-game/card-renderer";
 import type { PlayerCardRenderTemplate } from "@world-cup-game/card-renderer";
 import { BASE_CARD_STATS } from "@world-cup-game/config";
@@ -10,10 +17,11 @@ import type {
   PlayerCard as PlayerCardData
 } from "@world-cup-game/types";
 import type { PhotoSource } from "../../onboarding";
-import { colors } from "../../../theme/colors";
+import { colors, opacity } from "../../../theme/colors";
 import { startCardGeneration } from "../api/startCardGeneration";
 import { useCardTemplates } from "../hooks/useCardTemplates";
 import { LEVEL_00_SKETCH_TEMPLATE } from "../templates/level00SketchTemplate";
+import { CardStatOverlays } from "./CardStatOverlays";
 import { CardStatusBadge } from "./CardStatusBadge";
 
 interface RenderedPlayerCardProps {
@@ -26,6 +34,7 @@ interface RenderedPlayerCardProps {
   stats?: CardStats;
   templateId?: string | null;
   tier?: CardTier;
+  style?: StyleProp<ViewStyle>;
 }
 
 function resolveCardTemplate(templates: PlayerCardRenderTemplate[], templateId: string) {
@@ -49,8 +58,11 @@ export function RenderedPlayerCard({
   selectedNationCode,
   stats,
   templateId,
-  tier
+  tier,
+  style,
 }: RenderedPlayerCardProps) {
+  const { height: windowHeight } = useWindowDimensions();
+  const maxCardHeight = windowHeight * 0.55;
   const [isRetrying, setIsRetrying] = useState(false);
   const { templates } = useCardTemplates();
   const selectedTemplateId = templateId ?? card?.templateId ?? LEVEL_00_SKETCH_TEMPLATE.id;
@@ -77,26 +89,32 @@ export function RenderedPlayerCard({
       }
     : undefined;
 
+  const resolvedStats = stats ?? card?.stats ?? BASE_CARD_STATS;
+
   return (
-    <View style={styles.cardWrap}>
+    <View style={[styles.cardWrap, { maxHeight: maxCardHeight }, style]}>
       {shouldConceal ? (
         <HiddenCardPlaceholder
           aspectRatio={template.metadata.width / template.metadata.height}
           status={status}
         />
       ) : (
-        <PlayerCard
-          template={template}
-          card={{
-            avatarGeneratedUrl: card?.avatarGeneratedUrl,
-            avatarSourceUrl: card?.avatarSourceUrl ?? photoSource?.uri,
-            displayName: displayName ?? card?.displayName ?? "Rookie",
-            overall: overall ?? card?.overall ?? 50,
-            selectedNationCode: selectedNationCode ?? card?.selectedNationCode ?? "USA",
-            stats: stats ?? card?.stats ?? BASE_CARD_STATS,
-            tier: tier ?? card?.tier ?? "bronze"
-          }}
-        />
+        <View style={styles.cardSurface}>
+          <PlayerCard
+            renderStatValues={false}
+            template={template}
+            card={{
+              avatarGeneratedUrl: card?.avatarGeneratedUrl,
+              avatarSourceUrl: card?.avatarSourceUrl ?? photoSource?.uri,
+              displayName: displayName ?? card?.displayName ?? "Rookie",
+              overall: overall ?? card?.overall ?? 50,
+              selectedNationCode: selectedNationCode ?? card?.selectedNationCode ?? "USA",
+              stats: resolvedStats,
+              tier: tier ?? card?.tier ?? "bronze"
+            }}
+          />
+          <CardStatOverlays stats={resolvedStats} />
+        </View>
       )}
       <CardStatusBadge
         isRetrying={isRetrying}
@@ -129,9 +147,7 @@ function HiddenCardPlaceholder({
       <View style={styles.blurBandMid} />
       <View style={styles.blurBandBottom} />
       <View style={styles.hiddenOverlay}>
-        <View style={styles.questionCircle}>
-          <Text style={styles.questionMark}>?</Text>
-        </View>
+        <PulsingQuestionCircle />
         <Text style={styles.hiddenTitle}>{title}</Text>
         <Text style={styles.hiddenBody}>Your final card stays hidden until the AI version is ready.</Text>
       </View>
@@ -139,14 +155,43 @@ function HiddenCardPlaceholder({
   );
 }
 
+function PulsingQuestionCircle() {
+  const pulse = useSharedValue(1);
+
+  useEffect(() => {
+    pulse.value = withRepeat(
+      withSequence(
+        withTiming(0.35, { duration: 900 }),
+        withTiming(1, { duration: 900 })
+      ),
+      -1,
+      false
+    );
+  }, [pulse]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: pulse.value,
+  }));
+
+  return (
+    <Animated.View style={[styles.questionCircle, animatedStyle]}>
+      <Text style={styles.questionMark}>?</Text>
+    </Animated.View>
+  );
+}
+
 const styles = StyleSheet.create({
+  cardSurface: {
+    position: "relative",
+    width: "100%",
+  },
   cardWrap: {
     alignSelf: "center",
     maxWidth: 420,
     width: "100%"
   },
   blurBandBottom: {
-    backgroundColor: "rgba(12, 59, 46, 0.18)",
+    backgroundColor: opacity.ink15,
     borderRadius: 16,
     bottom: "12%",
     height: "18%",
@@ -155,7 +200,7 @@ const styles = StyleSheet.create({
     right: "16%"
   },
   blurBandMid: {
-    backgroundColor: "rgba(217, 231, 203, 0.72)",
+    backgroundColor: opacity.ink12,
     borderRadius: 24,
     height: "34%",
     left: "18%",
@@ -164,7 +209,7 @@ const styles = StyleSheet.create({
     top: "25%"
   },
   blurBandTop: {
-    backgroundColor: "rgba(255, 248, 234, 0.64)",
+    backgroundColor: opacity.cream70,
     borderRadius: 18,
     height: "16%",
     left: "14%",
@@ -173,7 +218,7 @@ const styles = StyleSheet.create({
     top: "8%"
   },
   hiddenBody: {
-    color: "rgba(255, 248, 234, 0.82)",
+    color: opacity.cream80,
     fontSize: 13,
     fontWeight: "700",
     lineHeight: 18,
@@ -183,8 +228,8 @@ const styles = StyleSheet.create({
   },
   hiddenCard: {
     alignItems: "center",
-    backgroundColor: colors.pitch,
-    borderColor: "rgba(255, 248, 234, 0.5)",
+    backgroundColor: colors.ink,
+    borderColor: opacity.ink30,
     borderRadius: 28,
     borderWidth: 2,
     justifyContent: "center",
@@ -194,7 +239,7 @@ const styles = StyleSheet.create({
   },
   hiddenOverlay: {
     alignItems: "center",
-    backgroundColor: "rgba(12, 59, 46, 0.42)",
+    backgroundColor: opacity.ink70,
     height: "100%",
     justifyContent: "center",
     padding: 24,
@@ -203,7 +248,7 @@ const styles = StyleSheet.create({
   hiddenTitle: {
     color: colors.cream,
     fontSize: 18,
-    fontWeight: "900",
+    fontWeight: "700",
     marginTop: 14,
     textAlign: "center"
   },
@@ -216,9 +261,9 @@ const styles = StyleSheet.create({
     width: 76
   },
   questionMark: {
-    color: colors.pitch,
+    color: colors.ink,
     fontSize: 48,
-    fontWeight: "900",
+    fontWeight: "700",
     lineHeight: 54
   }
 });

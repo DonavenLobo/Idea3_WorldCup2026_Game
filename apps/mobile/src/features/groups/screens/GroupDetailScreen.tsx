@@ -5,8 +5,8 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-nati
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LEADERBOARD_STAGES, SUPPORTED_NATIONS } from "@world-cup-game/config";
 import type { LeaderboardStage } from "@world-cup-game/config";
-import { useSession } from "../../../hooks/useSession";
-import { colors } from "../../../theme/colors";
+import { useSession } from "../../auth/hooks/useSession";
+import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
 import { useGroups } from "../GroupsContext";
@@ -25,15 +25,9 @@ import {
   uniqueCountryCodes
 } from "../../leaderboard";
 import type { CountryFilter, FilterOption } from "../../leaderboard";
+import { getErrorMessage } from "../../../utils/errors";
 
 type DetailTab = "leaderboard" | "members";
-
-function messageFromError(error: unknown, fallback: string): string {
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
-  }
-  return fallback;
-}
 
 function roleLabel(role: GroupMember["role"]): string {
   if (role === "owner") return "Owner";
@@ -125,7 +119,7 @@ export function GroupDetailScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         {detailQuery.error ? (
           <Text style={styles.errorText}>
-            {messageFromError(detailQuery.error, "Could not load this group.")}
+            {getErrorMessage(detailQuery.error, "Could not load this group.")}
           </Text>
         ) : null}
 
@@ -237,7 +231,7 @@ function MembersPanel({
         <Text style={styles.panelStatus}>Loading members...</Text>
       ) : error ? (
         <Text style={styles.panelStatus}>
-          {messageFromError(error, "Could not load members.")}
+          {getErrorMessage(error, "Could not load members.")}
         </Text>
       ) : members.length === 0 ? (
         <Text style={styles.panelStatus}>No members found yet.</Text>
@@ -357,7 +351,7 @@ function GroupLeaderboard({
           <Text style={styles.panelStatus}>Loading leaderboard...</Text>
         ) : leaderboardQuery.error ? (
           <Text style={styles.panelStatus}>
-            {messageFromError(leaderboardQuery.error, "Could not load leaderboard.")}
+            {getErrorMessage(leaderboardQuery.error, "Could not load leaderboard.")}
           </Text>
         ) : rows.length === 0 ? (
           <Text style={styles.panelStatus}>No leaderboard rows yet.</Text>
@@ -381,7 +375,7 @@ function GroupLeaderboard({
 const styles = StyleSheet.create({
   backButton: {
     alignItems: "center",
-    backgroundColor: "rgba(255, 248, 234, 0.12)",
+    backgroundColor: opacity.ink12,
     borderRadius: 999,
     height: 36,
     justifyContent: "center",
@@ -391,28 +385,28 @@ const styles = StyleSheet.create({
     width: 36
   },
   backText: {
-    color: colors.cream,
+    color: colors.ink,
     fontSize: 20,
-    fontWeight: "900"
+    fontWeight: "700"
   },
   colName: {
-    color: "rgba(12, 59, 46, 0.7)",
+    color: opacity.ink60,
     flex: 1,
     fontSize: 13,
-    fontWeight: "900",
+    fontWeight: "700",
     marginLeft: spacing.md + 44
   },
   colRank: {
-    color: "rgba(12, 59, 46, 0.7)",
+    color: opacity.ink60,
     fontSize: 13,
-    fontWeight: "900",
+    fontWeight: "700",
     minWidth: 28,
     textAlign: "center"
   },
   colScore: {
-    color: "rgba(12, 59, 46, 0.7)",
+    color: opacity.ink60,
     fontSize: 13,
-    fontWeight: "900",
+    fontWeight: "700",
     minWidth: 70,
     textAlign: "right"
   },
@@ -422,7 +416,7 @@ const styles = StyleSheet.create({
   },
   copyButton: {
     alignItems: "center",
-    backgroundColor: colors.gold,
+    backgroundColor: colors.red,
     borderRadius: radius.pill,
     justifyContent: "center",
     paddingHorizontal: spacing.lg,
@@ -432,16 +426,16 @@ const styles = StyleSheet.create({
     opacity: 0.5
   },
   copyButtonText: {
-    color: colors.pitch,
+    color: colors.cream,
     fontSize: 13,
-    fontWeight: "900"
+    fontWeight: "700"
   },
   errorText: {
-    backgroundColor: "rgba(184, 48, 48, 0.16)",
-    borderColor: "rgba(255, 248, 234, 0.16)",
+    backgroundColor: opacity.red18,
+    borderColor: opacity.ink15,
     borderRadius: radius.md,
     borderWidth: 1,
-    color: colors.cream,
+    color: colors.red,
     fontSize: 13,
     fontWeight: "700",
     marginBottom: spacing.md,
@@ -453,15 +447,15 @@ const styles = StyleSheet.create({
     marginTop: spacing.md
   },
   groupMeta: {
-    color: "rgba(255, 248, 234, 0.68)",
+    color: opacity.ink60,
     fontSize: 14,
-    fontWeight: "800",
+    fontWeight: "700",
     marginTop: spacing.xs
   },
   groupName: {
-    color: colors.cream,
+    color: colors.ink,
     fontSize: 30,
-    fontWeight: "900",
+    fontWeight: "700",
     letterSpacing: -0.7,
     marginTop: spacing.sm
   },
@@ -473,16 +467,16 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm
   },
   headerSafeArea: {
-    backgroundColor: colors.pitch
+    backgroundColor: colors.cream
   },
   headerTitle: {
-    color: colors.cream,
+    color: colors.ink,
     fontSize: 18,
-    fontWeight: "900"
+    fontWeight: "700"
   },
   hero: {
-    backgroundColor: "rgba(255, 248, 234, 0.08)",
-    borderColor: "rgba(255, 248, 234, 0.16)",
+    backgroundColor: opacity.ink12,
+    borderColor: opacity.ink15,
     borderRadius: radius.lg,
     borderWidth: 1,
     padding: spacing.lg
@@ -497,28 +491,28 @@ const styles = StyleSheet.create({
     padding: spacing.md
   },
   inviteCode: {
-    color: colors.pitch,
+    color: colors.ink,
     fontSize: 24,
-    fontWeight: "900",
+    fontWeight: "700",
     letterSpacing: 2
   },
   inviteLabel: {
-    color: "rgba(12, 59, 46, 0.56)",
+    color: opacity.ink55,
     fontSize: 11,
-    fontWeight: "900",
+    fontWeight: "700",
     letterSpacing: 1,
     textTransform: "uppercase"
   },
   kicker: {
-    color: colors.gold,
+    color: colors.red,
     fontSize: 12,
-    fontWeight: "900",
+    fontWeight: "700",
     letterSpacing: 1.4,
     textTransform: "uppercase"
   },
   memberAvatar: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.cream,
     borderRadius: 999,
     height: 44,
     justifyContent: "center",
@@ -537,26 +531,26 @@ const styles = StyleSheet.create({
     overflow: "hidden"
   },
   memberMeta: {
-    color: "rgba(12, 59, 46, 0.58)",
+    color: opacity.ink55,
     fontSize: 12,
     fontWeight: "700",
     marginTop: 2
   },
   memberName: {
-    color: colors.pitch,
+    color: colors.ink,
     fontSize: 16,
-    fontWeight: "900"
+    fontWeight: "700"
   },
   memberRow: {
     alignItems: "center",
-    borderBottomColor: "rgba(12, 59, 46, 0.08)",
+    borderBottomColor: opacity.ink12,
     borderBottomWidth: 1,
     flexDirection: "row",
     gap: spacing.md,
     padding: spacing.md
   },
   memberRowCurrent: {
-    backgroundColor: "rgba(214, 161, 30, 0.2)"
+    backgroundColor: opacity.red18
   },
   panel: {
     marginTop: spacing.lg
@@ -567,38 +561,38 @@ const styles = StyleSheet.create({
     justifyContent: "space-between"
   },
   panelStatus: {
-    color: colors.pitch,
+    color: colors.ink,
     fontSize: 14,
-    fontWeight: "800",
+    fontWeight: "700",
     padding: spacing.lg,
     textAlign: "center"
   },
   rolePill: {
-    backgroundColor: "rgba(12, 59, 46, 0.1)",
+    backgroundColor: opacity.ink12,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs
   },
   roleText: {
-    color: colors.pitch,
+    color: colors.ink,
     fontSize: 11,
-    fontWeight: "900",
+    fontWeight: "700",
     letterSpacing: 0.4,
     textTransform: "uppercase"
   },
   root: {
-    backgroundColor: colors.pitch,
+    backgroundColor: colors.cream,
     flex: 1
   },
   sectionCount: {
-    color: "rgba(255, 248, 234, 0.64)",
+    color: opacity.ink55,
     fontSize: 13,
-    fontWeight: "900"
+    fontWeight: "700"
   },
   sectionTitle: {
-    color: colors.gold,
+    color: colors.red,
     fontSize: 12,
-    fontWeight: "900",
+    fontWeight: "700",
     letterSpacing: 1.2,
     marginBottom: spacing.sm,
     textTransform: "uppercase"
@@ -610,10 +604,10 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm
   },
   segmentActive: {
-    backgroundColor: colors.gold
+    backgroundColor: colors.red
   },
   segmentRow: {
-    backgroundColor: "rgba(0, 0, 0, 0.18)",
+    backgroundColor: opacity.ink12,
     borderRadius: radius.pill,
     flexDirection: "row",
     gap: spacing.xs,
@@ -621,28 +615,28 @@ const styles = StyleSheet.create({
     padding: 4
   },
   segmentText: {
-    color: "rgba(255, 248, 234, 0.64)",
+    color: opacity.ink55,
     fontSize: 13,
-    fontWeight: "900"
+    fontWeight: "700"
   },
   segmentTextActive: {
-    color: colors.pitch
+    color: colors.cream
   },
   statusText: {
-    color: "rgba(255, 248, 234, 0.75)",
+    color: opacity.ink60,
     fontSize: 14,
-    fontWeight: "800",
+    fontWeight: "700",
     padding: spacing.lg,
     textAlign: "center"
   },
   table: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.cream,
     borderRadius: radius.lg,
     overflow: "hidden"
   },
   tableHeader: {
     alignItems: "center",
-    backgroundColor: "rgba(255, 248, 234, 0.85)",
+    backgroundColor: opacity.ink12,
     borderRadius: radius.sm,
     flexDirection: "row",
     marginTop: spacing.md,

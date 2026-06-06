@@ -7,7 +7,7 @@ import { PlayerCardTemplate } from "./PlayerCardTemplate";
 import { PlayerNameLayer } from "./PlayerNameLayer";
 import { PlayerStatsLayer } from "./PlayerStatsLayer";
 
-export function PlayerCard({ card, template }: PlayerCardRenderData) {
+export function PlayerCard({ card, renderStatValues = true, template }: PlayerCardRenderData) {
   const avatarUrl = card.avatarGeneratedUrl ?? card.avatarSourceUrl;
   const nation = SUPPORTED_NATIONS.find((candidate) => candidate.code === card.selectedNationCode);
   const overallLayer = template.metadata.layers.overall;
@@ -23,7 +23,7 @@ export function PlayerCard({ card, template }: PlayerCardRenderData) {
             {
               color: overallLayer.labelColor ?? overallLayer.color,
               fontSize: overallLabelFontSize,
-              fontWeight: (overallLayer.fontWeight ?? "900") as "900",
+              fontWeight: (overallLayer.fontWeight ?? "700") as "700",
               left: overallLayer.labelX ?? overallLayer.x,
               textAlign: overallLayer.align,
               top: overallLayer.labelY ?? Math.max(0, overallLayer.y - overallLabelFontSize - 6),
@@ -41,7 +41,7 @@ export function PlayerCard({ card, template }: PlayerCardRenderData) {
           {
             color: overallLayer.color,
             fontSize: overallLayer.fontSize,
-            fontWeight: (overallLayer.fontWeight ?? "900") as "900",
+            fontWeight: (overallLayer.fontWeight ?? "700") as "700",
             left: overallLayer.x,
             textAlign: overallLayer.align,
             top: overallLayer.y,
@@ -52,7 +52,9 @@ export function PlayerCard({ card, template }: PlayerCardRenderData) {
         {card.overall}
       </Text>
       <PlayerNameLayer displayName={card.displayName} layer={template.metadata.layers.displayName} />
-      <PlayerStatsLayer stats={card.stats} layer={template.metadata.layers.stats} />
+      {renderStatValues ? (
+        <PlayerStatsLayer stats={card.stats} layer={template.metadata.layers.stats} />
+      ) : null}
       <BadgeLayer
         label={nation?.flagEmoji ?? card.selectedNationCode}
         layer={template.metadata.layers.badge}

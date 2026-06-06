@@ -1,5 +1,5 @@
 export const CARD_RENDERER_COLORS = {
-  fallbackBackground: "#FFF8EA",
-  primaryText: "#3A2A05",
-  accent: "#D6A11E"
+  fallbackBackground: "#f5f0e8",
+  primaryText: "#1a1a2e",
+  accent: "#e63946",
 } as const;

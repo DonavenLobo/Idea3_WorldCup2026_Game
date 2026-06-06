@@ -15,8 +15,8 @@
       "x": 115,
       "y": 210,
       "fontSize": 88,
-      "fontWeight": "800",
-      "color": "#3A2A05"
+      "fontWeight": "700",
+      "color": "#1a1a2e"
     },
     "avatar": {
       "x": 260,
@@ -31,8 +31,8 @@
       "width": 704,
       "height": 100,
       "fontSize": 74,
-      "fontWeight": "900",
-      "color": "#3A2A05",
+      "fontWeight": "700",
+      "color": "#1a1a2e",
       "align": "center"
     },
     "stats": {
@@ -65,7 +65,7 @@
       ],
       "labelFontSize": 44,
       "valueFontSize": 58,
-      "color": "#3A2A05"
+      "color": "#1a1a2e"
     },
     "badge": {
       "x": 460,

@@ -1,11 +1,10 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "expo-router";
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { FlatList, Pressable, StyleSheet, Text } from "react-native";
 import { APP_ROUTES, SUPPORTED_NATIONS } from "@world-cup-game/config";
+import { OnboardingButton, OnboardingInput, OnboardingShell } from "../../src/components/onboarding";
 import { NationRow, useOnboarding } from "../../src/features/onboarding";
-import { colors } from "../../src/theme/colors";
-import { radius } from "../../src/theme/radius";
+import { opacity } from "../../src/theme/colors";
 import { spacing } from "../../src/theme/spacing";
 import { typography } from "../../src/theme/typography";
 
@@ -23,27 +22,39 @@ export default function SelectNationScreen() {
   }, [query]);
 
   return (
-    <SafeAreaView style={styles.root}>
-      <View style={styles.header}>
-        <Text style={styles.eyebrow}>Step 1 of 3</Text>
-        <Text style={styles.tagline}>Build your personalized football card</Text>
-        <Text style={styles.title}>Pick the Tournament Winner</Text>
-      </View>
-
-      <TextInput
+    <OnboardingShell
+      step={1}
+      title="Pick the tournament winner"
+      subtitle="Build your personalised football card"
+      footer={
+        <>
+          <Pressable onPress={() => router.push(APP_ROUTES.auth.signIn)}>
+            <Text style={styles.signInLink}>I already have an account</Text>
+          </Pressable>
+          <OnboardingButton
+            label="Continue"
+            onPress={() => router.push(APP_ROUTES.onboarding.photoBooth)}
+            disabled={!nation}
+            style={styles.cta}
+          />
+        </>
+      }
+    >
+      <OnboardingInput
         style={styles.search}
         placeholder="Search nations"
-        placeholderTextColor="rgba(12, 59, 46, 0.4)"
         value={query}
         onChangeText={setQuery}
         autoCorrect={false}
       />
 
       <FlatList
+        style={styles.list}
         data={filteredNations}
         keyExtractor={(item) => item.code}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={styles.listContent}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={<Text style={styles.empty}>No nations match that search.</Text>}
         renderItem={({ item }) => (
           <NationRow
@@ -53,92 +64,35 @@ export default function SelectNationScreen() {
           />
         )}
       />
-
-      <View style={styles.footer}>
-        <Pressable onPress={() => router.push(APP_ROUTES.auth.signIn)}>
-          <Text style={styles.signInLink}>I already have an account</Text>
-        </Pressable>
-
-        <Pressable
-          style={[styles.button, !nation ? styles.buttonDisabled : null]}
-          onPress={() => router.push(APP_ROUTES.onboarding.photoBooth)}
-          disabled={!nation}
-        >
-          <Text style={styles.buttonText}>Continue</Text>
-        </Pressable>
-      </View>
-    </SafeAreaView>
+    </OnboardingShell>
   );
 }
 
 const styles = StyleSheet.create({
-  button: {
-    alignItems: "center",
-    backgroundColor: colors.pitch,
-    borderRadius: radius.pill,
-    padding: spacing.md
-  },
-  buttonDisabled: {
-    opacity: 0.4
-  },
-  buttonText: {
-    color: colors.cream,
-    fontSize: 17,
-    fontWeight: "900"
+  cta: {
+    marginTop: spacing.md,
   },
   empty: {
-    color: "rgba(12, 59, 46, 0.5)",
-    fontSize: 15,
-    textAlign: "center"
-  },
-  footer: {
-    gap: spacing.md,
-    padding: spacing.lg,
-    paddingTop: spacing.sm
-  },
-  eyebrow: {
-    color: colors.gold,
-    fontSize: 12,
-    fontWeight: "900",
-    letterSpacing: 1.2,
-    textTransform: "uppercase"
-  },
-  header: {
-    gap: spacing.xs,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg
+    ...typography.body,
+    color: opacity.ink55,
+    textAlign: "center",
   },
   list: {
-    padding: spacing.lg
+    flex: 1,
+    marginHorizontal: -spacing.lg,
   },
-  root: {
-    backgroundColor: colors.cream,
-    flex: 1
+  listContent: {
+    paddingBottom: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
   },
   search: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "rgba(12, 59, 46, 0.15)",
-    borderRadius: radius.md,
-    borderWidth: 2,
-    color: colors.pitch,
-    fontSize: 16,
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.md,
-    padding: spacing.md
+    marginBottom: spacing.md,
+    textAlign: "left",
   },
   signInLink: {
-    color: colors.pitch,
-    fontSize: 15,
-    fontWeight: "800",
-    textAlign: "center"
+    ...typography.caption,
+    color: opacity.ink60,
+    textAlign: "center",
   },
-  tagline: {
-    color: "rgba(12, 59, 46, 0.75)",
-    fontSize: 15,
-    fontWeight: "700"
-  },
-  title: {
-    color: colors.pitch,
-    ...typography.display
-  }
 });

@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { SUPPORTED_NATIONS } from "@world-cup-game/config";
+import { formatTeamName, SUPPORTED_NATIONS } from "@world-cup-game/config";
 import { useBracket } from "../BracketContext";
 import {
   getFinalMatch,
@@ -10,7 +10,7 @@ import {
   getThirdPlaceMatch
 } from "../seeding";
 import type { Match, Round } from "../types";
-import { colors } from "../../../theme/colors";
+import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
 
@@ -98,9 +98,9 @@ export function KnockoutRound({ round }: KnockoutRoundProps) {
                 <Text style={styles.teamFlag}>{home?.flagEmoji ?? "?"}</Text>
                 <Text
                   style={[styles.teamName, homeSelected ? styles.teamNameSelected : null]}
-                  numberOfLines={1}
+                  numberOfLines={2}
                 >
-                  {home?.name ?? "TBD"}
+                  {home?.name ? formatTeamName(home.name) : "TBD"}
                 </Text>
               </Pressable>
 
@@ -118,9 +118,9 @@ export function KnockoutRound({ round }: KnockoutRoundProps) {
                 <Text style={styles.teamFlag}>{away?.flagEmoji ?? "?"}</Text>
                 <Text
                   style={[styles.teamName, awaySelected ? styles.teamNameSelected : null]}
-                  numberOfLines={1}
+                  numberOfLines={2}
                 >
-                  {away?.name ?? "TBD"}
+                  {away?.name ? formatTeamName(away.name) : "TBD"}
                 </Text>
               </Pressable>
             </View>
@@ -133,15 +133,15 @@ export function KnockoutRound({ round }: KnockoutRoundProps) {
 
 const styles = StyleSheet.create({
   hint: {
-    color: "rgba(255, 248, 234, 0.6)",
+    color: opacity.ink55,
     fontSize: 14,
     fontStyle: "italic",
     marginBottom: spacing.md,
     paddingHorizontal: spacing.lg
   },
   matchCard: {
-    backgroundColor: "rgba(255, 248, 234, 0.06)",
-    borderColor: "rgba(255, 248, 234, 0.12)",
+    backgroundColor: opacity.ink12,
+    borderColor: opacity.ink15,
     borderRadius: radius.lg,
     borderWidth: 1,
     marginBottom: spacing.md,
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     padding: spacing.md
   },
   matchLabel: {
-    color: "rgba(255, 248, 234, 0.6)",
+    color: opacity.ink55,
     fontSize: 12,
     fontWeight: "700",
     marginBottom: spacing.sm
@@ -164,8 +164,8 @@ const styles = StyleSheet.create({
   },
   team: {
     alignItems: "center",
-    backgroundColor: "rgba(255, 248, 234, 0.05)",
-    borderColor: "rgba(255, 248, 234, 0.15)",
+    backgroundColor: opacity.ink12,
+    borderColor: opacity.ink15,
     borderRadius: radius.md,
     borderWidth: 2,
     flex: 1,
@@ -180,28 +180,28 @@ const styles = StyleSheet.create({
     fontSize: 24
   },
   teamName: {
-    color: colors.cream,
+    color: colors.ink,
     fontSize: 13,
     fontWeight: "700",
     textAlign: "center"
   },
   teamNameSelected: {
-    color: colors.gold
+    color: colors.red
   },
   teamSelected: {
-    backgroundColor: "rgba(214, 161, 30, 0.12)",
-    borderColor: colors.gold
+    backgroundColor: opacity.red18,
+    borderColor: colors.red
   },
   title: {
-    color: colors.cream,
+    color: colors.ink,
     fontSize: 22,
-    fontWeight: "900",
+    fontWeight: "700",
     marginBottom: spacing.md,
     paddingHorizontal: spacing.lg
   },
   vs: {
-    color: "rgba(255, 248, 234, 0.55)",
+    color: opacity.ink55,
     fontSize: 12,
-    fontWeight: "900"
+    fontWeight: "700"
   }
 });

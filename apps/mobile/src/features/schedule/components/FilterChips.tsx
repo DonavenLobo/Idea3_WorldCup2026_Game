@@ -1,13 +1,12 @@
-import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
-import { colors } from "../../../theme/colors";
-import { radius } from "../../../theme/radius";
+import { ScrollView, StyleSheet } from "react-native";
+import { FilterPill } from "../../../components/brand/FilterPill";
 import { spacing } from "../../../theme/spacing";
 import type { ScheduleFilter } from "../types";
 
 const BASE_CHIPS: { key: ScheduleFilter; label: string }[] = [
   { key: "all", label: "All" },
   { key: "group", label: "Group stage" },
-  { key: "knockouts", label: "Knockouts" }
+  { key: "knockouts", label: "Knockouts" },
 ];
 
 interface FilterChipsProps {
@@ -25,45 +24,31 @@ export function FilterChips({ value, onChange, showMyTeam }: FilterChipsProps) {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
+      style={styles.scroll}
       contentContainerStyle={styles.row}
     >
-      {chips.map((chip) => {
-        const active = chip.key === value;
-        return (
-          <Pressable
-            key={chip.key}
-            onPress={() => onChange(chip.key)}
-            style={[styles.chip, active ? styles.chipActive : null]}
-          >
-            <Text style={[styles.label, active ? styles.labelActive : null]}>{chip.label}</Text>
-          </Pressable>
-        );
-      })}
+      {chips.map((chip) => (
+        <FilterPill
+          key={chip.key}
+          label={chip.label}
+          selected={chip.key === value}
+          onPress={() => onChange(chip.key)}
+        />
+      ))}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  chip: {
-    backgroundColor: "rgba(255, 248, 234, 0.08)",
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm
-  },
-  chipActive: {
-    backgroundColor: colors.gold
-  },
-  label: {
-    color: "rgba(255, 248, 234, 0.75)",
-    fontSize: 13,
-    fontWeight: "800"
-  },
-  labelActive: {
-    color: colors.pitch
-  },
   row: {
+    alignItems: "center",
     gap: spacing.sm,
+    paddingBottom: spacing.md,
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md
-  }
+    paddingTop: spacing.sm,
+  },
+  scroll: {
+    flexGrow: 0,
+    flexShrink: 0,
+  },
 });

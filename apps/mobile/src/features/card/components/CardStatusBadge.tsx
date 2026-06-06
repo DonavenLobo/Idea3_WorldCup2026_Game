@@ -1,5 +1,6 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import type { CardStatus } from "@world-cup-game/types";
+import { colors, opacity } from "../../../theme/colors";
 
 interface CardStatusBadgeProps {
   isRetrying?: boolean;
@@ -11,7 +12,7 @@ export function CardStatusBadge({ isRetrying, onRetry, status }: CardStatusBadge
   if (status === "generating_avatar") {
     return (
       <View style={styles.badge}>
-        <ActivityIndicator size="small" color="#FFF8EA" />
+        <ActivityIndicator size="small" color={colors.cream} />
         <Text style={styles.text}>Generating your card...</Text>
       </View>
     );
@@ -29,7 +30,7 @@ export function CardStatusBadge({ isRetrying, onRetry, status }: CardStatusBadge
           pressed && onRetry ? styles.pressed : null
         ]}
       >
-        {isRetrying ? <ActivityIndicator size="small" color="#FFF8EA" /> : null}
+        {isRetrying ? <ActivityIndicator size="small" color={colors.cream} /> : null}
         <Text style={styles.text}>{onRetry ? "Retry generation" : "Generation failed"}</Text>
       </Pressable>
     );
@@ -38,7 +39,7 @@ export function CardStatusBadge({ isRetrying, onRetry, status }: CardStatusBadge
   if (status === "moderation_rejected") {
     return (
       <View style={[styles.badge, styles.error]}>
-        <Text style={styles.text}>Photo not accepted - try another</Text>
+        <Text style={styles.text}>Photo not accepted — try another</Text>
       </View>
     );
   }
@@ -50,7 +51,7 @@ const styles = StyleSheet.create({
   badge: {
     alignItems: "center",
     alignSelf: "center",
-    backgroundColor: "rgba(12, 59, 46, 0.85)",
+    backgroundColor: opacity.ink85,
     borderRadius: 999,
     flexDirection: "row",
     gap: 8,
@@ -59,14 +60,14 @@ const styles = StyleSheet.create({
     paddingVertical: 8
   },
   error: {
-    backgroundColor: "rgba(140, 30, 30, 0.9)"
+    backgroundColor: colors.red
   },
   pressed: {
     opacity: 0.82
   },
   text: {
-    color: "#FFF8EA",
+    color: colors.cream,
+    fontFamily: "Inter_600SemiBold",
     fontSize: 13,
-    fontWeight: "900"
   }
 });

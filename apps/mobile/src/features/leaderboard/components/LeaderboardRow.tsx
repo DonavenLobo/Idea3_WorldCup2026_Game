@@ -1,7 +1,13 @@
 import { StyleSheet, Text, View } from "react-native";
 import { SUPPORTED_NATIONS } from "@world-cup-game/config";
-import { colors } from "../../../theme/colors";
+import { colors, opacity } from "../../../theme/colors";
+import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
+import { typography } from "../../../theme/typography";
+
+const RANK_WIDTH = 32;
+const FLAG_SIZE = 32;
+const SCORE_WIDTH = 72;
 
 interface LeaderboardRowProps {
   rank: number;
@@ -21,78 +27,87 @@ export function LeaderboardRow({
   displayName,
   countryCode,
   score,
-  isCurrentUser
+  isCurrentUser,
 }: LeaderboardRowProps) {
+  const textStyle = isCurrentUser ? styles.textCurrent : styles.textDefault;
+
   return (
-    <View style={[styles.row, isCurrentUser ? styles.rowCurrent : null]}>
-      <Text style={[styles.rank, isCurrentUser ? styles.textCurrent : null]}>{rank}</Text>
-      <View style={styles.divider} />
-      <View style={styles.avatar}>
-        <Text style={styles.avatarFlag}>{flagFor(countryCode)}</Text>
+    <View style={styles.wrap}>
+      <View style={[styles.row, isCurrentUser ? styles.rowCurrent : styles.rowDefault]}>
+        <Text style={[styles.rank, textStyle]}>{rank}</Text>
+        <View style={styles.flagCircle}>
+          <Text style={styles.flag}>{flagFor(countryCode)}</Text>
+        </View>
+        <Text style={[styles.name, textStyle]} numberOfLines={1}>
+          {displayName}
+        </Text>
+        <Text style={[styles.score, textStyle]}>{score}</Text>
       </View>
-      <Text
-        style={[styles.name, isCurrentUser ? styles.textCurrent : null]}
-        numberOfLines={1}
-      >
-        {displayName}
-      </Text>
-      <Text style={[styles.score, isCurrentUser ? styles.textCurrent : null]}>{score}</Text>
     </View>
   );
 }
 
+export const leaderboardRowMetrics = {
+  rankWidth: RANK_WIDTH,
+  flagSize: FLAG_SIZE,
+  scoreWidth: SCORE_WIDTH,
+  horizontalMargin: spacing.md,
+  rowGap: spacing.sm,
+} as const;
+
 const styles = StyleSheet.create({
-  avatar: {
+  flag: {
+    fontSize: 18,
+  },
+  flagCircle: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 999,
-    height: 36,
+    backgroundColor: colors.cream,
+    borderRadius: FLAG_SIZE / 2,
+    height: FLAG_SIZE,
     justifyContent: "center",
-    marginRight: spacing.sm,
-    width: 36
-  },
-  avatarFlag: {
-    fontSize: 20
-  },
-  divider: {
-    backgroundColor: "rgba(12, 59, 46, 0.15)",
-    height: 28,
-    marginHorizontal: spacing.sm,
-    width: 1
+    marginLeft: spacing.sm,
+    width: FLAG_SIZE,
   },
   name: {
-    color: colors.pitch,
+    ...typography.label,
     flex: 1,
-    fontSize: 17,
-    fontWeight: "900"
+    marginLeft: spacing.sm,
+    minWidth: 0,
   },
   rank: {
-    color: colors.pitch,
-    fontSize: 16,
-    fontWeight: "900",
-    minWidth: 28,
-    textAlign: "center"
+    ...typography.label,
+    fontVariant: ["tabular-nums"],
+    textAlign: "left",
+    width: RANK_WIDTH,
   },
   row: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderBottomColor: "rgba(12, 59, 46, 0.08)",
-    borderBottomWidth: 1,
+    borderRadius: radius.button,
     flexDirection: "row",
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm
+    paddingVertical: spacing.md,
   },
   rowCurrent: {
-    backgroundColor: colors.gold
+    backgroundColor: colors.red,
+  },
+  rowDefault: {
+    backgroundColor: colors.cream,
   },
   score: {
-    color: colors.pitch,
-    fontSize: 17,
-    fontWeight: "900",
-    minWidth: 50,
-    textAlign: "right"
+    ...typography.label,
+    fontVariant: ["tabular-nums"],
+    marginLeft: spacing.sm,
+    textAlign: "right",
+    width: SCORE_WIDTH,
   },
   textCurrent: {
-    color: colors.pitch
-  }
+    color: colors.cream,
+  },
+  textDefault: {
+    color: colors.ink,
+  },
+  wrap: {
+    marginBottom: spacing.sm,
+    marginHorizontal: spacing.md,
+  },
 });

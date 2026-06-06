@@ -33,7 +33,7 @@ export function PlayerStatsLayer({ stats, layer }: PlayerStatsLayerProps) {
                 {
                   color: layer.color,
                   fontSize: layer.valueFontSize,
-                  fontWeight: (layer.fontWeight ?? "900") as "900",
+                  fontWeight: (layer.fontWeight ?? "700") as "700",
                   textAlign: layer.align
                 }
               ]}
@@ -54,13 +54,13 @@ export function PlayerStatsLayer({ stats, layer }: PlayerStatsLayerProps) {
 
 const styles = StyleSheet.create({
   label: {
-    fontWeight: "800"
+    fontWeight: "700"
   },
   stat: {
     alignItems: "center",
     position: "absolute"
   },
   value: {
-    fontWeight: "900"
+    fontWeight: "700"
   }
 });

@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { SectionList, StyleSheet, Text, View } from "react-native";
-import { colors } from "../../../theme/colors";
+import { colors, opacity } from "../../../theme/colors";
 import { spacing } from "../../../theme/spacing";
 import { useSchedule } from "../hooks/useSchedule";
 import type { ScheduleFilter } from "../types";
-import { DaySectionHeader } from "./DaySectionHeader";
-import { FilterChips } from "./FilterChips";
-import { FixtureRow } from "./FixtureRow";
-import { StadiumDetailSheet } from "./StadiumDetailSheet";
+import { DaySectionHeader } from "../components/DaySectionHeader";
+import { FilterChips } from "../components/FilterChips";
+import { FixtureRow } from "../components/FixtureRow";
+import { StadiumDetailSheet } from "../components/StadiumDetailSheet";
 
 export function ScheduleScreen() {
   const [filter, setFilter] = useState<ScheduleFilter>("all");
@@ -24,12 +24,20 @@ export function ScheduleScreen() {
     <View style={styles.root}>
       <FilterChips value={filter} onChange={setFilter} showMyTeam={showMyTeam} />
       <SectionList
+        key={filter}
+        style={styles.list}
         sections={sections}
         keyExtractor={(item) => String(item.num)}
         renderItem={({ item }) => (
           <FixtureRow fixture={item} timeZone={timeZone} onVenuePress={setVenueCity} />
         )}
-        renderSectionHeader={({ section }) => <DaySectionHeader title={section.title} />}
+        renderSectionHeader={({ section }) => (
+          <DaySectionHeader
+            title={section.title}
+            isFirst={sections[0]?.title === section.title}
+          />
+        )}
+        ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
         stickySectionHeadersEnabled={false}
         contentContainerStyle={styles.content}
         ListEmptyComponent={<Text style={styles.empty}>No matches for this filter.</Text>}
@@ -40,17 +48,23 @@ export function ScheduleScreen() {
 }
 
 const styles = StyleSheet.create({
+  itemSeparator: {
+    height: spacing.sm,
+  },
+  list: {
+    flex: 1,
+  },
   content: {
-    paddingBottom: spacing.xl
+    paddingBottom: spacing.xl,
   },
   empty: {
-    color: "rgba(255, 248, 234, 0.6)",
+    color: opacity.ink55,
     fontSize: 14,
     padding: spacing.xl,
     textAlign: "center"
   },
   root: {
-    backgroundColor: colors.pitch,
+    backgroundColor: colors.cream,
     flex: 1
   }
 });

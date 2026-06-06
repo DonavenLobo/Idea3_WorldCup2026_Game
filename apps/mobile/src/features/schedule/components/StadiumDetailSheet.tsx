@@ -1,6 +1,6 @@
 import { Alert, Linking, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { getStadiumByCity } from "@world-cup-game/config";
-import { colors } from "../../../theme/colors";
+import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
 import { mapsUrl } from "../utils";
@@ -61,30 +61,30 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end"
   },
   city: {
-    color: "rgba(255, 248, 234, 0.7)",
+    color: opacity.ink60,
     fontSize: 14,
     fontWeight: "700",
     marginTop: spacing.xs
   },
   mapsButton: {
     alignItems: "center",
-    backgroundColor: colors.gold,
+    backgroundColor: colors.red,
     borderRadius: radius.pill,
     marginTop: spacing.lg,
     paddingVertical: spacing.md
   },
   mapsLabel: {
-    color: colors.pitch,
+    color: colors.cream,
     fontSize: 15,
-    fontWeight: "900"
+    fontWeight: "700"
   },
   meta: {
     flex: 1
   },
   metaLabel: {
-    color: "rgba(255, 248, 234, 0.55)",
+    color: opacity.ink55,
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: "700",
     letterSpacing: 1,
     textTransform: "uppercase"
   },
@@ -94,18 +94,18 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg
   },
   metaValue: {
-    color: colors.cream,
+    color: colors.ink,
     fontSize: 16,
-    fontWeight: "900",
+    fontWeight: "700",
     marginTop: 2
   },
   name: {
-    color: colors.cream,
+    color: colors.ink,
     fontSize: 22,
-    fontWeight: "900"
+    fontWeight: "700"
   },
   sheet: {
-    backgroundColor: colors.pitch,
+    backgroundColor: colors.cream,
     borderTopLeftRadius: radius.lg,
     borderTopRightRadius: radius.lg,
     padding: spacing.xl

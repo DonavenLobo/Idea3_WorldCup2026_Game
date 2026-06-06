@@ -11,6 +11,10 @@
     ],
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "backgroundColor": "#f5f0e8",
+    "splash": {
+      "backgroundColor": "#f5f0e8"
+    },
     "ios": {
       "bundleIdentifier": "com.ivs.gogaffa",
       "buildNumber": "1",
@@ -35,6 +39,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-font",
       "expo-secure-store",
       "expo-notifications",
       [

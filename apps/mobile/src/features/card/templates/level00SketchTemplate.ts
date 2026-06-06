@@ -25,8 +25,8 @@ export const LEVEL_00_SKETCH_METADATA = {
       y: 185,
       width: 150,
       fontSize: 84,
-      fontWeight: "900",
-      color: "#2C2923",
+      fontWeight: "700",
+      color: "#1a1a2e",
       align: "center",
       label: "OVR",
       labelFontSize: 26,
@@ -46,8 +46,8 @@ export const LEVEL_00_SKETCH_METADATA = {
       width: 614,
       height: 70,
       fontSize: 46,
-      fontWeight: "900",
-      color: "#2C2923",
+      fontWeight: "700",
+      color: "#1a1a2e",
       align: "center"
     },
     stats: {
@@ -63,8 +63,8 @@ export const LEVEL_00_SKETCH_METADATA = {
       ],
       labelFontSize: 0,
       valueFontSize: 42,
-      fontWeight: "900",
-      color: "#2C2923",
+      fontWeight: "700",
+      color: "#1a1a2e",
       align: "center",
       showLabels: false
     },
@@ -75,7 +75,7 @@ export const LEVEL_00_SKETCH_METADATA = {
       height: 132,
       fontSize: 76,
       backgroundColor: "transparent",
-      color: "#2C2923"
+      color: "#1a1a2e"
     }
   }
 } satisfies CardTemplateMetadata;

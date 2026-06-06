@@ -16,7 +16,7 @@ export function PlayerNameLayer({ displayName, layer }: PlayerNameLayerProps) {
         {
           color: layer.color,
           fontSize: layer.fontSize,
-          fontWeight: layer.fontWeight as "900",
+          fontWeight: layer.fontWeight as "700",
           height: layer.height,
           left: layer.x,
           textAlign: layer.align,

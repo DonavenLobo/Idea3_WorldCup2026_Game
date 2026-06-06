@@ -1,8 +1,9 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { PlayerCard } from "@world-cup-game/card-renderer";
 import { LEVEL_00_SKETCH_TEMPLATE } from "../../src/features/card/templates/level00SketchTemplate";
-import { colors } from "../../src/theme/colors";
+import { colors, opacity } from "../../src/theme/colors";
 import { spacing } from "../../src/theme/spacing";
+import { typography } from "../../src/theme/typography";
 
 const TEST_AVATAR_SVG = encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 780">
@@ -58,18 +59,18 @@ const styles = StyleSheet.create({
     padding: spacing.lg
   },
   root: {
-    backgroundColor: colors.pitch,
+    backgroundColor: colors.cream,
     flex: 1
   },
   subtitle: {
-    color: "rgba(255, 248, 234, 0.7)",
+    color: opacity.ink70,
+    fontFamily: "Inter_400Regular",
     fontSize: 14,
     textAlign: "center"
   },
   title: {
-    color: colors.cream,
-    fontSize: 28,
-    fontWeight: "900",
-    textAlign: "center"
-  }
+    ...typography.titleScreen,
+    color: colors.ink,
+    textAlign: "center",
+  },
 });

@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { CosmeticItem } from "@world-cup-game/config";
-import { colors } from "../../../theme/colors";
+import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
 
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   card: {
     alignItems: "center",
     backgroundColor: colors.cream,
-    borderColor: "rgba(12, 59, 46, 0.12)",
+    borderColor: opacity.ink12,
     borderRadius: radius.md,
     borderWidth: 2,
     flex: 1,
@@ -63,18 +63,18 @@ const styles = StyleSheet.create({
     opacity: 0.5
   },
   cardOwned: {
-    backgroundColor: "rgba(214, 161, 30, 0.18)",
-    borderColor: colors.gold
+    backgroundColor: opacity.red18,
+    borderColor: colors.red
   },
   locked: {
-    color: "rgba(12, 59, 46, 0.55)",
+    color: opacity.ink55,
     fontSize: 10,
-    fontWeight: "900",
+    fontWeight: "700",
     marginTop: 2
   },
   mark: {
     alignItems: "center",
-    backgroundColor: "rgba(12, 59, 46, 0.08)",
+    backgroundColor: opacity.ink12,
     borderRadius: radius.pill,
     height: 34,
     justifyContent: "center",
@@ -83,26 +83,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xs
   },
   markText: {
-    color: colors.pitch,
+    color: colors.ink,
     fontSize: 13,
-    fontWeight: "900"
+    fontWeight: "700"
   },
   name: {
-    color: colors.pitch,
+    color: colors.ink,
     fontSize: 12,
-    fontWeight: "800",
+    fontWeight: "700",
     textAlign: "center"
   },
   owned: {
-    color: colors.gold,
+    color: colors.red,
     fontSize: 10,
-    fontWeight: "900",
+    fontWeight: "700",
     marginTop: 2
   },
   price: {
-    color: colors.pitch,
+    color: colors.ink,
     fontSize: 11,
-    fontWeight: "900",
+    fontWeight: "700",
     marginTop: 2
   }
 });

@@ -1,8 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
 import type { UserProfile } from "@world-cup-game/types";
-import { getCardUploadDisplayUrl } from "../lib/imageUpload";
-import { supabase } from "../lib/supabase";
-import { useSession } from "./useSession";
+import { getCardUploadDisplayUrl } from "../../../lib/imageUpload";
+import { supabase } from "../../../lib/supabase";
 
 interface ProfileRow {
   id: string;
@@ -91,19 +89,4 @@ export async function upsertCurrentProfile(input: UpsertProfileInput): Promise<U
   }
 
   return mapProfileRow(data);
-}
-
-export function useProfile() {
-  const { user, isLoading: isSessionLoading } = useSession();
-  const query = useQuery({
-    enabled: !isSessionLoading && Boolean(user),
-    queryFn: getCurrentProfile,
-    queryKey: ["profile", user?.id]
-  });
-
-  return {
-    error: query.error,
-    isLoading: isSessionLoading || query.isLoading,
-    profile: query.data ?? null
-  };
 }

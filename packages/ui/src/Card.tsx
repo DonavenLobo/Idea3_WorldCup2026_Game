@@ -1,24 +1,29 @@
 import type { ReactNode } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 
 export interface CardProps {
   children: ReactNode;
+  variant?: "surface" | "outlined";
+  style?: StyleProp<ViewStyle>;
 }
 
-export function Card({ children }: CardProps) {
-  return <View style={styles.card}>{children}</View>;
+export function Card({ children, variant = "surface", style }: CardProps) {
+  return (
+    <View style={[styles.card, variant === "outlined" && styles.outlined, style]}>
+      {children}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#FFF8EA",
-    borderColor: "rgba(12, 59, 46, 0.12)",
-    borderRadius: 28,
-    borderWidth: 1,
-    padding: 20,
-    shadowColor: "#0C3B2E",
-    shadowOffset: { height: 8, width: 0 },
-    shadowOpacity: 0.12,
-    shadowRadius: 24
-  }
+    backgroundColor: "rgba(26, 26, 46, 0.12)",
+    borderRadius: 16,
+    padding: 16,
+  },
+  outlined: {
+    backgroundColor: "#f5f0e8",
+    borderColor: "#e63946",
+    borderWidth: 2,
+  },
 });

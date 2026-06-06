@@ -7,7 +7,7 @@ export interface LoadingStateProps {
 export function LoadingState({ label }: LoadingStateProps) {
   return (
     <View style={styles.root}>
-      <ActivityIndicator color="#0C3B2E" />
+      <ActivityIndicator color="#e63946" />
       <Text style={styles.label}>{label}</Text>
     </View>
   );
@@ -15,13 +15,13 @@ export function LoadingState({ label }: LoadingStateProps) {
 
 const styles = StyleSheet.create({
   label: {
-    color: "#0C3B2E",
+    color: "#1a1a2e",
     fontSize: 15,
-    fontWeight: "700"
+    fontWeight: "600",
   },
   root: {
     alignItems: "center",
     gap: 12,
-    padding: 24
-  }
+    padding: 24,
+  },
 });

@@ -1,21 +1,36 @@
-import { StyleSheet, Text } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { colors } from "../../../theme/colors";
 import { spacing } from "../../../theme/spacing";
+import { typography } from "../../../theme/typography";
 
-export function DaySectionHeader({ title }: { title: string }) {
-  return <Text style={styles.header}>{title}</Text>;
+export function DaySectionHeader({
+  title,
+  isFirst = false,
+}: {
+  title: string;
+  isFirst?: boolean;
+}) {
+  return (
+    <View style={[styles.wrap, isFirst ? styles.wrapFirst : null]}>
+      <Text style={styles.header}>{title}</Text>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: colors.pitch,
-    color: colors.gold,
-    fontSize: 13,
-    fontWeight: "900",
+    ...typography.label,
+    color: colors.red,
     letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  wrap: {
+    backgroundColor: colors.cream,
+    paddingBottom: spacing.sm,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
-    paddingBottom: spacing.sm,
-    textTransform: "uppercase"
-  }
+  },
+  wrapFirst: {
+    paddingTop: spacing.md,
+  },
 });

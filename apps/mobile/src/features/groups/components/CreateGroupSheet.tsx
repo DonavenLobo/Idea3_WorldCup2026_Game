@@ -12,9 +12,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { GroupVisibility } from "@world-cup-game/config";
-import { colors } from "../../../theme/colors";
+import { BrandButton } from "../../../components/brand";
+import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
+import { typography } from "../../../theme/typography";
 
 interface CreateGroupSheetProps {
   visible: boolean;
@@ -75,7 +77,7 @@ export function CreateGroupSheet({ visible, onDismiss, onSubmit }: CreateGroupSh
               <TextInput
                 style={styles.input}
                 placeholder="Sunday Squad"
-                placeholderTextColor="rgba(12, 59, 46, 0.4)"
+                placeholderTextColor={opacity.ink35}
                 value={name}
                 onChangeText={setName}
                 autoCapitalize="words"
@@ -105,13 +107,12 @@ export function CreateGroupSheet({ visible, onDismiss, onSubmit }: CreateGroupSh
               </View>
             </View>
 
-            <Pressable
-              style={[styles.submit, !canSubmit ? styles.submitDisabled : null]}
+            <BrandButton
+              label="Create Group"
               onPress={handleSubmit}
               disabled={!canSubmit}
-            >
-              <Text style={styles.submitText}>Create Group</Text>
-            </Pressable>
+              style={styles.submit}
+            />
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -147,29 +148,29 @@ function VisibilityChip({
 
 const chipStyles = StyleSheet.create({
   active: {
-    backgroundColor: colors.gold,
-    borderColor: colors.gold
+    backgroundColor: colors.red,
+    borderColor: colors.red
   },
   description: {
-    color: "rgba(255, 248, 234, 0.6)",
+    color: opacity.ink55,
     fontSize: 12,
     fontWeight: "700",
     marginTop: 2
   },
   descriptionActive: {
-    color: "rgba(12, 59, 46, 0.7)"
+    color: opacity.cream75
   },
   label: {
-    color: colors.cream,
+    color: colors.ink,
     fontSize: 16,
-    fontWeight: "900"
+    fontWeight: "700"
   },
   labelActive: {
-    color: colors.pitch
+    color: colors.cream
   },
   root: {
-    backgroundColor: "rgba(255, 248, 234, 0.08)",
-    borderColor: "rgba(255, 248, 234, 0.15)",
+    backgroundColor: opacity.ink12,
+    borderColor: opacity.ink15,
     borderRadius: 14,
     borderWidth: 2,
     flex: 1,
@@ -179,7 +180,7 @@ const chipStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
   cancel: {
-    color: colors.cream,
+    color: colors.ink,
     fontSize: 16,
     fontWeight: "700"
   },
@@ -188,15 +189,13 @@ const styles = StyleSheet.create({
   },
   counter: {
     alignSelf: "flex-end",
-    color: "rgba(255, 248, 234, 0.5)",
+    color: opacity.ink35,
     fontSize: 12,
     marginTop: 4
   },
   eyebrow: {
-    color: colors.gold,
-    fontSize: 12,
-    fontWeight: "900",
-    letterSpacing: 1.2
+    ...typography.eyebrow,
+    color: colors.red,
   },
   header: {
     alignItems: "center",
@@ -206,15 +205,14 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md
   },
   heading: {
-    color: colors.cream,
-    fontSize: 26,
-    fontWeight: "900",
-    marginTop: spacing.xs
+    ...typography.sectionHeading,
+    color: colors.ink,
+    marginTop: spacing.xs,
   },
   input: {
     backgroundColor: colors.cream,
     borderRadius: radius.md,
-    color: colors.pitch,
+    color: colors.ink,
     fontSize: 18,
     fontWeight: "700",
     marginTop: spacing.xs,
@@ -224,14 +222,14 @@ const styles = StyleSheet.create({
     flex: 1
   },
   label: {
-    color: "rgba(255, 248, 234, 0.7)",
+    color: opacity.ink60,
     fontSize: 13,
-    fontWeight: "900",
+    fontWeight: "700",
     letterSpacing: 0.6,
     textTransform: "uppercase"
   },
   root: {
-    backgroundColor: colors.pitch,
+    backgroundColor: colors.cream,
     flex: 1
   },
   section: {
@@ -241,29 +239,17 @@ const styles = StyleSheet.create({
     width: 60
   },
   subhead: {
-    color: "rgba(255, 248, 234, 0.7)",
+    color: opacity.ink60,
     fontSize: 14,
     marginTop: spacing.xs
   },
   submit: {
-    alignItems: "center",
-    backgroundColor: colors.gold,
-    borderRadius: radius.pill,
     marginTop: spacing.xl,
-    padding: spacing.md
-  },
-  submitDisabled: {
-    opacity: 0.4
-  },
-  submitText: {
-    color: colors.pitch,
-    fontSize: 17,
-    fontWeight: "900"
   },
   title: {
-    color: colors.cream,
+    color: colors.ink,
     fontSize: 18,
-    fontWeight: "900"
+    fontWeight: "700"
   },
   toggleRow: {
     flexDirection: "row",

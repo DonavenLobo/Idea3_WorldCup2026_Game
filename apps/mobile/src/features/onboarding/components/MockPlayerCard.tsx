@@ -2,7 +2,7 @@ import { Image, StyleSheet, Text, View } from "react-native";
 import { BASE_CARD_STATS, CARD_STATS } from "@world-cup-game/config";
 import type { NationConfig } from "@world-cup-game/config";
 import type { CardStats } from "@world-cup-game/types";
-import { colors } from "../../../theme/colors";
+import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
 import type { PhotoSource } from "../types";
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
   avatar: {
     alignItems: "center",
     alignSelf: "center",
-    backgroundColor: colors.turf,
+    backgroundColor: opacity.ink12,
     borderRadius: radius.lg,
     height: 180,
     justifyContent: "center",
@@ -80,11 +80,11 @@ const styles = StyleSheet.create({
   },
   badge: {
     alignSelf: "center",
-    backgroundColor: colors.gold,
+    backgroundColor: colors.red,
     borderRadius: radius.pill,
-    color: colors.pitch,
+    color: colors.cream,
     fontSize: 11,
-    fontWeight: "900",
+    fontWeight: "700",
     letterSpacing: 1,
     marginTop: spacing.md,
     overflow: "hidden",
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: colors.cream,
-    borderColor: colors.gold,
+    borderColor: colors.red,
     borderRadius: radius.lg,
     borderWidth: 3,
     padding: spacing.lg
@@ -102,39 +102,39 @@ const styles = StyleSheet.create({
     fontSize: 40
   },
   name: {
-    color: colors.pitch,
+    color: colors.ink,
     fontSize: 26,
-    fontWeight: "900",
+    fontWeight: "700",
     textAlign: "center"
   },
   nation: {
-    color: "rgba(12, 59, 46, 0.6)",
+    color: opacity.ink55,
     fontSize: 14,
     textAlign: "center"
   },
   overall: {
-    color: colors.pitch,
+    color: colors.ink,
     fontSize: 40,
-    fontWeight: "900"
+    fontWeight: "700"
   },
   overallLabel: {
-    color: "rgba(12, 59, 46, 0.6)",
+    color: opacity.ink55,
     fontSize: 12,
-    fontWeight: "800"
+    fontWeight: "700"
   },
   stat: {
     alignItems: "center",
     flex: 1
   },
   statLabel: {
-    color: "rgba(12, 59, 46, 0.6)",
+    color: opacity.ink55,
     fontSize: 11,
-    fontWeight: "800"
+    fontWeight: "700"
   },
   statValue: {
-    color: colors.pitch,
+    color: colors.ink,
     fontSize: 18,
-    fontWeight: "900"
+    fontWeight: "700"
   },
   statsRow: {
     flexDirection: "row",

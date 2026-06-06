@@ -1,10 +1,10 @@
 import { StyleSheet, Text, View } from "react-native";
 import type { CardTemplateLayerMetadata } from "@world-cup-game/types";
 
-const DEFAULT_BADGE_BACKGROUND = "rgba(255, 248, 234, 0.84)";
-const DEFAULT_BADGE_COLOR = "#3A2A05";
+const DEFAULT_BADGE_BACKGROUND = "rgba(245, 240, 232, 0.84)";
+const DEFAULT_BADGE_COLOR = "#1a1a2e";
 const DEFAULT_BADGE_FONT_SIZE = 16;
-const DEFAULT_BADGE_FONT_WEIGHT = "900";
+const DEFAULT_BADGE_FONT_WEIGHT = "700";
 const DEFAULT_BADGE_RADIUS = 999;
 
 export interface BadgeLayerProps {
@@ -37,7 +37,7 @@ export function BadgeLayer({ label, layer }: BadgeLayerProps) {
           {
             color: layer.color ?? DEFAULT_BADGE_COLOR,
             fontSize: layer.fontSize ?? DEFAULT_BADGE_FONT_SIZE,
-            fontWeight: (layer.fontWeight ?? DEFAULT_BADGE_FONT_WEIGHT) as "900"
+            fontWeight: (layer.fontWeight ?? DEFAULT_BADGE_FONT_WEIGHT) as "700"
           }
         ]}
       >

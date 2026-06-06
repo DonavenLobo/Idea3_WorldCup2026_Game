@@ -1,9 +1,13 @@
 import { useRouter } from "expo-router";
-import { Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
+import { ScrollView, Share, StyleSheet, Text, View } from "react-native";
+import { BrandButton } from "../../../components/brand";
+import { Eyebrow } from "../../../components/brand/Eyebrow";
+import { ScoreDisplay } from "./TriviaScore";
 import type { DailyTriviaQuestion, ScoredTriviaAttempt } from "../types";
-import { colors } from "../../../theme/colors";
+import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
+import { typography } from "../../../theme/typography";
 import { formatResponseTime } from "../../../utils/formatters";
 
 interface CompletedViewProps {
@@ -16,12 +20,11 @@ export function CompletedView({ attempt, questions }: CompletedViewProps) {
   const questionsById = Object.fromEntries(questions.map((question) => [question.id, question]));
 
   const handleShare = async () => {
-    // Spoiler-safe Wordle-like format per MVP decision #17 — never leaks answers.
     const grid = attempt.answers.map((a) => (a.isCorrect ? "🟩" : "⬛")).join("");
     const message = [
       "GoGaffa Daily Trivia",
       `${grid} ${attempt.correctAnswers}/${attempt.totalQuestions}`,
-      `+${attempt.competitivePoints} pts`
+      `+${attempt.competitivePoints} pts`,
     ].join("\n");
     try {
       await Share.share({ message });
@@ -35,205 +38,206 @@ export function CompletedView({ attempt, questions }: CompletedViewProps) {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
-      <View style={styles.hero}>
-        <Text style={styles.heroEyebrow}>TODAY&apos;S TRIVIA COMPLETE</Text>
-        <Text style={styles.heroValue}>+{attempt.competitivePoints}</Text>
-        <Text style={styles.heroSub}>
-          {attempt.correctAnswers} of {attempt.totalQuestions} correct
+    <View style={styles.root}>
+      <View style={styles.fold}>
+        <Eyebrow label="Done for today" accent="purple" />
+
+        <View style={styles.resultGrid}>
+          {attempt.answers.map((answer, index) => {
+            const correct = answer.isCorrect ?? false;
+            return (
+              <View
+                key={`${answer.questionId}-${index}`}
+                style={[styles.resultCell, correct ? styles.resultCellCorrect : styles.resultCellWrong]}
+              />
+            );
+          })}
+        </View>
+
+        <ScoreDisplay
+          framed={false}
+          size="hero"
+          value={attempt.competitivePoints}
+        />
+
+        <Text style={styles.summaryLine}>
+          {attempt.correctAnswers}/{attempt.totalQuestions} correct
+          {"  ·  "}
+          {formatResponseTime(attempt.totalResponseTimeMs)}
         </Text>
-        <Text style={styles.heroMeta}>
-          {formatResponseTime(attempt.totalResponseTimeMs)} total response time
-        </Text>
+
+        {attempt.earnedCardXp > 0 ? (
+          <View style={styles.xpPill}>
+            <Text style={styles.xpPillText}>+{attempt.earnedCardXp} card XP</Text>
+          </View>
+        ) : null}
+
+        <BrandButton
+          label="Share my score"
+          onPress={() => void handleShare()}
+          style={styles.shareCta}
+        />
+
+        <BrandButton
+          label="View leaderboard"
+          variant="ghost"
+          onPress={handleViewLeaderboard}
+          style={styles.leaderboardCta}
+        />
       </View>
 
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryHeader}>Your first attempt</Text>
-        {attempt.answers.map((answer, i) => {
+      <View style={styles.detailsDivider} />
+
+      <ScrollView
+        style={styles.detailsScroll}
+        contentContainerStyle={styles.detailsContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Eyebrow label="Breakdown" />
+        {attempt.answers.map((answer, index) => {
           const question = questionsById[answer.questionId];
           const correct = answer.isCorrect ?? false;
 
           return (
-            <View key={`${answer.questionId}-${i}`} style={styles.summaryRow}>
+            <View key={`${answer.questionId}-${index}`} style={styles.breakdownRow}>
               <View
                 style={[
-                  styles.resultBadge,
-                  correct ? styles.resultBadgeCorrect : styles.resultBadgeWrong
+                  styles.breakdownBadge,
+                  correct ? styles.breakdownBadgeCorrect : styles.breakdownBadgeWrong,
                 ]}
               >
-                <Text style={styles.resultBadgeText}>{correct ? "✓" : "x"}</Text>
+                <Text style={styles.breakdownBadgeText}>{correct ? "✓" : "x"}</Text>
               </View>
-              <View style={styles.summaryText}>
-                <Text style={styles.summaryQ} numberOfLines={2}>
-                  {question?.question ?? `Question ${i + 1}`}
+              <View style={styles.breakdownText}>
+                <Text style={styles.breakdownTitle} numberOfLines={1}>
+                  Q{index + 1}
+                  {question ? ` · ${question.question}` : ""}
                 </Text>
-                <Text style={styles.summaryMeta}>
-                  Picked {answer.selectedAnswerKey}  •  +{answer.points ?? 0} pts  •  {" "}
+                <Text style={styles.breakdownMeta}>
+                  {answer.selectedAnswerKey} · +{answer.points ?? 0} pts ·{" "}
                   {formatResponseTime(answer.responseTimeMs)}
                 </Text>
               </View>
             </View>
           );
         })}
-      </View>
-
-      <View style={styles.totalCard}>
-        <Text style={styles.totalLabel}>CARD XP EARNED</Text>
-        <Text style={styles.totalValue}>+{attempt.earnedCardXp}</Text>
-      </View>
-
-      <Pressable style={styles.primaryCta} onPress={handleShare}>
-        <Text style={styles.primaryCtaText}>📤  Share my score</Text>
-      </Pressable>
-
-      <Pressable style={styles.secondaryCta} onPress={handleViewLeaderboard}>
-        <Text style={styles.secondaryCtaText}>🏆  View Leaderboard</Text>
-      </Pressable>
-
-      <Text style={styles.comeBack}>Come back tomorrow for fresh questions.</Text>
-    </ScrollView>
+        <Text style={styles.comeBack}>Come back tomorrow for fresh questions.</Text>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  comeBack: {
-    color: "rgba(255, 248, 234, 0.65)",
-    fontSize: 14,
-    fontStyle: "italic",
-    marginTop: spacing.lg,
-    textAlign: "center"
-  },
-  content: {
-    padding: spacing.lg
-  },
-  hero: {
+  breakdownBadge: {
     alignItems: "center",
-    backgroundColor: colors.cream,
-    borderColor: colors.gold,
-    borderRadius: radius.lg,
-    borderWidth: 3,
-    marginBottom: spacing.md,
-    padding: spacing.lg
-  },
-  heroEyebrow: {
-    color: colors.gold,
-    fontSize: 12,
-    fontWeight: "900",
-    letterSpacing: 1.2
-  },
-  heroMeta: {
-    color: "rgba(12, 59, 46, 0.55)",
-    fontSize: 13,
-    fontWeight: "700",
-    marginTop: spacing.xs
-  },
-  heroSub: {
-    color: "rgba(12, 59, 46, 0.7)",
-    fontSize: 16,
-    fontWeight: "700",
-    marginTop: spacing.xs
-  },
-  heroValue: {
-    color: colors.pitch,
-    fontSize: 56,
-    fontWeight: "900",
-    marginTop: spacing.sm
-  },
-  primaryCta: {
-    alignItems: "center",
-    backgroundColor: colors.gold,
     borderRadius: radius.pill,
-    marginTop: spacing.lg,
-    padding: spacing.md
-  },
-  primaryCtaText: {
-    color: colors.pitch,
-    fontSize: 16,
-    fontWeight: "900"
-  },
-  resultBadge: {
-    alignItems: "center",
-    borderRadius: 999,
-    height: 32,
+    height: 28,
     justifyContent: "center",
-    width: 32
+    width: 28,
   },
-  resultBadgeCorrect: {
-    backgroundColor: "#1F9D55"
+  breakdownBadgeCorrect: {
+    backgroundColor: colors.success,
   },
-  resultBadgeText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "900"
-  },
-  resultBadgeWrong: {
-    backgroundColor: "#C8102E"
-  },
-  secondaryCta: {
-    alignItems: "center",
-    borderColor: colors.gold,
-    borderRadius: radius.pill,
-    borderWidth: 2,
-    marginTop: spacing.sm,
-    padding: spacing.md
-  },
-  secondaryCtaText: {
-    color: colors.gold,
-    fontSize: 16,
-    fontWeight: "900"
-  },
-  summaryCard: {
-    backgroundColor: "rgba(255, 248, 234, 0.06)",
-    borderColor: "rgba(255, 248, 234, 0.12)",
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    padding: spacing.lg
-  },
-  summaryHeader: {
+  breakdownBadgeText: {
     color: colors.cream,
-    fontSize: 16,
-    fontWeight: "900",
-    marginBottom: spacing.sm
+    fontFamily: typography.label.fontFamily,
+    fontSize: 13,
   },
-  summaryMeta: {
-    color: "rgba(255, 248, 234, 0.55)",
-    fontSize: 12,
-    fontWeight: "700",
-    marginTop: 2
+  breakdownBadgeWrong: {
+    backgroundColor: colors.red,
   },
-  summaryQ: {
-    color: colors.cream,
-    fontSize: 14,
-    fontWeight: "700"
+  breakdownMeta: {
+    ...typography.caption,
+    color: opacity.ink55,
+    marginTop: 2,
   },
-  summaryRow: {
+  breakdownRow: {
     alignItems: "center",
     flexDirection: "row",
-    gap: spacing.md,
-    paddingVertical: spacing.sm
+    gap: spacing.sm,
+    paddingVertical: spacing.xs,
   },
-  summaryText: {
-    flex: 1
+  breakdownText: {
+    flex: 1,
+    minWidth: 0,
   },
-  totalCard: {
+  breakdownTitle: {
+    ...typography.label,
+    color: colors.ink,
+    fontSize: 14,
+  },
+  comeBack: {
+    ...typography.caption,
+    color: opacity.ink55,
+    fontStyle: "italic",
+    marginTop: spacing.md,
+    textAlign: "center",
+  },
+  detailsContent: {
+    paddingBottom: spacing.xl,
+    paddingTop: spacing.sm,
+  },
+  detailsDivider: {
+    alignSelf: "stretch",
+    backgroundColor: opacity.ink10,
+    height: 1,
+    marginTop: spacing.md,
+  },
+  detailsScroll: {
+    flex: 1,
+  },
+  fold: {
     alignItems: "center",
-    backgroundColor: "rgba(214, 161, 30, 0.12)",
-    borderColor: colors.gold,
-    borderRadius: radius.lg,
+  },
+  leaderboardCta: {
+    marginTop: spacing.xs,
+  },
+  resultCell: {
+    borderColor: colors.ink,
+    borderRadius: radius.sm,
     borderWidth: 2,
+    height: 44,
+    width: 44,
+  },
+  resultCellCorrect: {
+    backgroundColor: colors.success,
+  },
+  resultCellWrong: {
+    backgroundColor: opacity.ink12,
+  },
+  resultGrid: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  root: {
+    flex: 1,
+  },
+  shareCta: {
+    alignSelf: "stretch",
     marginTop: spacing.lg,
-    padding: spacing.lg
+    width: "100%",
   },
-  totalLabel: {
-    color: colors.gold,
-    fontSize: 12,
-    fontWeight: "900",
-    letterSpacing: 1.2
+  summaryLine: {
+    ...typography.caption,
+    color: opacity.ink60,
+    fontFamily: typography.label.fontFamily,
+    letterSpacing: 0.4,
+    marginTop: spacing.xs,
+    textAlign: "center",
   },
-  totalValue: {
-    color: colors.cream,
-    fontSize: 40,
-    fontWeight: "900",
-    marginTop: spacing.xs
-  }
+  xpPill: {
+    backgroundColor: opacity.red18,
+    borderRadius: radius.pill,
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  xpPillText: {
+    ...typography.caption,
+    color: colors.red,
+    fontFamily: typography.label.fontFamily,
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
+  },
 });
