@@ -4,23 +4,29 @@ import { useState } from "react";
 import type { LayoutChangeEvent } from "react-native";
 import { StyleSheet, Text, View } from "react-native";
 import { colors } from "../../../theme/colors";
+import { fontFamily } from "../../../theme/typography";
+
+/** Caveat reads smaller than Inter at the same px — scale to match template (~42/1024). */
+const SKETCH_STAT_FONT_SCALE = 0.059;
 
 /**
- * Fine-tune these % positions to center each value inside the stat boxes
- * drawn on the card image. Order: HYP, FRM, ATK, AST, WAL, LCK.
+ * Stat overlay tuning (percent of card width/height):
+ * - Positions → `STAT_VALUE_OVERLAY_POSITIONS` below (center of each drawn box)
+ * - Size → `SKETCH_STAT_FONT_SCALE`
  *
- * `left` / `top` are the anchor point for each slot (center of the drawn box).
+ * OVR + player name also use overlays — see `CardTextOverlays.tsx` + `templates/level00SketchTemplate.ts`.
+ * Order: HYP, FRM, ATK, AST, WAL, LCK.
  */
 export const STAT_VALUE_OVERLAY_POSITIONS: ReadonlyArray<{
   left: number;
   top: number;
 }> = [
-  { left: 19.5, top: 83 },
+  { left: 19, top: 83 },
   { left: 31.5, top: 83 },
-  { left: 44, top: 83 },
-  { left: 56, top: 83 },
-  { left: 68.5, top: 83 },
-  { left: 80.5, top: 83 },
+  { left: 43.5, top: 83 },
+  { left: 55.5, top: 83 },
+  { left: 68, top: 83 },
+  { left: 80, top: 83 },
 ];
 
 /** Width of each stat slot as a % of the card image container. */
@@ -38,7 +44,8 @@ export function CardStatOverlays({ stats }: CardStatOverlaysProps) {
     setImageWidth((current) => (Math.abs(current - nextWidth) < 1 ? current : nextWidth));
   };
 
-  const fontSize = imageWidth > 0 ? imageWidth * 0.045 : 16;
+  const fontSize = imageWidth > 0 ? imageWidth * SKETCH_STAT_FONT_SCALE : 18;
+  const lineHeight = fontSize * 1.15;
 
   return (
     <View pointerEvents="none" style={styles.overlay} onLayout={handleLayout}>
@@ -58,7 +65,9 @@ export function CardStatOverlays({ stats }: CardStatOverlaysProps) {
               },
             ]}
           >
-            <Text style={[styles.value, { fontSize }]}>{stats[stat.key]}</Text>
+            <Text style={[styles.value, { fontSize, lineHeight }]}>
+              {stats[stat.key]}
+            </Text>
           </View>
         );
       })}
@@ -77,8 +86,10 @@ const styles = StyleSheet.create({
   },
   value: {
     color: colors.ink,
-    fontFamily: "Inter_700Bold",
-    fontVariant: ["tabular-nums"],
+    fontFamily: fontFamily.caveatBold,
+    fontWeight: "normal",
+    includeFontPadding: false,
+    paddingHorizontal: 2,
     textAlign: "center",
     width: "100%",
   },

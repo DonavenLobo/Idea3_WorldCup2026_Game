@@ -3,6 +3,7 @@ import { loadTemplate } from "@world-cup-game/card-renderer";
 import type { PlayerCardRenderTemplate } from "@world-cup-game/card-renderer";
 import { supabase } from "../../../lib/supabase";
 import {
+  applyBundledSketchMetadata,
   getBundledTemplateSource,
   LEVEL_00_SKETCH_TEMPLATE
 } from "../templates/level00SketchTemplate";
@@ -24,14 +25,16 @@ const TEMPLATE_COLUMNS = `
 `;
 
 function mapTemplate(row: CardTemplateRow): PlayerCardRenderTemplate {
-  return loadTemplate({
-    id: row.id,
-    templateKey: row.template_key,
-    name: row.name,
-    baseImageSource: getBundledTemplateSource(row.template_key),
-    baseImageUrl: row.base_image_url ?? undefined,
-    metadata: row.metadata
-  });
+  return applyBundledSketchMetadata(
+    loadTemplate({
+      id: row.id,
+      templateKey: row.template_key,
+      name: row.name,
+      baseImageSource: getBundledTemplateSource(row.template_key),
+      baseImageUrl: row.base_image_url ?? undefined,
+      metadata: row.metadata
+    })
+  );
 }
 
 async function getActiveCardTemplates(): Promise<PlayerCardRenderTemplate[]> {
@@ -55,7 +58,9 @@ export function useCardTemplates() {
     queryFn: getActiveCardTemplates,
     queryKey: ["card-templates"]
   });
-  const templates = query.data?.length ? query.data : [LEVEL_00_SKETCH_TEMPLATE];
+  const templates = (query.data?.length ? query.data : [LEVEL_00_SKETCH_TEMPLATE]).map(
+    applyBundledSketchMetadata
+  );
 
   return {
     error: query.error,

@@ -20,8 +20,13 @@ import type { PhotoSource } from "../../onboarding";
 import { colors, opacity } from "../../../theme/colors";
 import { startCardGeneration } from "../api/startCardGeneration";
 import { useCardTemplates } from "../hooks/useCardTemplates";
-import { LEVEL_00_SKETCH_TEMPLATE } from "../templates/level00SketchTemplate";
+import {
+  applyBundledSketchMetadata,
+  isLevel00SketchTemplate,
+  LEVEL_00_SKETCH_TEMPLATE
+} from "../templates/level00SketchTemplate";
 import { CardStatOverlays } from "./CardStatOverlays";
+import { CardTextOverlays } from "./CardTextOverlays";
 import { CardStatusBadge } from "./CardStatusBadge";
 
 interface RenderedPlayerCardProps {
@@ -66,7 +71,9 @@ export function RenderedPlayerCard({
   const [isRetrying, setIsRetrying] = useState(false);
   const { templates } = useCardTemplates();
   const selectedTemplateId = templateId ?? card?.templateId ?? LEVEL_00_SKETCH_TEMPLATE.id;
-  const template = resolveCardTemplate(templates, selectedTemplateId);
+  const template = applyBundledSketchMetadata(
+    resolveCardTemplate(templates, selectedTemplateId)
+  );
   const canRetry = card?.status === "failed" && Boolean(card.id);
   const status = card?.status;
   const shouldConceal =
@@ -90,6 +97,9 @@ export function RenderedPlayerCard({
     : undefined;
 
   const resolvedStats = stats ?? card?.stats ?? BASE_CARD_STATS;
+  const resolvedDisplayName = displayName ?? card?.displayName ?? "Rookie";
+  const resolvedOverall = overall ?? card?.overall ?? 50;
+  const useSketchTextOverlays = isLevel00SketchTemplate(template);
 
   return (
     <View style={[styles.cardWrap, { maxHeight: maxCardHeight }, style]}>
@@ -101,18 +111,23 @@ export function RenderedPlayerCard({
       ) : (
         <View style={styles.cardSurface}>
           <PlayerCard
+            renderDisplayName={!useSketchTextOverlays}
+            renderOverall={!useSketchTextOverlays}
             renderStatValues={false}
             template={template}
             card={{
               avatarGeneratedUrl: card?.avatarGeneratedUrl,
               avatarSourceUrl: card?.avatarSourceUrl ?? photoSource?.uri,
-              displayName: displayName ?? card?.displayName ?? "Rookie",
-              overall: overall ?? card?.overall ?? 50,
+              displayName: resolvedDisplayName,
+              overall: resolvedOverall,
               selectedNationCode: selectedNationCode ?? card?.selectedNationCode ?? "USA",
               stats: resolvedStats,
               tier: tier ?? card?.tier ?? "bronze"
             }}
           />
+          {useSketchTextOverlays ? (
+            <CardTextOverlays displayName={resolvedDisplayName} overall={resolvedOverall} />
+          ) : null}
           <CardStatOverlays stats={resolvedStats} />
         </View>
       )}
