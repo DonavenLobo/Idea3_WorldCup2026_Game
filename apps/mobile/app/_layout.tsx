@@ -16,6 +16,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { RootProviders } from "../src/components/layout/RootProviders";
 import { useAuthRedirectHandler } from "../src/features/auth";
 import { BracketProvider } from "../src/features/bracket";
 import { GroupsProvider } from "../src/features/groups";
@@ -62,21 +63,23 @@ export default function RootLayout() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>
-        <OnboardingProvider>
-          <BracketProvider>
-            <TriviaProvider>
-              <GroupsProvider>
-                <LockerRoomProvider>
-                  <RootStack />
-                </LockerRoomProvider>
-              </GroupsProvider>
-            </TriviaProvider>
-          </BracketProvider>
-        </OnboardingProvider>
-      </SafeAreaProvider>
-    </QueryClientProvider>
+    <RootProviders>
+      <QueryClientProvider client={queryClient}>
+        <SafeAreaProvider>
+          <OnboardingProvider>
+            <BracketProvider>
+              <TriviaProvider>
+                <GroupsProvider>
+                  <LockerRoomProvider>
+                    <RootStack />
+                  </LockerRoomProvider>
+                </GroupsProvider>
+              </TriviaProvider>
+            </BracketProvider>
+          </OnboardingProvider>
+        </SafeAreaProvider>
+      </QueryClientProvider>
+    </RootProviders>
   );
 }
 

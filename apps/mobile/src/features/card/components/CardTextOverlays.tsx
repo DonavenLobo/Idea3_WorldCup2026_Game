@@ -60,7 +60,7 @@ export function CardTextOverlays({ displayName, overall }: CardTextOverlaysProps
             style={[
               styles.text,
               {
-                color: overallLayer.labelColor ?? overallLayer.color ?? colors.ink,
+                color: overallLayer.color ?? colors.ink,
                 fontFamily,
                 fontSize: overallLabelFontSize,
                 lineHeight: overallLabelFontSize * 1.15,

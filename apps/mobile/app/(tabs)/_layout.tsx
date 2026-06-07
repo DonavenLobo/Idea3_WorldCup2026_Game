@@ -1,15 +1,10 @@
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { APP_ROUTES } from "@world-cup-game/config";
-import { Tabs, useRouter } from "expo-router";
-import { Alert, Image, Pressable, StyleSheet, Text } from "react-native";
+import { Tabs } from "expo-router";
+import { Image, StyleSheet, Text } from "react-native";
 import type { ImageSourcePropType } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { tabBarIconSources } from "../../src/components/icons/tabBarIconSources";
-import { useCardRealtime, useCurrentUserCard } from "../../src/features/card";
-import { useOnboarding } from "../../src/features/onboarding";
-import { useProfile } from "../../src/features/profile";
-import { supabase } from "../../src/lib/supabase";
+import { useCardRealtime } from "../../src/features/card";
+import { ProfileHeaderButton } from "../../src/features/profile/components/ProfileHeaderButton";
 import { colors, opacity } from "../../src/theme/colors";
 import { spacing } from "../../src/theme/spacing";
 import { typography } from "../../src/theme/typography";
@@ -32,65 +27,6 @@ function TabHeaderTitle({ children }: { children: string }) {
   );
 }
 
-function ProfileButton() {
-  const router = useRouter();
-  const queryClient = useQueryClient();
-  const { displayName, photoSource, reset } = useOnboarding();
-  const { card } = useCurrentUserCard();
-  const { profile } = useProfile();
-  const [isSigningOut, setIsSigningOut] = useState(false);
-  const savedImageUrl = profile?.avatarUrl ?? card?.avatarSourceUrl;
-  const imageUri = savedImageUrl ?? photoSource?.uri;
-  const effectiveName = profile?.displayName || card?.displayName || displayName;
-  const initial = effectiveName.trim().charAt(0).toUpperCase() || "?";
-
-  const handleSignOut = async () => {
-    setIsSigningOut(true);
-
-    try {
-      const { error } = await supabase.auth.signOut();
-
-      if (error) {
-        throw error;
-      }
-
-      reset();
-      queryClient.clear();
-      router.replace(APP_ROUTES.onboarding.selectNation);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Please try again.";
-      Alert.alert("Sign-out failed", message);
-    } finally {
-      setIsSigningOut(false);
-    }
-  };
-
-  const showAccountMenu = () => {
-    Alert.alert("Account", effectiveName || "GoGaffa account", [
-      { text: "Cancel", style: "cancel" },
-      {
-        onPress: () => void handleSignOut(),
-        style: "destructive",
-        text: isSigningOut ? "Signing out..." : "Sign out",
-      },
-    ]);
-  };
-
-  return (
-    <Pressable
-      style={profileStyles.root}
-      disabled={isSigningOut}
-      onPress={showAccountMenu}
-    >
-      {imageUri ? (
-        <Image source={{ uri: imageUri }} style={profileStyles.image} />
-      ) : (
-        <Text style={profileStyles.initial}>{initial}</Text>
-      )}
-    </Pressable>
-  );
-}
-
 const headerTitleStyles = StyleSheet.create({
   title: {
     ...typography.titleScreen,
@@ -99,30 +35,6 @@ const headerTitleStyles = StyleSheet.create({
     paddingLeft: CAVEAT_HEADER_PAD_LEFT,
     paddingRight: CAVEAT_HEADER_PAD_RIGHT,
     textAlign: "center",
-  },
-});
-
-const profileStyles = StyleSheet.create({
-  image: {
-    height: "100%",
-    width: "100%",
-  },
-  initial: {
-    color: colors.red,
-    fontFamily: "Caveat_700Bold",
-    fontSize: 16,
-  },
-  root: {
-    alignItems: "center",
-    backgroundColor: opacity.red18,
-    borderColor: colors.red,
-    borderRadius: 18,
-    borderWidth: 2,
-    height: 36,
-    justifyContent: "center",
-    marginLeft: 16,
-    overflow: "hidden",
-    width: 36,
   },
 });
 
@@ -173,7 +85,7 @@ export default function TabsLayout() {
           paddingTop: spacing.xs,
         },
         headerTintColor: colors.ink,
-        headerLeft: () => <ProfileButton />,
+        headerLeft: () => <ProfileHeaderButton />,
         headerShadowVisible: false,
         tabBarActiveTintColor: colors.red,
         tabBarInactiveTintColor: opacity.ink55,
