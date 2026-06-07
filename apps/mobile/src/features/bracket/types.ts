@@ -35,3 +35,29 @@ export interface Match {
   home: string | null;
   away: string | null;
 }
+
+import type { KnockoutRoundId } from "./lib/computeBracketLockState";
+
+export interface PickPastLockoutDetails {
+  invalidGroups: string[];
+  invalidMatches: Array<{ round: KnockoutRoundId; index: number }>;
+}
+
+export class PickPastLockoutError extends Error {
+  public readonly invalidGroups: string[];
+  public readonly invalidMatches: Array<{ round: KnockoutRoundId; index: number }>;
+
+  constructor(details: PickPastLockoutDetails) {
+    super("Some picks are past lockout");
+    this.name = "PickPastLockoutError";
+    this.invalidGroups = details.invalidGroups;
+    this.invalidMatches = details.invalidMatches;
+  }
+}
+
+export class NotGroupMemberError extends Error {
+  constructor() {
+    super("Not a member of this group");
+    this.name = "NotGroupMemberError";
+  }
+}
