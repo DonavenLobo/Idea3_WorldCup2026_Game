@@ -4,7 +4,14 @@ import { FilterPill } from "../../../components/brand/FilterPill";
 import { spacing } from "../../../theme/spacing";
 import type { SubTab } from "../types";
 
-const TABS: readonly { id: SubTab; label: string }[] = [
+export interface SubTabItem {
+  id: SubTab;
+  label: string;
+  isLocked?: boolean;
+  phase2Hint?: boolean;
+}
+
+const TABS: readonly SubTabItem[] = [
   { id: "groups", label: "Groups" },
   { id: "r32", label: "R32" },
   { id: "r16", label: "R16" },
@@ -18,9 +25,12 @@ const TABS: readonly { id: SubTab; label: string }[] = [
 interface SubTabBarProps {
   value: SubTab;
   onChange: (next: SubTab) => void;
+  /** Optional override for tab items. Defaults to the internal TABS constant. */
+  items?: ReadonlyArray<SubTabItem>;
 }
 
-export function SubTabBar({ value, onChange }: SubTabBarProps) {
+export function SubTabBar({ value, onChange, items }: SubTabBarProps) {
+  const tabs = items ?? TABS;
   const scrollRef = useRef<ScrollView>(null);
   const positions = useRef<Record<string, number>>({});
 
@@ -39,17 +49,20 @@ export function SubTabBar({ value, onChange }: SubTabBarProps) {
       style={styles.scroll}
       contentContainerStyle={styles.scrollContent}
     >
-      {TABS.map((tab) => (
-        <FilterPill
-          key={tab.id}
-          label={tab.label}
-          selected={tab.id === value}
-          onLayout={(e) => {
-            positions.current[tab.id] = e.nativeEvent.layout.x;
-          }}
-          onPress={() => onChange(tab.id)}
-        />
-      ))}
+      {tabs.map((tab) => {
+        const label = `${tab.phase2Hint ? "P2 " : ""}${tab.label}${tab.isLocked ? " 🔒" : ""}`;
+        return (
+          <FilterPill
+            key={tab.id}
+            label={label}
+            selected={tab.id === value}
+            onLayout={(e) => {
+              positions.current[tab.id] = e.nativeEvent.layout.x;
+            }}
+            onPress={() => onChange(tab.id)}
+          />
+        );
+      })}
     </ScrollView>
   );
 }
@@ -57,12 +70,12 @@ export function SubTabBar({ value, onChange }: SubTabBarProps) {
 const styles = StyleSheet.create({
   scroll: {
     flexGrow: 0,
-    flexShrink: 0,
+    flexShrink: 0
   },
   scrollContent: {
     alignItems: "center",
     gap: spacing.sm,
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-  },
+    paddingVertical: spacing.sm
+  }
 });

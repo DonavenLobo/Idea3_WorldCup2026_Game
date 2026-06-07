@@ -2,6 +2,11 @@ import { GROUP_IDS } from "@world-cup-game/config";
 import type { GroupId } from "@world-cup-game/config";
 import { supabase } from "../../../lib/supabase";
 import type { BracketPicks, PersistedBracketPicks } from "../types";
+import {
+  PickPastLockoutError,
+  NotGroupMemberError,
+  type PickPastLockoutDetails
+} from "../types";
 
 interface BracketRow {
   id: string;
@@ -128,19 +133,48 @@ export async function getCurrentBracket(): Promise<SavedBracket | null> {
   return data ? mapBracketRow(data) : null;
 }
 
-export async function submitCurrentBracket(picks: PersistedBracketPicks): Promise<SavedBracket> {
-  const { data, error } = await supabase.functions.invoke<{ bracket: SavedBracket }>("submit-bracket", {
-    body: {
-      groupId: null,
-      picks
-    }
-  });
+interface SubmitBracketResponse {
+  ok?: boolean;
+  bracket?: SavedBracket;
+  code?: "PICK_PAST_LOCKOUT" | "NOT_GROUP_MEMBER";
+  invalidGroups?: string[];
+  invalidMatches?: Array<{ round: string; index: number }>;
+  error?: string;
+}
+
+export async function submitCurrentBracket(
+  picks: PersistedBracketPicks,
+  groupId: string | null = null
+): Promise<SavedBracket> {
+  const { data, error } = await supabase.functions.invoke<SubmitBracketResponse>(
+    "submit-bracket",
+    { body: { groupId, picks } }
+  );
 
   if (error) {
     throw error;
   }
 
-  if (!data?.bracket) {
+  if (!data) {
+    throw new Error("Bracket save returned no data.");
+  }
+
+  if (data.code === "PICK_PAST_LOCKOUT") {
+    throw new PickPastLockoutError({
+      invalidGroups: data.invalidGroups ?? [],
+      invalidMatches: (data.invalidMatches ?? []) as PickPastLockoutDetails["invalidMatches"]
+    });
+  }
+
+  if (data.code === "NOT_GROUP_MEMBER") {
+    throw new NotGroupMemberError();
+  }
+
+  if (data.error) {
+    throw new Error(data.error);
+  }
+
+  if (!data.bracket) {
     throw new Error("Bracket save did not return a saved bracket.");
   }
 

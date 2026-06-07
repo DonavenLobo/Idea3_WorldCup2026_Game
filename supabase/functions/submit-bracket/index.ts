@@ -1,6 +1,11 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { parseSubmitBracketRequest } from "./schema.ts";
+import {
+  loadKickoffMaps,
+  validateBracketAgainstFixtures,
+  type BracketPicksPayload
+} from "./validateFixtures.ts";
 
 interface BracketRow {
   id: string;
@@ -47,6 +52,35 @@ function mapBracket(row: BracketRow) {
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
+}
+
+async function isGroupMember(
+  supabase: ReturnType<typeof createClient>,
+  groupId: string,
+  userId: string
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("group_members")
+    .select("user_id")
+    .eq("group_id", groupId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  return data !== null;
+}
+
+async function fetchExistingPicks(
+  supabase: ReturnType<typeof createClient>,
+  bracketId: string
+): Promise<BracketPicksPayload | null> {
+  const { data, error } = await supabase
+    .from("brackets")
+    .select("picks")
+    .eq("id", bracketId)
+    .maybeSingle<{ picks: unknown }>();
+  if (error) throw error;
+  if (!data) return null;
+  return data.picks as BracketPicksPayload;
 }
 
 Deno.serve(async (request) => {
@@ -107,9 +141,40 @@ Deno.serve(async (request) => {
       throw existingError;
     }
 
-    if (existingBracket?.locked_at) {
-      return jsonResponse({ error: "This bracket is locked and can no longer be changed." }, 409);
+    // Group bracket: confirm membership before allowing the write.
+    if (input.groupId) {
+      const isMember = await isGroupMember(supabase, input.groupId, userData.user.id);
+      if (!isMember) {
+        return jsonResponse({ ok: false, code: "NOT_GROUP_MEMBER" });
+      }
     }
+
+    // Fixture validation: any CHANGED pick on a passed-kickoff unit is rejected.
+    const [existingPicks, kickoffMaps] = await Promise.all([
+      existingBracket ? fetchExistingPicks(supabase, existingBracket.id) : Promise.resolve(null),
+      loadKickoffMaps(supabase)
+    ]);
+
+    const validation = validateBracketAgainstFixtures(
+      Date.now(),
+      input.picks as BracketPicksPayload,
+      existingPicks,
+      kickoffMaps.groupKickoffMs,
+      kickoffMaps.knockoutKickoffMs
+    );
+
+    if (validation.invalidGroups.length > 0 || validation.invalidMatches.length > 0) {
+      return jsonResponse({
+        ok: false,
+        code: "PICK_PAST_LOCKOUT",
+        invalidGroups: validation.invalidGroups,
+        invalidMatches: validation.invalidMatches
+      });
+    }
+
+    // (Binary `locked_at` check removed — phased lockout is enforced by
+    // validateBracketAgainstFixtures above. The locked_at column remains
+    // nullable on the table but is no longer consulted.)
 
     const now = new Date().toISOString();
     const writePayload = {
@@ -140,7 +205,7 @@ Deno.serve(async (request) => {
       throw writeError;
     }
 
-    return jsonResponse({ bracket: mapBracket(savedBracket) });
+    return jsonResponse({ ok: true, bracket: mapBracket(savedBracket) });
   } catch (error) {
     return jsonResponse(
       { error: error instanceof Error ? error.message : "Unexpected submit-bracket error." },
