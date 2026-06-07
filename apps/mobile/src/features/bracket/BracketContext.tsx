@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { BRACKET_GROUPS, GROUP_IDS } from "@world-cup-game/config";
 import type { GroupId } from "@world-cup-game/config";
-import { useSession } from "../../hooks/useSession";
+import { useSession } from "../auth/hooks/useSession";
 import { getCurrentBracket, submitCurrentBracket } from "./api/brackets";
 import type { BracketPicks, BracketState, PersistedBracketPicks, PickRound } from "./types";
 import { useBracketLockState } from "./hooks/useBracketLockState";

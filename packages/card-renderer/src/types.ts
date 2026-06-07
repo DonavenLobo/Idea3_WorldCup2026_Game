@@ -21,5 +21,11 @@ export interface PlayerCardRenderData {
     | "avatarGeneratedUrl"
     | "avatarSourceUrl"
   >;
+  /** When false, stat values are omitted so the host can overlay them on the image. */
+  renderStatValues?: boolean;
+  /** When false, the overall rating is omitted so the host can overlay it on the image. */
+  renderOverall?: boolean;
+  /** When false, the display name is omitted so the host can overlay it on the image. */
+  renderDisplayName?: boolean;
   template: PlayerCardRenderTemplate;
 }

@@ -1,7 +1,10 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { ContentCard } from "../../../components/brand";
+import { triggerLightImpact } from "../../../lib/haptics";
+import { pressableFeedback } from "../../../theme/pressable";
 import { TRIVIA_MAX_POINTS_PER_QUESTION } from "@world-cup-game/config";
 import type { DailyTriviaQuestion } from "../types";
-import { colors } from "../../../theme/colors";
+import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
 
@@ -25,7 +28,7 @@ export function QuestionCard({
   const isLockedIn = selectedIndex !== null;
 
   return (
-    <View style={styles.card}>
+    <ContentCard style={styles.card}>
       <Text style={styles.eyebrow}>
         Q{questionNumber} of {totalQuestions}  •  UP TO {TRIVIA_MAX_POINTS_PER_QUESTION} PTS
       </Text>
@@ -39,11 +42,15 @@ export function QuestionCard({
             <Pressable
               key={option.key}
               disabled={disabled || isLockedIn}
-              onPress={() => onSelect(idx)}
-              style={[
+              onPress={() => {
+                triggerLightImpact();
+                onSelect(idx);
+              }}
+              style={({ pressed }) => [
                 styles.option,
                 isSelected ? styles.optionSelected : null,
-                disabled ? styles.optionDisabled : null
+                disabled ? styles.optionDisabled : null,
+                pressed && !disabled && !isLockedIn && pressableFeedback(true),
               ]}
             >
               <View style={[styles.letterBadge, isSelected ? styles.letterBadgeSelected : null]}>
@@ -57,52 +64,50 @@ export function QuestionCard({
           );
         })}
       </View>
-    </View>
+    </ContentCard>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.cream,
-    borderRadius: radius.lg,
-    padding: spacing.lg
   },
   eyebrow: {
-    color: colors.gold,
+    color: colors.red,
     fontSize: 12,
-    fontWeight: "900",
+    fontWeight: "700",
     letterSpacing: 1.1,
     marginBottom: spacing.sm
   },
   letterBadge: {
     alignItems: "center",
-    backgroundColor: "rgba(12, 59, 46, 0.08)",
+    backgroundColor: opacity.ink12,
     borderRadius: 999,
     height: 32,
     justifyContent: "center",
     width: 32
   },
   letterBadgeSelected: {
-    backgroundColor: colors.gold
+    backgroundColor: colors.red
   },
   letterText: {
-    color: colors.pitch,
+    color: colors.ink,
     fontSize: 14,
-    fontWeight: "900"
+    fontWeight: "700"
   },
   letterTextSelected: {
-    color: colors.pitch
+    color: colors.cream
   },
   lockedText: {
-    color: colors.gold,
+    color: colors.red,
     fontSize: 12,
-    fontWeight: "900",
+    fontWeight: "700",
     textTransform: "uppercase"
   },
   option: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderColor: "rgba(12, 59, 46, 0.12)",
+    backgroundColor: colors.cream,
+    borderColor: opacity.ink12,
     borderRadius: radius.md,
     borderWidth: 2,
     flexDirection: "row",
@@ -114,11 +119,11 @@ const styles = StyleSheet.create({
     opacity: 0.7
   },
   optionSelected: {
-    backgroundColor: "rgba(214, 161, 30, 0.12)",
-    borderColor: colors.gold
+    backgroundColor: opacity.red18,
+    borderColor: colors.red
   },
   optionText: {
-    color: colors.pitch,
+    color: colors.ink,
     flex: 1,
     fontSize: 15,
     fontWeight: "700"
@@ -127,9 +132,9 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm
   },
   question: {
-    color: colors.pitch,
+    color: colors.ink,
     fontSize: 20,
-    fontWeight: "900",
+    fontWeight: "700",
     lineHeight: 26
   }
 });

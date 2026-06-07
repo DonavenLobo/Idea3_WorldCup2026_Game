@@ -30,7 +30,7 @@ export interface LockerTierConfig {
 export const LOCKER_TIERS: readonly LockerTierConfig[] = [
   { id: "bronze", label: "Bronze", minItemsOwned: 0, ovrBonus: 0, badgeColor: "#A56627" },
   { id: "silver", label: "Silver", minItemsOwned: 3, ovrBonus: 5, badgeColor: "#9AA0A6" },
-  { id: "gold", label: "Gold", minItemsOwned: 6, ovrBonus: 10, badgeColor: "#D6A11E" },
+  { id: "gold", label: "Gold", minItemsOwned: 6, ovrBonus: 10, badgeColor: "#e63946" },
   { id: "platinum", label: "Platinum", minItemsOwned: 10, ovrBonus: 15, badgeColor: "#5BC0EB" },
   { id: "diamond", label: "Diamond", minItemsOwned: 14, ovrBonus: 20, badgeColor: "#A88EFE" }
 ];

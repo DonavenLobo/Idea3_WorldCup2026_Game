@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useMemo } from "react";
 import type { PropsWithChildren } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSession } from "../../hooks/useSession";
+import { useSession } from "../auth/hooks/useSession";
 import {
   createGroup as createGroupApi,
   joinGroupByCode,

@@ -1,7 +1,7 @@
 // apps/mobile/src/features/bracket/components/PhaseHeroCard.tsx
 import { StyleSheet, Text, View } from "react-native";
 import type { TournamentPhase } from "../lib/computeBracketLockState";
-import { colors } from "../../../theme/colors";
+import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
 
@@ -72,7 +72,7 @@ export function PhaseHeroCard({ phase, nextLockAt, nextLockLabel, now }: PhaseHe
   }
 
   const borderColor =
-    tone === "green" ? colors.gold : tone === "amber" ? "#D97706" : "rgba(255, 248, 234, 0.25)";
+    tone === "green" ? colors.success : tone === "amber" ? colors.red : opacity.ink15;
 
   return (
     <View style={[styles.card, { borderColor }]}>
@@ -85,13 +85,13 @@ export function PhaseHeroCard({ phase, nextLockAt, nextLockLabel, now }: PhaseHe
 
 const styles = StyleSheet.create({
   body: {
-    color: "rgba(255, 248, 234, 0.75)",
+    color: opacity.ink70,
     fontSize: 14,
     fontWeight: "700",
     marginTop: 6
   },
   card: {
-    backgroundColor: "rgba(255, 248, 234, 0.06)",
+    backgroundColor: opacity.ink10,
     borderRadius: radius.lg,
     borderWidth: 2,
     marginHorizontal: spacing.lg,
@@ -99,13 +99,13 @@ const styles = StyleSheet.create({
     padding: spacing.lg
   },
   eyebrow: {
-    color: colors.gold,
+    color: colors.red,
     fontSize: 12,
     fontWeight: "900",
     letterSpacing: 1.2
   },
   title: {
-    color: colors.cream,
+    color: colors.ink,
     fontSize: 22,
     fontWeight: "900",
     marginTop: 4

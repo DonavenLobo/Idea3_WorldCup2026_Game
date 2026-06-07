@@ -1,9 +1,10 @@
 import { StyleSheet, Text, View } from "react-native";
-import { flagForTeam } from "@world-cup-game/config";
-import { colors } from "../../../theme/colors";
+import { flagForTeam, formatTeamName } from "@world-cup-game/config";
+import { colors, opacity } from "../../../theme/colors";
 import { spacing } from "../../../theme/spacing";
 
 export function TeamLabel({ name, align }: { name: string; align: "left" | "right" }) {
+  const displayName = formatTeamName(name);
   const flag = flagForTeam(name);
   const marker = flag ? (
     <Text style={styles.flag}>{flag}</Text>
@@ -15,7 +16,7 @@ export function TeamLabel({ name, align }: { name: string; align: "left" | "righ
     <View style={[styles.root, align === "right" ? styles.rowReverse : null]}>
       {marker}
       <Text style={styles.name} numberOfLines={1}>
-        {name}
+        {displayName}
       </Text>
     </View>
   );
@@ -23,27 +24,31 @@ export function TeamLabel({ name, align }: { name: string; align: "left" | "righ
 
 const styles = StyleSheet.create({
   flag: {
-    fontSize: 22
+    flexShrink: 0,
+    fontSize: 20,
   },
   name: {
-    color: colors.cream,
-    flexShrink: 1,
+    color: colors.ink,
+    flex: 1,
     fontSize: 15,
-    fontWeight: "800"
+    fontWeight: "700",
+    minWidth: 0,
   },
   placeholder: {
-    backgroundColor: "rgba(255, 248, 234, 0.18)",
+    backgroundColor: opacity.ink15,
     borderRadius: 4,
+    flexShrink: 0,
     height: 16,
-    width: 22
+    width: 20,
   },
   root: {
     alignItems: "center",
     flex: 1,
     flexDirection: "row",
-    gap: spacing.sm
+    gap: spacing.xs,
+    minWidth: 0,
   },
   rowReverse: {
-    flexDirection: "row-reverse"
-  }
+    flexDirection: "row-reverse",
+  },
 });

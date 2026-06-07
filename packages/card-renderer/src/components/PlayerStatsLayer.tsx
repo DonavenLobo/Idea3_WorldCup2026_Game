@@ -1,6 +1,7 @@
 import { CARD_STATS } from "@world-cup-game/config";
 import type { CardStats, CardTemplateMetadata } from "@world-cup-game/types";
 import { StyleSheet, Text, View } from "react-native";
+import { resolveLayerFontStyle } from "../utils/layerTextStyle";
 
 export interface PlayerStatsLayerProps {
   stats: CardStats;
@@ -33,15 +34,24 @@ export function PlayerStatsLayer({ stats, layer }: PlayerStatsLayerProps) {
                 {
                   color: layer.color,
                   fontSize: layer.valueFontSize,
-                  fontWeight: (layer.fontWeight ?? "900") as "900",
-                  textAlign: layer.align
+                  textAlign: layer.align,
+                  ...resolveLayerFontStyle(layer),
                 }
               ]}
             >
               {stats[column.key]}
             </Text>
             {showLabels ? (
-              <Text style={[styles.label, { color: layer.color, fontSize: layer.labelFontSize }]}>
+              <Text
+                style={[
+                  styles.label,
+                  {
+                    color: layer.color,
+                    fontSize: layer.labelFontSize,
+                    ...resolveLayerFontStyle(layer),
+                  },
+                ]}
+              >
                 {stat?.label ?? column.key.toUpperCase()}
               </Text>
             ) : null}
@@ -53,14 +63,10 @@ export function PlayerStatsLayer({ stats, layer }: PlayerStatsLayerProps) {
 }
 
 const styles = StyleSheet.create({
-  label: {
-    fontWeight: "800"
-  },
+  label: {},
   stat: {
     alignItems: "center",
     position: "absolute"
   },
-  value: {
-    fontWeight: "900"
-  }
+  value: {},
 });

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { LEADERBOARD_STAGES, SUPPORTED_NATIONS } from "@world-cup-game/config";
 import type { LeaderboardStage } from "@world-cup-game/config";
 import {
@@ -11,23 +11,20 @@ import {
   LeaderboardRow,
   filterLeaderboardRows,
   getLeaderboardRows,
-  uniqueCountryCodes
+  leaderboardRowMetrics,
+  uniqueCountryCodes,
 } from "../src/features/leaderboard";
 import type { CountryFilter, FilterOption } from "../src/features/leaderboard";
-import { useSession } from "../src/hooks/useSession";
-import { colors } from "../src/theme/colors";
+import { useSession } from "../src/features/auth";
+import { colors, opacity } from "../src/theme/colors";
 import { radius } from "../src/theme/radius";
 import { spacing } from "../src/theme/spacing";
-
-function messageFromError(error: unknown, fallback: string): string {
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
-  }
-  return fallback;
-}
+import { typography } from "../src/theme/typography";
+import { getErrorMessage } from "../src/utils/errors";
 
 export default function LeaderboardScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user } = useSession();
 
   const [stage, setStage] = useState<LeaderboardStage>("overall");
@@ -44,8 +41,8 @@ export default function LeaderboardScreen() {
     queryFn: () => getLeaderboardRows({
       currentUserId: user?.id ?? null,
       groupId: null,
-      stage
-    })
+      stage,
+    }),
   });
 
   const allRows = leaderboardQuery.data ?? [];
@@ -57,7 +54,7 @@ export default function LeaderboardScreen() {
       const nationConfig = SUPPORTED_NATIONS.find((n) => n.code === code);
       opts.push({
         id: code,
-        label: nationConfig ? `${nationConfig.flagEmoji} ${nationConfig.name}` : code
+        label: nationConfig ? `${nationConfig.flagEmoji} ${nationConfig.name}` : code,
       });
     }
     return opts;
@@ -75,7 +72,9 @@ export default function LeaderboardScreen() {
           <Pressable style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backText}>←</Text>
           </Pressable>
-          <Text style={styles.headerTitle}>Leaderboard</Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            Leaderboard
+          </Text>
           <View style={styles.backSpacer} />
         </View>
       </SafeAreaView>
@@ -95,18 +94,27 @@ export default function LeaderboardScreen() {
         />
       </View>
 
-      <View style={styles.tableHeader}>
-        <Text style={styles.colRank}>Rank</Text>
-        <Text style={styles.colName}>Display Name</Text>
-        <Text style={styles.colScore}>Total Pts</Text>
+      <View style={styles.tableHeaderWrap}>
+        <View style={styles.tableHeader}>
+          <Text style={styles.colRank}>Rank</Text>
+          <View style={styles.colFlagSpacer} />
+          <Text style={styles.colName}>Display Name</Text>
+          <Text style={styles.colScore}>Total Pts</Text>
+        </View>
       </View>
 
-      <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
+      <ScrollView
+        style={styles.list}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingBottom: Math.max(insets.bottom, spacing.md) + spacing.xl },
+        ]}
+      >
         {leaderboardQuery.isLoading ? (
           <Text style={styles.status}>Loading leaderboard...</Text>
         ) : leaderboardQuery.error ? (
           <Text style={styles.status}>
-            {messageFromError(leaderboardQuery.error, "Could not load leaderboard.")}
+            {getErrorMessage(leaderboardQuery.error, "Could not load leaderboard.")}
           </Text>
         ) : rows.length === 0 ? (
           <Text style={styles.status}>No leaderboard rows yet.</Text>
@@ -127,91 +135,100 @@ export default function LeaderboardScreen() {
   );
 }
 
+const { rankWidth, flagSize, scoreWidth, horizontalMargin } = leaderboardRowMetrics;
+
 const styles = StyleSheet.create({
   backButton: {
     alignItems: "center",
-    backgroundColor: "rgba(255, 248, 234, 0.12)",
+    backgroundColor: opacity.ink12,
     borderRadius: 999,
     height: 36,
     justifyContent: "center",
-    width: 36
+    width: 36,
   },
   backSpacer: {
-    width: 36
+    width: 36,
   },
   backText: {
-    color: colors.cream,
+    ...typography.label,
+    color: colors.ink,
     fontSize: 20,
-    fontWeight: "900"
+  },
+  colFlagSpacer: {
+    marginLeft: spacing.sm,
+    width: flagSize,
   },
   colName: {
-    color: "rgba(12, 59, 46, 0.7)",
+    ...typography.caption,
+    color: opacity.ink70,
     flex: 1,
-    fontSize: 13,
-    fontWeight: "900",
-    marginLeft: spacing.md + 44
+    fontFamily: typography.label.fontFamily,
+    marginLeft: spacing.sm,
   },
   colRank: {
-    color: "rgba(12, 59, 46, 0.7)",
-    fontSize: 13,
-    fontWeight: "900",
-    minWidth: 28,
-    textAlign: "center"
+    ...typography.caption,
+    color: opacity.ink70,
+    fontFamily: typography.label.fontFamily,
+    width: rankWidth,
   },
   colScore: {
-    color: "rgba(12, 59, 46, 0.7)",
-    fontSize: 13,
-    fontWeight: "900",
-    minWidth: 70,
-    textAlign: "right"
+    ...typography.caption,
+    color: opacity.ink70,
+    fontFamily: typography.label.fontFamily,
+    marginLeft: spacing.sm,
+    textAlign: "right",
+    width: scoreWidth,
   },
   filterRow: {
     flexDirection: "row",
     gap: spacing.sm,
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md
+    paddingVertical: spacing.md,
   },
   header: {
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm
+    paddingVertical: spacing.sm,
   },
   headerSafeArea: {
-    backgroundColor: colors.pitch
+    backgroundColor: colors.cream,
   },
   headerTitle: {
-    color: colors.cream,
-    fontSize: 18,
-    fontWeight: "900"
+    ...typography.titleScreen,
+    color: colors.ink,
+    flex: 1,
+    textAlign: "center",
   },
   list: {
-    backgroundColor: "#FFFFFF",
-    flex: 1
+    backgroundColor: colors.cream,
+    flex: 1,
   },
   listContent: {
-    paddingBottom: spacing.xl
+    paddingTop: spacing.xs,
   },
   root: {
-    backgroundColor: colors.pitch,
-    flex: 1
+    backgroundColor: colors.cream,
+    flex: 1,
   },
   status: {
-    color: colors.pitch,
-    fontSize: 14,
-    fontWeight: "800",
+    ...typography.bodySmall,
+    color: colors.ink,
+    fontFamily: typography.label.fontFamily,
     padding: spacing.lg,
-    textAlign: "center"
+    textAlign: "center",
   },
   tableHeader: {
     alignItems: "center",
-    backgroundColor: "rgba(12, 59, 46, 0.15)",
-    borderRadius: radius.sm,
+    backgroundColor: opacity.ink12,
+    borderRadius: radius.button,
     flexDirection: "row",
-    marginHorizontal: spacing.lg,
-    marginVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm
-  }
+    paddingVertical: spacing.sm,
+  },
+  tableHeaderWrap: {
+    marginBottom: spacing.sm,
+    marginHorizontal: horizontalMargin,
+  },
 });

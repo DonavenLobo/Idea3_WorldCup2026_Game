@@ -1,7 +1,8 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors } from "../../../theme/colors";
+import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
+import { typography } from "../../../theme/typography";
 
 interface GroupListItemProps {
   name: string;
@@ -48,7 +49,7 @@ export function GroupListItem({
           <Text style={styles.avatarText}>{initials(name)}</Text>
         </View>
         <View style={styles.text}>
-          <Text style={styles.name} numberOfLines={1}>
+          <Text style={styles.name} numberOfLines={2}>
             {name}
           </Text>
           <View style={styles.metaRow}>
@@ -90,28 +91,31 @@ export function GroupListItem({
   );
 }
 
+const AVATAR_SIZE = 48;
+
 const styles = StyleSheet.create({
   avatar: {
     alignItems: "center",
-    backgroundColor: colors.pitch,
-    borderRadius: 999,
-    height: 44,
+    backgroundColor: colors.ink,
+    borderRadius: AVATAR_SIZE / 2,
+    flexShrink: 0,
+    height: AVATAR_SIZE,
     justifyContent: "center",
-    width: 44
+    width: AVATAR_SIZE,
   },
   avatarText: {
-    color: colors.gold,
-    fontSize: 14,
-    fontWeight: "900"
+    ...typography.caption,
+    color: colors.red,
+    fontFamily: typography.label.fontFamily,
   },
   card: {
     backgroundColor: colors.cream,
-    borderRadius: radius.lg,
+    borderRadius: radius.card,
     marginBottom: spacing.sm,
-    padding: spacing.md
+    padding: spacing.md,
   },
   cardInteractive: {
-    borderColor: "rgba(214, 161, 30, 0.45)",
+    borderColor: opacity.red50,
     borderWidth: 1
   },
   cardPressed: {
@@ -119,44 +123,46 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.99 }]
   },
   detailHint: {
-    color: "rgba(12, 59, 46, 0.5)",
-    fontSize: 12,
-    fontWeight: "800",
-    marginTop: spacing.xs
+    ...typography.caption,
+    color: opacity.ink55,
+    marginTop: spacing.xs,
   },
   featured: {
-    color: colors.gold,
-    fontSize: 12,
-    fontWeight: "800"
+    ...typography.caption,
+    color: colors.red,
+    fontFamily: typography.label.fontFamily,
   },
   joinButton: {
-    backgroundColor: colors.pitch,
+    alignSelf: "flex-start",
+    backgroundColor: colors.ink,
     borderRadius: radius.pill,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm
+    flexShrink: 0,
+    marginTop: 2,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
   },
   joinText: {
+    ...typography.caption,
     color: colors.cream,
-    fontSize: 13,
-    fontWeight: "900"
+    fontFamily: typography.label.fontFamily,
   },
   inviteCode: {
-    color: colors.pitch,
+    color: colors.ink,
     fontSize: 13,
-    fontWeight: "900",
+    fontWeight: "700",
     letterSpacing: 1.6
   },
   inviteLabel: {
-    color: "rgba(12, 59, 46, 0.55)",
+    color: opacity.ink55,
     fontSize: 11,
-    fontWeight: "900",
+    fontWeight: "700",
     letterSpacing: 0.8,
     textTransform: "uppercase"
   },
   inviteRow: {
     alignItems: "center",
     alignSelf: "flex-start",
-    backgroundColor: "rgba(12, 59, 46, 0.08)",
+    backgroundColor: opacity.ink12,
     borderRadius: radius.pill,
     flexDirection: "row",
     gap: spacing.xs,
@@ -165,22 +171,24 @@ const styles = StyleSheet.create({
     paddingVertical: 4
   },
   joinedButton: {
-    backgroundColor: "rgba(12, 59, 46, 0.1)",
-    borderColor: colors.pitch,
+    alignSelf: "flex-start",
+    backgroundColor: opacity.ink12,
+    borderColor: colors.ink,
     borderRadius: radius.pill,
     borderWidth: 1,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm
+    flexShrink: 0,
+    marginTop: 2,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
   },
   joinedText: {
-    color: colors.pitch,
-    fontSize: 13,
-    fontWeight: "900"
+    ...typography.caption,
+    color: colors.ink,
+    fontFamily: typography.label.fontFamily,
   },
   meta: {
-    color: "rgba(12, 59, 46, 0.65)",
-    fontSize: 13,
-    fontWeight: "700"
+    ...typography.caption,
+    color: opacity.ink60,
   },
   metaRow: {
     alignItems: "center",
@@ -189,16 +197,17 @@ const styles = StyleSheet.create({
     marginTop: 2
   },
   name: {
-    color: colors.pitch,
-    fontSize: 16,
-    fontWeight: "900"
+    ...typography.headingCard,
+    color: colors.ink,
   },
   row: {
-    alignItems: "center",
+    alignItems: "flex-start",
     flexDirection: "row",
-    gap: spacing.md
+    gap: spacing.sm,
   },
   text: {
-    flex: 1
-  }
+    flex: 1,
+    minWidth: 0,
+    paddingRight: spacing.xs,
+  },
 });

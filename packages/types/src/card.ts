@@ -37,6 +37,8 @@ export interface CardTemplateLayerMetadata {
   height?: number;
   fontSize?: number;
   fontWeight?: string;
+  /** React Native font family — e.g. Caveat_700Bold when loaded in the host app. */
+  fontFamily?: string;
   color?: string;
   backgroundColor?: string;
   borderRadius?: number;

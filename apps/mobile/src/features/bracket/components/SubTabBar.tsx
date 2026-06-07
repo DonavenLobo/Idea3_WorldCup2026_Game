@@ -1,9 +1,8 @@
 import { useEffect, useRef } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import type { SubTab } from "../types";
-import { colors } from "../../../theme/colors";
-import { radius } from "../../../theme/radius";
+import { ScrollView, StyleSheet } from "react-native";
+import { FilterPill } from "../../../components/brand/FilterPill";
 import { spacing } from "../../../theme/spacing";
+import type { SubTab } from "../types";
 
 export interface SubTabItem {
   id: SubTab;
@@ -20,7 +19,7 @@ const TABS: readonly SubTabItem[] = [
   { id: "sf", label: "SF" },
   { id: "final", label: "Final" },
   { id: "third", label: "3rd" },
-  { id: "summary", label: "My Bracket" }
+  { id: "summary", label: "My Bracket" },
 ];
 
 interface SubTabBarProps {
@@ -35,7 +34,6 @@ export function SubTabBar({ value, onChange, items }: SubTabBarProps) {
   const scrollRef = useRef<ScrollView>(null);
   const positions = useRef<Record<string, number>>({});
 
-  // When the active tab changes (manual or auto-advance), bring it into view.
   useEffect(() => {
     const x = positions.current[value];
     if (x !== undefined && scrollRef.current) {
@@ -52,27 +50,17 @@ export function SubTabBar({ value, onChange, items }: SubTabBarProps) {
       contentContainerStyle={styles.scrollContent}
     >
       {tabs.map((tab) => {
-        const active = tab.id === value;
+        const label = `${tab.phase2Hint ? "P2 " : ""}${tab.label}${tab.isLocked ? " 🔒" : ""}`;
         return (
-          <Pressable
+          <FilterPill
             key={tab.id}
+            label={label}
+            selected={tab.id === value}
             onLayout={(e) => {
               positions.current[tab.id] = e.nativeEvent.layout.x;
             }}
-            style={[styles.tab, active ? styles.tabActive : null]}
             onPress={() => onChange(tab.id)}
-          >
-            <View style={styles.tabInner}>
-              {tab.phase2Hint ? <Text style={styles.eyebrow}>PHASE 2</Text> : null}
-              <Text
-                style={[styles.label, active ? styles.labelActive : null]}
-                numberOfLines={1}
-              >
-                {tab.label}
-                {tab.isLocked ? <Text style={styles.lockIcon}>  🔒</Text> : null}
-              </Text>
-            </View>
-          </Pressable>
+          />
         );
       })}
     </ScrollView>
@@ -80,23 +68,6 @@ export function SubTabBar({ value, onChange, items }: SubTabBarProps) {
 }
 
 const styles = StyleSheet.create({
-  eyebrow: {
-    color: colors.gold,
-    fontSize: 9,
-    fontWeight: "900",
-    letterSpacing: 1
-  },
-  label: {
-    color: "rgba(255, 248, 234, 0.65)",
-    fontSize: 13,
-    fontWeight: "800"
-  },
-  labelActive: {
-    color: colors.pitch
-  },
-  lockIcon: {
-    fontSize: 11
-  },
   scroll: {
     flexGrow: 0,
     flexShrink: 0
@@ -106,20 +77,5 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm
-  },
-  tab: {
-    alignItems: "center",
-    backgroundColor: "rgba(255, 248, 234, 0.08)",
-    borderRadius: radius.pill,
-    height: 36,
-    justifyContent: "center",
-    minWidth: 56,
-    paddingHorizontal: spacing.md
-  },
-  tabActive: {
-    backgroundColor: colors.gold
-  },
-  tabInner: {
-    alignItems: "center"
   }
 });

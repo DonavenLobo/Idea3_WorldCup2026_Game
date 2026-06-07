@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect, useRouter } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { APP_ROUTES } from "@world-cup-game/config";
+import { BrandButton, Eyebrow } from "../../src/components/brand";
+import { Screen } from "../../src/components/layout";
 import { RenderedPlayerCard } from "../../src/features/card";
 import { useOnboarding } from "../../src/features/onboarding";
-import { useCard } from "../../src/hooks/useCard";
-import { useProfile } from "../../src/hooks/useProfile";
-import { colors } from "../../src/theme/colors";
+import { useCurrentUserCard } from "../../src/features/card";
+import { useProfile } from "../../src/features/profile";
+import { colors, opacity } from "../../src/theme/colors";
 import { radius } from "../../src/theme/radius";
 import { spacing } from "../../src/theme/spacing";
+import { typography } from "../../src/theme/typography";
 
 const KICKOFF_DATE = new Date("2026-06-11T18:00:00Z");
 
@@ -24,7 +27,7 @@ function useCountdown(target: Date) {
     days: Math.floor(diff / 86400000),
     hours: Math.floor((diff / 3600000) % 24),
     minutes: Math.floor((diff / 60000) % 60),
-    seconds: Math.floor((diff / 1000) % 60)
+    seconds: Math.floor((diff / 1000) % 60),
   };
 }
 
@@ -32,10 +35,61 @@ function pad(value: number) {
   return value.toString().padStart(2, "0");
 }
 
+/** Pre-tournament only — remove once the World Cup kicks off. */
+function KickoffCountdown({
+  days,
+  hours,
+  minutes,
+  seconds,
+}: {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}) {
+  return (
+    <View style={styles.kickoffBanner}>
+      <Text style={styles.kickoffSeries}>World Cup 2026</Text>
+      <Text style={styles.kickoffDate}>Kickoff · 11 June</Text>
+
+      <View style={styles.kickoffRow}>
+        <KickoffUnit label="days" value={days} />
+        <Text style={styles.kickoffDot}>·</Text>
+        <KickoffUnit label="hrs" value={hours} />
+        <Text style={styles.kickoffDot}>·</Text>
+        <KickoffUnit label="min" value={minutes} />
+        <Text style={styles.kickoffDot}>·</Text>
+        <KickoffUnit emphasize label="sec" value={seconds} />
+      </View>
+    </View>
+  );
+}
+
+function KickoffUnit({
+  value,
+  label,
+  emphasize = false,
+}: {
+  value: number;
+  label: string;
+  emphasize?: boolean;
+}) {
+  return (
+    <View style={styles.kickoffUnit}>
+      <Text style={[styles.kickoffValue, emphasize && styles.kickoffValueLive]}>
+        {pad(value)}
+      </Text>
+      <Text style={[styles.kickoffLabel, emphasize && styles.kickoffLabelLive]}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
 export default function HomeScreen() {
   const router = useRouter();
   const { nation, displayName, photoSource } = useOnboarding();
-  const { card } = useCard();
+  const { card } = useCurrentUserCard();
   const { profile } = useProfile();
   const { days, hours, minutes, seconds } = useCountdown(KICKOFF_DATE);
   const selectedNationCode =
@@ -47,7 +101,6 @@ export default function HomeScreen() {
     : photoSource;
   const scrollRef = useRef<ScrollView>(null);
 
-  // Reset scroll to top whenever the Home tab gets focused.
   useFocusEffect(
     useCallback(() => {
       scrollRef.current?.scrollTo({ y: 0, animated: false });
@@ -55,151 +108,129 @@ export default function HomeScreen() {
   );
 
   return (
-    <ScrollView ref={scrollRef} style={styles.root} contentContainerStyle={styles.content}>
-      <Text style={styles.eyebrow}>YOUR CARD</Text>
+    <Screen
+      scroll
+      edges={["left", "right"]}
+      bottomInset={spacing.xl}
+      ref={scrollRef}
+      contentContainerStyle={styles.content}
+    >
+      <KickoffCountdown
+        days={days}
+        hours={hours}
+        minutes={minutes}
+        seconds={seconds}
+      />
+
+      <Eyebrow label="Your card" />
       <RenderedPlayerCard
         card={card}
         displayName={cardDisplayName}
         photoSource={cardPhotoSource}
         selectedNationCode={selectedNationCode}
         stats={card?.stats}
+        style={styles.playerCard}
       />
 
-      <View style={styles.countdownCard}>
-        <Text style={styles.countdownLabel}>Kickoff in</Text>
-        <View style={styles.countdownRow}>
-          <CountdownBox value={days} unit="DAYS" />
-          <CountdownBox value={hours} unit="HRS" />
-          <CountdownBox value={minutes} unit="MIN" />
-          <CountdownBox value={seconds} unit="SEC" />
-        </View>
-        <Text style={styles.kickoffDate}>Kickoff Jun 11</Text>
+      <View style={styles.navActions}>
+        <BrandButton
+          label="Create Your Bracket"
+          onPress={() => router.push(APP_ROUTES.tabs.bracket)}
+        />
+        <BrandButton
+          label="Join a Group"
+          variant="secondary"
+          onPress={() => router.push(APP_ROUTES.tabs.groups)}
+        />
       </View>
-
-      <Pressable
-        style={styles.ctaCard}
-        onPress={() => router.push(APP_ROUTES.tabs.bracket)}
-      >
-        <View style={styles.ctaText}>
-          <Text style={styles.ctaTitle}>Create Your Bracket</Text>
-          <Text style={styles.ctaBody}>
-            Pick group winners and the knockout path to the trophy.
-          </Text>
-        </View>
-        <Text style={styles.ctaArrow}>›</Text>
-      </Pressable>
-
-      <Pressable
-        style={styles.ctaCard}
-        onPress={() => router.push(APP_ROUTES.tabs.groups)}
-      >
-        <View style={styles.ctaText}>
-          <Text style={styles.ctaTitle}>Join a Group</Text>
-          <Text style={styles.ctaBody}>
-            Compete with friends on the tournament leaderboard.
-          </Text>
-        </View>
-        <Text style={styles.ctaArrow}>›</Text>
-      </Pressable>
-    </ScrollView>
-  );
-}
-
-function CountdownBox({ value, unit }: { value: number; unit: string }) {
-  return (
-    <View style={styles.countdownBox}>
-      <Text style={styles.countdownValue}>{pad(value)}</Text>
-      <Text style={styles.countdownUnit}>{unit}</Text>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   content: {
-    padding: spacing.lg
+    paddingTop: spacing.lg,
   },
-  countdownBox: {
+  kickoffBanner: {
     alignItems: "center",
-    backgroundColor: "rgba(214, 161, 30, 0.12)",
-    borderRadius: radius.md,
-    flex: 1,
-    paddingVertical: spacing.sm
-  },
-  countdownCard: {
-    backgroundColor: "rgba(255, 248, 234, 0.06)",
-    borderColor: "rgba(255, 248, 234, 0.12)",
-    borderRadius: radius.lg,
+    borderColor: opacity.ink15,
+    borderRadius: radius.card,
+    borderTopColor: colors.red,
+    borderTopWidth: 3,
     borderWidth: 1,
-    marginTop: spacing.lg,
-    padding: spacing.lg
-  },
-  countdownLabel: {
-    color: "rgba(255, 248, 234, 0.7)",
-    fontSize: 13,
-    fontWeight: "700"
-  },
-  countdownRow: {
-    flexDirection: "row",
-    gap: spacing.sm,
-    marginTop: spacing.sm
-  },
-  countdownUnit: {
-    color: "rgba(255, 248, 234, 0.6)",
-    fontSize: 10,
-    fontWeight: "900",
-    letterSpacing: 1,
-    marginTop: 2
-  },
-  countdownValue: {
-    color: colors.gold,
-    fontSize: 28,
-    fontWeight: "900"
-  },
-  ctaArrow: {
-    color: colors.pitch,
-    fontSize: 28,
-    fontWeight: "900"
-  },
-  ctaBody: {
-    color: "rgba(12, 59, 46, 0.65)",
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: 2
-  },
-  ctaCard: {
-    alignItems: "center",
-    backgroundColor: colors.cream,
-    borderRadius: radius.lg,
-    flexDirection: "row",
-    gap: spacing.md,
-    marginTop: spacing.md,
-    padding: spacing.lg
-  },
-  ctaText: {
-    flex: 1
-  },
-  ctaTitle: {
-    color: colors.pitch,
-    fontSize: 17,
-    fontWeight: "900"
-  },
-  eyebrow: {
-    color: colors.gold,
-    fontSize: 12,
-    fontWeight: "900",
-    letterSpacing: 1.2,
-    marginBottom: spacing.sm,
-    textTransform: "uppercase"
+    marginBottom: spacing.md,
+    overflow: "visible",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   kickoffDate: {
-    color: "rgba(255, 248, 234, 0.7)",
-    fontSize: 13,
-    fontWeight: "700",
-    marginTop: spacing.sm,
-    textAlign: "center"
+    ...typography.caption,
+    color: colors.red,
+    fontFamily: typography.label.fontFamily,
+    letterSpacing: 1,
+    marginTop: spacing.xs,
+    textTransform: "uppercase",
   },
-  root: {
-    backgroundColor: colors.pitch,
-    flex: 1
-  }
+  kickoffDot: {
+    ...typography.caption,
+    color: opacity.red50,
+    fontFamily: typography.label.fontFamily,
+    marginBottom: 10,
+    paddingHorizontal: 2,
+  },
+  kickoffLabel: {
+    ...typography.caption,
+    color: opacity.ink55,
+    fontSize: 10,
+    letterSpacing: 0.6,
+    marginTop: 2,
+    textTransform: "uppercase",
+  },
+  kickoffLabelLive: {
+    color: colors.red,
+    fontFamily: typography.label.fontFamily,
+  },
+  kickoffRow: {
+    alignItems: "flex-end",
+    borderColor: opacity.ink15,
+    borderRadius: radius.button,
+    borderWidth: 1,
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xs,
+    width: "100%",
+  },
+  kickoffSeries: {
+    ...typography.titleScreen,
+    color: colors.ink,
+    fontSize: 24,
+    lineHeight: 34,
+    paddingLeft: spacing.sm,
+    paddingRight: spacing.xl,
+    textAlign: "center",
+  },
+  navActions: {
+    gap: spacing.sm,
+    marginTop: spacing.xxl,
+  },
+  kickoffUnit: {
+    alignItems: "center",
+    flex: 1,
+    minWidth: 0,
+  },
+  kickoffValue: {
+    ...typography.dataValue,
+    color: colors.ink,
+    fontSize: 20,
+    fontVariant: ["tabular-nums"],
+    lineHeight: 24,
+  },
+  kickoffValueLive: {
+    color: colors.red,
+  },
+  playerCard: {
+    marginTop: -15,
+  },
 });

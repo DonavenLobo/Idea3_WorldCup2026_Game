@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { colors } from "../../../theme/colors";
+import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
 
@@ -52,8 +52,8 @@ export function LateJoinerBanner({ lockedGroupCount, lockedMatchCount }: LateJoi
 
 const styles = StyleSheet.create({
   banner: {
-    backgroundColor: "rgba(214, 161, 30, 0.18)",
-    borderColor: colors.gold,
+    backgroundColor: opacity.red18,
+    borderColor: colors.red,
     borderRadius: radius.md,
     borderWidth: 1,
     flexDirection: "row",
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
     padding: spacing.md
   },
   body: {
-    color: colors.cream,
+    color: colors.ink,
     flex: 1,
     fontSize: 13,
     fontWeight: "700",
@@ -71,13 +71,13 @@ const styles = StyleSheet.create({
   },
   bold: { fontWeight: "900" },
   dismiss: {
-    backgroundColor: colors.gold,
+    backgroundColor: colors.red,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.sm,
     paddingVertical: 4
   },
   dismissText: {
-    color: colors.pitch,
+    color: colors.cream,
     fontSize: 12,
     fontWeight: "900"
   }

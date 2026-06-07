@@ -1,7 +1,7 @@
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
-import { GROUP_IDS, SUPPORTED_NATIONS } from "@world-cup-game/config";
+import { formatTeamName, GROUP_IDS, SUPPORTED_NATIONS } from "@world-cup-game/config";
 import { useBracket } from "../BracketContext";
-import { colors } from "../../../theme/colors";
+import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
 
@@ -55,7 +55,7 @@ export function GroupPicker({ index, onIndexChange, onComplete }: GroupPickerPro
               <Text style={styles.position}>{i + 1}</Text>
               <Text style={styles.flag}>{nation?.flagEmoji ?? "🏴"}</Text>
               <Text style={styles.nationName} numberOfLines={1}>
-                {nation?.name ?? code}
+                {nation?.name ? formatTeamName(nation.name) : code}
               </Text>
               {!locked ? (
                 <View style={styles.arrows}>
@@ -142,13 +142,13 @@ const styles = StyleSheet.create({
     gap: spacing.sm
   },
   lockChip: {
-    color: "rgba(12, 59, 46, 0.6)",
+    color: opacity.ink60,
     fontSize: 12,
     fontWeight: "900",
     letterSpacing: 0.8
   },
   saveButton: {
-    borderColor: colors.gold,
+    borderColor: colors.red,
     borderRadius: radius.pill,
     borderWidth: 2,
     flex: 1,
@@ -156,14 +156,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10
   },
   saveButtonText: {
-    color: colors.gold,
+    color: colors.red,
     fontSize: 14,
     fontWeight: "900",
     textAlign: "center"
   },
   arrowButton: {
     alignItems: "center",
-    backgroundColor: "rgba(12, 59, 46, 0.08)",
+    backgroundColor: opacity.ink12,
     borderRadius: radius.sm,
     height: 36,
     justifyContent: "center",
@@ -173,9 +173,9 @@ const styles = StyleSheet.create({
     opacity: 0.25
   },
   arrowText: {
-    color: colors.pitch,
+    color: colors.ink,
     fontSize: 14,
-    fontWeight: "900"
+    fontWeight: "700"
   },
   arrows: {
     flexDirection: "row",
@@ -190,31 +190,31 @@ const styles = StyleSheet.create({
     fontSize: 24
   },
   groupTitle: {
-    color: colors.pitch,
+    color: colors.ink,
     fontSize: 22,
-    fontWeight: "900",
+    fontWeight: "700",
     letterSpacing: 1.2,
     marginBottom: spacing.md
   },
   indicator: {
-    color: "rgba(255, 248, 234, 0.75)",
+    color: opacity.ink60,
     fontSize: 13,
-    fontWeight: "800"
+    fontWeight: "700"
   },
   nationName: {
-    color: colors.pitch,
+    color: colors.ink,
     flex: 1,
     fontSize: 16,
-    fontWeight: "800"
+    fontWeight: "700"
   },
   navButton: {
-    backgroundColor: "rgba(255, 248, 234, 0.1)",
+    backgroundColor: opacity.ink12,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: 10
   },
   navButtonPrimary: {
-    backgroundColor: colors.gold,
+    backgroundColor: colors.red,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: 10
@@ -229,19 +229,19 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg
   },
   navText: {
-    color: colors.cream,
+    color: colors.ink,
     fontSize: 14,
-    fontWeight: "800"
+    fontWeight: "700"
   },
   navTextPrimary: {
-    color: colors.pitch,
+    color: colors.cream,
     fontSize: 14,
-    fontWeight: "900"
+    fontWeight: "700"
   },
   position: {
-    color: colors.pitch,
+    color: colors.ink,
     fontSize: 18,
-    fontWeight: "900",
+    fontWeight: "700",
     width: 22
   },
   resetButton: {
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4
   },
   resetText: {
-    color: "rgba(12, 59, 46, 0.55)",
+    color: opacity.ink55,
     fontSize: 13,
     fontWeight: "700"
   },
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   },
   row: {
     alignItems: "center",
-    borderTopColor: "rgba(12, 59, 46, 0.08)",
+    borderTopColor: opacity.ink12,
     borderTopWidth: 1,
     flexDirection: "row",
     gap: spacing.md,

@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { PropsWithChildren } from "react";
 import { TRIVIA_QUESTIONS_PER_DAY } from "@world-cup-game/config";
-import { useSession } from "../../hooks/useSession";
+import { useSession } from "../auth/hooks/useSession";
 import {
   getCompletedTriviaAttempt,
   getDailyTriviaQuestions,

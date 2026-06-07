@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 100" fill="none">
+  <title>GoGaffa wordmark  ink</title>
+  <style>
+    .ink { fill: #1a1a2e; }
+    .cream { fill: #f5f0e8; }
+  </style>
+  <!--
+    GoGaffa wordmark in a hand-drawn Caveat Bold style.
+    Rendered as a single text element using the brand font stack.
+    For production use, convert to outlines in a vector editor.
+  -->
+  <text
+    class="ink"
+    x="240" y="72"
+    font-family="Caveat, 'Comic Sans MS', cursive"
+    font-size="72"
+    font-weight="700"
+    text-anchor="middle"
+    letter-spacing="1"
+  >GoGaffa</text>
+</svg>

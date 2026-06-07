@@ -1,7 +1,8 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors } from "../../../theme/colors";
-import { radius } from "../../../theme/radius";
+import { colors, opacity } from "../../../theme/colors";
 import { spacing } from "../../../theme/spacing";
+import { pressableFeedback } from "../../../theme/pressable";
+import { typography } from "../../../theme/typography";
 
 interface PhotoChoiceButtonProps {
   emoji: string;
@@ -12,12 +13,17 @@ interface PhotoChoiceButtonProps {
 
 export function PhotoChoiceButton({ emoji, title, subtitle, onPress }: PhotoChoiceButtonProps) {
   return (
-    <Pressable style={styles.button} onPress={onPress}>
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.button, pressed && pressableFeedback(true)]}
+    >
       <Text style={styles.emoji}>{emoji}</Text>
       <View style={styles.text}>
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.subtitle}>{subtitle}</Text>
       </View>
+      <Text style={styles.chevron}>›</Text>
     </Pressable>
   );
 }
@@ -25,30 +31,33 @@ export function PhotoChoiceButton({ emoji, title, subtitle, onPress }: PhotoChoi
 const styles = StyleSheet.create({
   button: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderColor: "rgba(12, 59, 46, 0.12)",
-    borderRadius: radius.md,
-    borderWidth: 2,
+    borderBottomColor: opacity.ink12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
     gap: spacing.md,
-    marginBottom: spacing.md,
-    padding: spacing.lg
+    paddingVertical: spacing.lg,
+  },
+  chevron: {
+    color: opacity.ink35,
+    fontFamily: typography.label.fontFamily,
+    fontSize: 20,
+    lineHeight: 24,
   },
   emoji: {
-    fontSize: 34
+    fontSize: 28,
   },
   subtitle: {
-    color: "rgba(12, 59, 46, 0.6)",
-    fontSize: 13,
-    lineHeight: 18
+    ...typography.caption,
+    color: opacity.ink55,
+    marginTop: 2,
   },
   text: {
     flex: 1,
-    gap: 2
   },
   title: {
-    color: colors.pitch,
-    fontSize: 17,
-    fontWeight: "800"
-  }
+    ...typography.sectionHeading,
+    color: colors.ink,
+    fontSize: 20,
+    lineHeight: 24,
+  },
 });

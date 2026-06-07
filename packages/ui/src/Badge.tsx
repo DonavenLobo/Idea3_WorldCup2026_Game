@@ -8,7 +8,7 @@ export interface BadgeProps {
 export function Badge({ label, tone = "neutral" }: BadgeProps) {
   return (
     <View style={[styles.badge, styles[tone]]}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, tone === "success" && styles.successLabel]}>{label}</Text>
     </View>
   );
 }
@@ -18,20 +18,23 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     borderRadius: 999,
     paddingHorizontal: 10,
-    paddingVertical: 5
+    paddingVertical: 5,
   },
   label: {
-    color: "#0C3B2E",
+    color: "#1a1a2e",
     fontSize: 12,
-    fontWeight: "800"
+    fontWeight: "700",
   },
   neutral: {
-    backgroundColor: "#E9E4D4"
+    backgroundColor: "rgba(26, 26, 46, 0.08)",
   },
   success: {
-    backgroundColor: "#BFE8C5"
+    backgroundColor: "rgba(47, 122, 77, 0.15)",
+  },
+  successLabel: {
+    color: "#2f7a4d",
   },
   warning: {
-    backgroundColor: "#FFE0A3"
-  }
+    backgroundColor: "rgba(230, 57, 70, 0.12)",
+  },
 });

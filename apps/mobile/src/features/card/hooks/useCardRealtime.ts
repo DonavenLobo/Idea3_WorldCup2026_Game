@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppState } from "react-native";
-import { useSession } from "../../../hooks/useSession";
+import { useSession } from "../../auth/hooks/useSession";
 import {
   getNotificationsModule,
   registerForPushNotifications,
