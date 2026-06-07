@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { WORLD_CUP_FIXTURES } from "@world-cup-game/config";
-import { useProfile } from "../../../hooks/useProfile";
+import { useProfile } from "../../profile/hooks/useProfile";
 import type { ScheduleFilter, ScheduleSection } from "../types";
 import {
   deviceTimeZone,

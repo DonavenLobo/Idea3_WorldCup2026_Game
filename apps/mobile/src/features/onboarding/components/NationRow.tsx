@@ -1,8 +1,9 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text } from "react-native";
 import type { NationConfig } from "@world-cup-game/config";
-import { colors } from "../../../theme/colors";
-import { radius } from "../../../theme/radius";
+import { colors, opacity } from "../../../theme/colors";
 import { spacing } from "../../../theme/spacing";
+import { pressableFeedback } from "../../../theme/pressable";
+import { typography } from "../../../theme/typography";
 
 interface NationRowProps {
   nation: NationConfig;
@@ -14,13 +15,14 @@ export function NationRow({ nation, selected, onPress }: NationRowProps) {
   return (
     <Pressable
       onPress={onPress}
-      style={[
+      style={({ pressed }) => [
         styles.row,
-        selected ? { borderColor: nation.primaryColor, backgroundColor: colors.cream } : null
+        selected && styles.rowSelected,
+        pressed && pressableFeedback(true),
       ]}
     >
       <Text style={styles.flag}>{nation.flagEmoji}</Text>
-      <Text style={styles.name} numberOfLines={1}>
+      <Text style={styles.name} numberOfLines={2}>
         {nation.name}
       </Text>
       {selected ? <Text style={styles.check}>✓</Text> : null}
@@ -30,28 +32,32 @@ export function NationRow({ nation, selected, onPress }: NationRowProps) {
 
 const styles = StyleSheet.create({
   check: {
-    color: colors.pitch,
-    fontSize: 20,
-    fontWeight: "900"
+    color: colors.red,
+    fontFamily: typography.label.fontFamily,
+    fontSize: 18,
+    lineHeight: 22,
   },
   flag: {
-    fontSize: 32
+    fontSize: 28,
   },
   name: {
-    color: colors.pitch,
+    ...typography.body,
+    color: colors.ink,
     flex: 1,
-    fontSize: 17,
-    fontWeight: "800"
+    fontFamily: typography.eyebrow.fontFamily,
+    fontSize: 16,
   },
   row: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderColor: "rgba(12, 59, 46, 0.12)",
-    borderRadius: radius.md,
-    borderWidth: 2,
+    borderBottomColor: opacity.ink12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
     gap: spacing.md,
-    marginBottom: spacing.sm,
-    padding: spacing.md
-  }
+    paddingVertical: spacing.md,
+  },
+  rowSelected: {
+    borderLeftColor: colors.red,
+    borderLeftWidth: 2,
+    paddingLeft: spacing.sm,
+  },
 });

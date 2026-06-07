@@ -1,9 +1,8 @@
 import { useEffect, useRef } from "react";
-import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
-import type { SubTab } from "../types";
-import { colors } from "../../../theme/colors";
-import { radius } from "../../../theme/radius";
+import { ScrollView, StyleSheet } from "react-native";
+import { FilterPill } from "../../../components/brand/FilterPill";
 import { spacing } from "../../../theme/spacing";
+import type { SubTab } from "../types";
 
 const TABS: readonly { id: SubTab; label: string }[] = [
   { id: "groups", label: "Groups" },
@@ -13,7 +12,7 @@ const TABS: readonly { id: SubTab; label: string }[] = [
   { id: "sf", label: "SF" },
   { id: "final", label: "Final" },
   { id: "third", label: "3rd" },
-  { id: "summary", label: "My Bracket" }
+  { id: "summary", label: "My Bracket" },
 ];
 
 interface SubTabBarProps {
@@ -25,7 +24,6 @@ export function SubTabBar({ value, onChange }: SubTabBarProps) {
   const scrollRef = useRef<ScrollView>(null);
   const positions = useRef<Record<string, number>>({});
 
-  // When the active tab changes (manual or auto-advance), bring it into view.
   useEffect(() => {
     const x = positions.current[value];
     if (x !== undefined && scrollRef.current) {
@@ -41,59 +39,30 @@ export function SubTabBar({ value, onChange }: SubTabBarProps) {
       style={styles.scroll}
       contentContainerStyle={styles.scrollContent}
     >
-      {TABS.map((tab) => {
-        const active = tab.id === value;
-        return (
-          <Pressable
-            key={tab.id}
-            onLayout={(e) => {
-              positions.current[tab.id] = e.nativeEvent.layout.x;
-            }}
-            style={[styles.tab, active ? styles.tabActive : null]}
-            onPress={() => onChange(tab.id)}
-          >
-            <Text
-              style={[styles.label, active ? styles.labelActive : null]}
-              numberOfLines={1}
-            >
-              {tab.label}
-            </Text>
-          </Pressable>
-        );
-      })}
+      {TABS.map((tab) => (
+        <FilterPill
+          key={tab.id}
+          label={tab.label}
+          selected={tab.id === value}
+          onLayout={(e) => {
+            positions.current[tab.id] = e.nativeEvent.layout.x;
+          }}
+          onPress={() => onChange(tab.id)}
+        />
+      ))}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  label: {
-    color: "rgba(255, 248, 234, 0.65)",
-    fontSize: 13,
-    fontWeight: "800"
-  },
-  labelActive: {
-    color: colors.pitch
-  },
   scroll: {
     flexGrow: 0,
-    flexShrink: 0
+    flexShrink: 0,
   },
   scrollContent: {
     alignItems: "center",
     gap: spacing.sm,
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm
+    paddingVertical: spacing.sm,
   },
-  tab: {
-    alignItems: "center",
-    backgroundColor: "rgba(255, 248, 234, 0.08)",
-    borderRadius: radius.pill,
-    height: 36,
-    justifyContent: "center",
-    minWidth: 56,
-    paddingHorizontal: spacing.md
-  },
-  tabActive: {
-    backgroundColor: colors.gold
-  }
 });

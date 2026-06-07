@@ -16,19 +16,19 @@ export function EmptyState({ title, body }: EmptyStateProps) {
 
 const styles = StyleSheet.create({
   body: {
-    color: "rgba(12, 59, 46, 0.68)",
+    color: "rgba(26, 26, 46, 0.70)",
     fontSize: 15,
-    textAlign: "center"
+    textAlign: "center",
   },
   root: {
     alignItems: "center",
     gap: 8,
-    padding: 24
+    padding: 24,
   },
   title: {
-    color: "#0C3B2E",
+    color: "#1a1a2e",
     fontSize: 18,
-    fontWeight: "900",
-    textAlign: "center"
-  }
+    fontWeight: "700",
+    textAlign: "center",
+  },
 });

@@ -1,12 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { TRIVIA_MAX_POINTS_PER_QUESTION, TRIVIA_QUESTIONS_PER_DAY } from "@world-cup-game/config";
-import { CompletedView, QuestionCard, useTrivia } from "../../src/features/trivia";
-import { colors } from "../../src/theme/colors";
-import { radius } from "../../src/theme/radius";
+import { BrandButton, Eyebrow } from "../../src/components/brand";
+import { Screen, ScreenHeader } from "../../src/components/layout";
+import {
+  CompletedView,
+  QuestionCard,
+  TriviaStatChip,
+  useTrivia
+} from "../../src/features/trivia";
+import { colors, opacity } from "../../src/theme/colors";
 import { spacing } from "../../src/theme/spacing";
-import { typography } from "../../src/theme/typography";
 
 const LOCKED_IN_MS = 700;
 
@@ -68,205 +73,165 @@ export default function TriviaScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.empty}>
-        <Text style={styles.emptyEyebrow}>DAILY TRIVIA</Text>
-        <Text style={styles.emptyTitle}>Loading Today&apos;s Quiz</Text>
-        <Text style={styles.emptyBody}>Checking today&apos;s fixed question set.</Text>
-      </View>
+      <Screen
+        scroll
+        edges={["left", "right"]}
+        bottomInset={32}
+        contentContainerStyle={styles.emptyContent}
+      >
+        <ScreenHeader
+          eyebrow="DAILY TRIVIA"
+          title="Loading Today's Quiz"
+          subtitle="Checking today's fixed question set."
+        />
+      </Screen>
     );
   }
 
   if (!hasDailyQuestions) {
     return (
-      <View style={styles.empty}>
-        <Text style={styles.emptyEyebrow}>DAILY TRIVIA</Text>
-        <Text style={styles.emptyTitle}>Trivia Is Not Ready</Text>
-        <Text style={styles.emptyBody}>
-          Today needs exactly {TRIVIA_QUESTIONS_PER_DAY} configured questions before players can start.
-        </Text>
+      <Screen
+        scroll
+        edges={["left", "right"]}
+        bottomInset={32}
+        contentContainerStyle={styles.emptyContent}
+      >
+        <ScreenHeader
+          eyebrow="DAILY TRIVIA"
+          title="Trivia Is Not Ready"
+          subtitle={`Today needs exactly ${TRIVIA_QUESTIONS_PER_DAY} configured questions before players can start.`}
+        />
         {error ? <Text style={styles.errorText}>{error.message}</Text> : null}
-        <Pressable style={styles.cta} onPress={() => void reloadToday()}>
-          <Text style={styles.ctaText}>Reload Trivia</Text>
-        </Pressable>
-      </View>
+        <BrandButton
+          label="Reload Trivia"
+          onPress={() => void reloadToday()}
+          style={styles.cta}
+        />
+      </Screen>
     );
   }
 
   if (completedAttempt) {
     return (
-      <View style={styles.root}>
+      <Screen scroll={false} edges={["left", "right"]} bottomInset={32}>
         <CompletedView attempt={completedAttempt} questions={questions} />
-      </View>
+      </Screen>
     );
   }
 
   if (!isStarted) {
     return (
-      <View style={styles.empty}>
-        <Text style={styles.emptyEyebrow}>DAILY TRIVIA</Text>
-        <Text style={styles.emptyTitle}>5 Questions. 1 Shot.</Text>
-        <Text style={styles.emptyBody}>
-          Today&apos;s trivia is the same for everyone. Your first attempt counts, with points for
-          correctness plus speed.
-        </Text>
+      <Screen
+        scroll
+        edges={["left", "right"]}
+        bottomInset={32}
+        contentContainerStyle={styles.emptyContent}
+      >
+        <ScreenHeader
+          eyebrow="DAILY TRIVIA"
+          title="5 Questions. 1 Shot."
+          subtitle="Today's trivia is the same for everyone. Your first attempt counts, with points for correctness plus speed."
+        />
 
         <View style={styles.scoringRow}>
-          <ScoringChip label="QUESTIONS" value={`${TRIVIA_QUESTIONS_PER_DAY}`} />
-          <ScoringChip label="OPTIONS" value="4" />
-          <ScoringChip label="MAX/Q" value={`+${TRIVIA_MAX_POINTS_PER_QUESTION}`} />
+          <TriviaStatChip label="Questions" value={`${TRIVIA_QUESTIONS_PER_DAY}`} />
+          <TriviaStatChip label="Options" value="4" />
+          <TriviaStatChip label="Max/Q" value={`+${TRIVIA_MAX_POINTS_PER_QUESTION}`} />
         </View>
 
         {error ? <Text style={styles.errorText}>{error.message}</Text> : null}
 
-        <Pressable style={styles.cta} onPress={startToday}>
-          <Text style={styles.ctaText}>Start Today&apos;s Trivia</Text>
-        </Pressable>
-      </View>
+        <BrandButton
+          label="Start Today's Trivia"
+          onPress={startToday}
+          style={styles.cta}
+        />
+      </Screen>
     );
   }
 
   if (!currentQuestion) {
     return (
-      <View style={styles.empty}>
-        <Text style={styles.emptyEyebrow}>DAILY TRIVIA</Text>
-        <Text style={styles.emptyTitle}>
-          {isSubmitting ? "Scoring Your Attempt" : "Saving Your Result"}
-        </Text>
-        <Text style={styles.emptyBody}>
-          {isSubmitting
-            ? "Your answers are being checked server-side."
-            : "Waiting for today's result."}
-        </Text>
+      <Screen
+        scroll
+        edges={["left", "right"]}
+        bottomInset={32}
+        contentContainerStyle={styles.emptyContent}
+      >
+        <ScreenHeader
+          eyebrow="DAILY TRIVIA"
+          title={isSubmitting ? "Scoring Your Attempt" : "Saving Your Result"}
+          subtitle={
+            isSubmitting
+              ? "Your answers are being checked server-side."
+              : "Waiting for today's result."
+          }
+        />
         {error ? <Text style={styles.errorText}>{error.message}</Text> : null}
-      </View>
+      </Screen>
     );
   }
 
   return (
-    <View style={styles.root}>
-      <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
-        <View style={styles.headerRow}>
-          <Text style={styles.headerEyebrow}>DAILY TRIVIA</Text>
-          <Text style={styles.headerPoints}>
-            {answers.length}/{questions.length} locked
-          </Text>
-        </View>
+    <Screen
+      scroll
+      ref={scrollRef}
+      edges={["left", "right"]}
+      bottomInset={32}
+      contentContainerStyle={styles.content}
+    >
+      <View style={styles.headerRow}>
+        <Eyebrow label="DAILY TRIVIA" />
+        <Text style={styles.headerPoints}>
+          {answers.length}/{questions.length} locked
+        </Text>
+      </View>
 
-        <QuestionCard
-          disabled={isSubmitting}
-          question={currentQuestion}
-          questionNumber={currentIndex + 1}
-          totalQuestions={questions.length}
-          selectedIndex={selectedIndex}
-          onSelect={handleSelect}
-        />
+      <QuestionCard
+        disabled={isSubmitting}
+        question={currentQuestion}
+        questionNumber={currentIndex + 1}
+        totalQuestions={questions.length}
+        selectedIndex={selectedIndex}
+        onSelect={handleSelect}
+      />
 
-        {error ? <Text style={styles.errorText}>{error.message}</Text> : null}
-        {isSubmitting ? <Text style={styles.statusText}>Scoring attempt...</Text> : null}
-      </ScrollView>
-    </View>
-  );
-}
-
-function ScoringChip({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.chip}>
-      <Text style={styles.chipLabel}>{label}</Text>
-      <Text style={styles.chipValue}>{value}</Text>
-    </View>
+      {error ? <Text style={styles.errorText}>{error.message}</Text> : null}
+      {isSubmitting ? <Text style={styles.statusText}>Scoring attempt...</Text> : null}
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  chip: {
-    alignItems: "center",
-    backgroundColor: "rgba(214, 161, 30, 0.14)",
-    borderColor: colors.gold,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    flex: 1,
-    paddingVertical: spacing.sm
-  },
-  chipLabel: {
-    color: "rgba(255, 248, 234, 0.7)",
-    fontSize: 10,
-    fontWeight: "900",
-    letterSpacing: 1
-  },
-  chipValue: {
-    color: colors.gold,
-    fontSize: 18,
-    fontWeight: "900",
-    marginTop: 2
-  },
   content: {
-    padding: spacing.lg
+    padding: spacing.lg,
+    paddingHorizontal: spacing.lg
   },
   cta: {
+    alignSelf: "stretch",
+    marginTop: spacing.xl
+  },
+  emptyContent: {
     alignItems: "center",
-    backgroundColor: colors.gold,
-    borderRadius: radius.pill,
-    marginTop: spacing.xl,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md
-  },
-  ctaText: {
-    color: colors.pitch,
-    fontSize: 17,
-    fontWeight: "900"
-  },
-  empty: {
-    alignItems: "center",
-    backgroundColor: colors.pitch,
-    flex: 1,
-    justifyContent: "center",
-    padding: spacing.xl
-  },
-  emptyBody: {
-    color: "rgba(255, 248, 234, 0.7)",
-    marginTop: spacing.sm,
-    textAlign: "center",
-    ...typography.body
-  },
-  emptyEyebrow: {
-    color: colors.gold,
-    fontSize: 12,
-    fontWeight: "900",
-    letterSpacing: 1.2
-  },
-  emptyTitle: {
-    color: colors.cream,
-    marginTop: spacing.xs,
-    textAlign: "center",
-    ...typography.display
+    justifyContent: "center"
   },
   errorText: {
-    color: "#FFB4A8",
+    color: colors.red,
     fontSize: 13,
     fontWeight: "700",
     marginTop: spacing.md,
     textAlign: "center"
   },
-  headerEyebrow: {
-    color: colors.gold,
-    fontSize: 12,
-    fontWeight: "900",
-    letterSpacing: 1.2
-  },
   headerPoints: {
-    color: colors.cream,
+    color: colors.ink,
     fontSize: 14,
-    fontWeight: "900"
+    fontWeight: "700"
   },
   headerRow: {
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: spacing.md
-  },
-  root: {
-    backgroundColor: colors.pitch,
-    flex: 1
   },
   scoringRow: {
     flexDirection: "row",
@@ -275,7 +240,8 @@ const styles = StyleSheet.create({
     width: "100%"
   },
   statusText: {
-    color: "rgba(255, 248, 234, 0.65)",
+    color: opacity.ink60,
+    fontFamily: "Inter_400Regular",
     fontSize: 13,
     fontWeight: "700",
     marginTop: spacing.md,

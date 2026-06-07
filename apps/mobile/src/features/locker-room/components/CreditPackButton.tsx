@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { CreditPack } from "@world-cup-game/config";
-import { colors } from "../../../theme/colors";
+import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
 
@@ -29,7 +29,7 @@ export function CreditPackButton({ pack, onPress }: CreditPackButtonProps) {
 
 const styles = StyleSheet.create({
   bestBadge: {
-    backgroundColor: colors.pitch,
+    backgroundColor: colors.ink,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
@@ -38,15 +38,15 @@ const styles = StyleSheet.create({
     top: -8
   },
   bestBadgeText: {
-    color: colors.gold,
+    color: colors.red,
     fontSize: 9,
-    fontWeight: "900",
+    fontWeight: "700",
     letterSpacing: 1
   },
   card: {
     alignItems: "center",
     backgroundColor: colors.cream,
-    borderColor: "rgba(12, 59, 46, 0.12)",
+    borderColor: opacity.ink12,
     borderRadius: radius.lg,
     borderWidth: 2,
     flex: 1,
@@ -54,23 +54,23 @@ const styles = StyleSheet.create({
     position: "relative"
   },
   cardBest: {
-    borderColor: colors.gold
+    borderColor: colors.red
   },
   credits: {
-    color: colors.gold,
+    color: colors.red,
     fontSize: 22,
-    fontWeight: "900"
+    fontWeight: "700"
   },
   creditsLabel: {
-    color: "rgba(12, 59, 46, 0.55)",
+    color: opacity.ink55,
     fontSize: 10,
-    fontWeight: "900",
+    fontWeight: "700",
     letterSpacing: 1
   },
   price: {
-    color: colors.pitch,
+    color: colors.ink,
     fontSize: 14,
-    fontWeight: "900",
+    fontWeight: "700",
     marginTop: spacing.xs
   }
 });

@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { getCurrentUserCard } from "../features/card/api/getCard";
-import { useSession } from "./useSession";
+import { useSession } from "../../auth/hooks/useSession";
+import { getCurrentUserCard } from "../api/getCard";
 
-export function useCard() {
+export function useCurrentUserCard() {
   const { user, isLoading: isSessionLoading } = useSession();
   const query = useQuery({
     enabled: !isSessionLoading && Boolean(user),

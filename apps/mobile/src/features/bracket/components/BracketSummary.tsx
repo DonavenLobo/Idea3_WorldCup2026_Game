@@ -1,15 +1,17 @@
 import { useRouter } from "expo-router";
 import { Alert, Pressable, Share, StyleSheet, Text, View } from "react-native";
-import { APP_ROUTES, GROUP_IDS, SUPPORTED_NATIONS } from "@world-cup-game/config";
+import { BrandButton } from "../../../components/brand";
+import { APP_ROUTES, formatTeamName, GROUP_IDS, SUPPORTED_NATIONS } from "@world-cup-game/config";
 import type { GroupId } from "@world-cup-game/config";
 import { useBracket } from "../BracketContext";
-import { colors } from "../../../theme/colors";
+import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
 
 function nationName(code: string | null): string {
   if (!code) return "—";
-  return SUPPORTED_NATIONS.find((n) => n.code === code)?.name ?? code;
+  const name = SUPPORTED_NATIONS.find((n) => n.code === code)?.name ?? code;
+  return formatTeamName(name);
 }
 
 function nationFlag(code: string | null): string {
@@ -138,32 +140,38 @@ export function BracketSummary({ onGroupTap }: BracketSummaryProps) {
 
       <Text style={styles.nextStepsHeader}>What&apos;s next?</Text>
 
-      <Pressable
-        disabled={isSaving}
-        style={[styles.primaryButton, isSaving ? styles.disabledButton : null]}
+      <BrandButton
+        label="Save My Bracket"
         onPress={handleSave}
-      >
-        <Text style={styles.primaryButtonText}>
-          {isSaving ? "Saving..." : "Save My Bracket"}
-        </Text>
-      </Pressable>
+        disabled={isSaving}
+        loading={isSaving}
+      />
 
       {lastSavedAt ? (
         <Text style={styles.saveStatus}>Saved {new Date(lastSavedAt).toLocaleTimeString()}</Text>
       ) : null}
       {saveError ? <Text style={styles.saveError}>{saveError.message}</Text> : null}
 
-      <Pressable style={styles.secondaryButton} onPress={handleShare}>
-        <Text style={styles.secondaryButtonText}>📤  Share My Bracket</Text>
-      </Pressable>
+      <BrandButton
+        label="📤  Share My Bracket"
+        onPress={handleShare}
+        variant="secondary"
+        style={styles.secondaryCta}
+      />
 
-      <Pressable style={styles.secondaryButton} onPress={handleJoinGroup}>
-        <Text style={styles.secondaryButtonText}>👥  Create or Join a Group</Text>
-      </Pressable>
+      <BrandButton
+        label="👥  Create or Join a Group"
+        onPress={handleJoinGroup}
+        variant="secondary"
+        style={styles.secondaryCta}
+      />
 
-      <Pressable style={styles.resetButton} onPress={handleResetPress}>
-        <Text style={styles.resetText}>Reset bracket</Text>
-      </Pressable>
+      <BrandButton
+        label="Reset bracket"
+        onPress={handleResetPress}
+        variant="ghost"
+        style={styles.resetCta}
+      />
     </View>
   );
 }
@@ -172,7 +180,7 @@ const styles = StyleSheet.create({
   championCard: {
     alignItems: "center",
     backgroundColor: colors.cream,
-    borderColor: colors.gold,
+    borderColor: colors.red,
     borderRadius: radius.lg,
     borderWidth: 3,
     marginBottom: spacing.md,
@@ -183,24 +191,21 @@ const styles = StyleSheet.create({
     marginVertical: spacing.sm
   },
   championLabel: {
-    color: colors.gold,
+    color: colors.red,
     fontSize: 12,
-    fontWeight: "900",
+    fontWeight: "700",
     letterSpacing: 1.2
   },
   championName: {
-    color: colors.pitch,
+    color: colors.ink,
     fontSize: 24,
-    fontWeight: "900",
+    fontWeight: "700",
     textAlign: "center"
-  },
-  disabledButton: {
-    opacity: 0.7
   },
   groupCell: {
     alignItems: "center",
-    backgroundColor: "rgba(255, 248, 234, 0.06)",
-    borderColor: "rgba(255, 248, 234, 0.1)",
+    backgroundColor: opacity.ink12,
+    borderColor: opacity.ink15,
     borderRadius: radius.md,
     borderWidth: 1,
     padding: spacing.sm,
@@ -217,28 +222,28 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg
   },
   groupLetter: {
-    color: colors.gold,
+    color: colors.red,
     fontSize: 12,
-    fontWeight: "900"
+    fontWeight: "700"
   },
   groupWinner: {
-    color: colors.cream,
+    color: colors.ink,
     fontSize: 11,
     fontWeight: "700",
     textAlign: "center"
   },
   nextStepsHeader: {
-    color: "rgba(255, 248, 234, 0.7)",
+    color: opacity.ink60,
     fontSize: 12,
-    fontWeight: "900",
+    fontWeight: "700",
     letterSpacing: 1,
     marginBottom: spacing.sm,
     textTransform: "uppercase"
   },
   podiumCard: {
     alignItems: "center",
-    backgroundColor: "rgba(255, 248, 234, 0.06)",
-    borderColor: "rgba(255, 248, 234, 0.12)",
+    backgroundColor: opacity.ink12,
+    borderColor: opacity.ink15,
     borderRadius: radius.lg,
     borderWidth: 1,
     flex: 1,
@@ -249,15 +254,15 @@ const styles = StyleSheet.create({
     marginVertical: 4
   },
   podiumLabel: {
-    color: "rgba(255, 248, 234, 0.7)",
+    color: opacity.ink60,
     fontSize: 11,
-    fontWeight: "900",
+    fontWeight: "700",
     letterSpacing: 1
   },
   podiumName: {
-    color: colors.cream,
+    color: colors.ink,
     fontSize: 15,
-    fontWeight: "900",
+    fontWeight: "700",
     textAlign: "center"
   },
   podiumRow: {
@@ -265,61 +270,33 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.lg
   },
-  primaryButton: {
-    alignItems: "center",
-    backgroundColor: colors.gold,
-    borderRadius: radius.pill,
-    padding: spacing.md
-  },
-  primaryButtonText: {
-    color: colors.pitch,
-    fontSize: 16,
-    fontWeight: "900"
-  },
-  resetButton: {
+  resetCta: {
     marginTop: spacing.lg,
-    padding: spacing.sm
-  },
-  resetText: {
-    color: "rgba(255, 248, 234, 0.5)",
-    fontSize: 13,
-    fontWeight: "700",
-    textAlign: "center"
   },
   root: {
     padding: spacing.lg
   },
   saveError: {
-    color: "#FFB4A8",
+    color: colors.red,
     fontSize: 12,
     fontWeight: "700",
     marginTop: spacing.xs,
     textAlign: "center"
   },
   saveStatus: {
-    color: "rgba(255, 248, 234, 0.65)",
+    color: opacity.ink55,
     fontSize: 12,
     fontWeight: "700",
     marginTop: spacing.xs,
     textAlign: "center"
   },
-  secondaryButton: {
-    alignItems: "center",
-    borderColor: colors.gold,
-    borderRadius: radius.pill,
-    borderWidth: 2,
+  secondaryCta: {
     marginTop: spacing.sm,
-    padding: spacing.md
-  },
-  secondaryButtonText: {
-    color: colors.gold,
-    fontSize: 16,
-    fontWeight: "900"
   },
   sectionHeader: {
-    color: "rgba(255, 248, 234, 0.7)",
+    color: opacity.ink60,
     fontSize: 12,
-    fontWeight: "900",
+    fontWeight: "700",
     letterSpacing: 1,
     marginBottom: spacing.sm,
     textTransform: "uppercase"

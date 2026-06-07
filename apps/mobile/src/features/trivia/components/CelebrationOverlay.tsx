@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
-import { Animated, Easing, StyleSheet, View } from "react-native";
+import { Animated, Easing, StyleSheet, Text, View } from "react-native";
+import { colors, opacity } from "../../../theme/colors";
+import { typography } from "../../../theme/typography";
 
 interface CelebrationOverlayProps {
   points: number;
@@ -65,46 +67,64 @@ export function CelebrationOverlay({ points }: CelebrationOverlayProps) {
       >
         <Animated.Text style={styles.check}>✓</Animated.Text>
       </Animated.View>
-      <Animated.Text
+      <Animated.View
         style={[
-          styles.points,
+          styles.pointsRow,
           { opacity: pointsOpacity, transform: [{ translateY: lift }] }
         ]}
       >
-        +{points} PTS
-      </Animated.Text>
+        <Text style={styles.pointsPlus}>+</Text>
+        <Text style={styles.pointsValue}>{points}</Text>
+        <Text style={styles.pointsUnit}>pts</Text>
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   check: {
-    color: "#FFFFFF",
+    color: colors.cream,
     fontSize: 80,
-    fontWeight: "900"
+    fontFamily: "Caveat_700Bold",
   },
   checkCircle: {
     alignItems: "center",
-    backgroundColor: "#1F9D55",
+    backgroundColor: colors.success,
     borderRadius: 999,
     elevation: 8,
     height: 140,
     justifyContent: "center",
-    shadowColor: "#000",
+    shadowColor: colors.ink,
     shadowOffset: { height: 6, width: 0 },
     shadowOpacity: 0.25,
     shadowRadius: 12,
     width: 140
   },
-  points: {
-    color: "#D6A11E",
-    fontSize: 28,
-    fontWeight: "900",
-    letterSpacing: 1,
+  pointsPlus: {
+    ...typography.dataValue,
+    color: colors.red,
+    fontSize: 24,
+    lineHeight: 28,
+    marginRight: 2,
+  },
+  pointsRow: {
+    alignItems: "baseline",
+    flexDirection: "row",
     marginTop: 24,
-    textShadowColor: "rgba(0, 0, 0, 0.4)",
-    textShadowOffset: { height: 2, width: 0 },
-    textShadowRadius: 6
+  },
+  pointsUnit: {
+    ...typography.caption,
+    color: opacity.ink55,
+    letterSpacing: 0.8,
+    marginLeft: 4,
+    textTransform: "uppercase",
+  },
+  pointsValue: {
+    ...typography.dataValue,
+    color: colors.red,
+    fontSize: 28,
+    fontVariant: ["tabular-nums"],
+    lineHeight: 32,
   },
   root: {
     alignItems: "center",

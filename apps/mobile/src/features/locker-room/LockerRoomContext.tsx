@@ -3,7 +3,7 @@ import type { PropsWithChildren } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LOCKER_TIERS } from "@world-cup-game/config";
 import type { CosmeticItem, LockerTier } from "@world-cup-game/config";
-import { useSession } from "../../hooks/useSession";
+import { useSession } from "../auth/hooks/useSession";
 import {
   getLockerRoomItems,
   getLockerWallet,

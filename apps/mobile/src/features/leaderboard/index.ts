@@ -1,4 +1,4 @@
-export { LeaderboardRow } from "./components/LeaderboardRow";
+export { LeaderboardRow, leaderboardRowMetrics } from "./components/LeaderboardRow";
 export { FilterDropdown } from "./components/FilterDropdown";
 export type { FilterOption } from "./components/FilterDropdown";
 export { getLeaderboardRows } from "./api/leaderboard";

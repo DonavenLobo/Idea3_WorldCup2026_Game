@@ -4,15 +4,18 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colors } from "../../../theme/colors";
+import { BrandButton } from "../../../components/brand";
+import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
+import { typography } from "../../../theme/typography";
 
 interface JoinByCodeSheetProps {
   visible: boolean;
@@ -56,14 +59,18 @@ export function JoinByCodeSheet({ visible, onDismiss, onSubmit }: JoinByCodeShee
             <View style={styles.cancelSpacer} />
           </View>
 
-          <View style={styles.content}>
+          <ScrollView
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
             <Text style={styles.icon}>👤＋</Text>
             <Text style={styles.label}>Have an invite code?</Text>
 
             <TextInput
               style={styles.input}
               placeholder="e.g., ABC2XYZ9"
-              placeholderTextColor="rgba(12, 59, 46, 0.4)"
+              placeholderTextColor={opacity.ink35}
               value={code}
               onChangeText={setCode}
               autoCapitalize="characters"
@@ -73,18 +80,17 @@ export function JoinByCodeSheet({ visible, onDismiss, onSubmit }: JoinByCodeShee
               onSubmitEditing={handleSubmit}
             />
 
-            <Pressable
-              style={[styles.submit, !canSubmit ? styles.submitDisabled : null]}
+            <BrandButton
+              label="Join"
               onPress={handleSubmit}
               disabled={!canSubmit}
-            >
-              <Text style={styles.submitText}>Join</Text>
-            </Pressable>
+              style={styles.submit}
+            />
 
             <Text style={styles.hint}>
               Codes are case-insensitive. Ask your group owner for the invite code.
             </Text>
-          </View>
+          </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </Modal>
@@ -93,15 +99,16 @@ export function JoinByCodeSheet({ visible, onDismiss, onSubmit }: JoinByCodeShee
 
 const styles = StyleSheet.create({
   cancel: {
-    color: colors.cream,
-    fontSize: 16,
-    fontWeight: "700"
+    ...typography.body,
+    color: colors.ink,
+    fontFamily: typography.eyebrow.fontFamily,
   },
   cancelSpacer: {
     width: 60
   },
   content: {
     alignItems: "center",
+    flexGrow: 1,
     padding: spacing.xl
   },
   header: {
@@ -112,8 +119,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md
   },
   hint: {
-    color: "rgba(255, 248, 234, 0.55)",
-    fontSize: 12,
+    ...typography.footnote,
+    color: opacity.ink55,
     fontStyle: "italic",
     marginTop: spacing.md,
     textAlign: "center"
@@ -123,11 +130,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md
   },
   input: {
+    ...typography.input,
     backgroundColor: colors.cream,
     borderRadius: radius.pill,
-    color: colors.pitch,
-    fontSize: 22,
-    fontWeight: "900",
+    color: colors.ink,
+    fontFamily: typography.eyebrow.fontFamily,
     letterSpacing: 4,
     marginTop: spacing.md,
     paddingHorizontal: spacing.lg,
@@ -139,34 +146,20 @@ const styles = StyleSheet.create({
     flex: 1
   },
   label: {
-    color: "rgba(255, 248, 234, 0.85)",
-    fontSize: 16,
-    fontWeight: "700"
+    ...typography.body,
+    color: opacity.ink85,
+    fontFamily: typography.eyebrow.fontFamily,
   },
   root: {
-    backgroundColor: colors.pitch,
+    backgroundColor: colors.cream,
     flex: 1
   },
   submit: {
-    alignItems: "center",
-    backgroundColor: colors.gold,
-    borderRadius: radius.pill,
     marginTop: spacing.lg,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
     width: "100%"
   },
-  submitDisabled: {
-    opacity: 0.4
-  },
-  submitText: {
-    color: colors.pitch,
-    fontSize: 17,
-    fontWeight: "900"
-  },
   title: {
-    color: colors.cream,
-    fontSize: 18,
-    fontWeight: "900"
+    ...typography.sectionHeading,
+    color: colors.ink,
   }
 });

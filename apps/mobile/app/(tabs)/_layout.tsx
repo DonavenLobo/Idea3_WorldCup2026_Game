@@ -1,130 +1,135 @@
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { APP_ROUTES } from "@world-cup-game/config";
-import { Tabs, useRouter } from "expo-router";
-import { Alert, Image, Pressable, StyleSheet, Text } from "react-native";
-import { useCardRealtime } from "../../src/features/card/hooks/useCardRealtime";
-import { useOnboarding } from "../../src/features/onboarding";
-import { useCard } from "../../src/hooks/useCard";
-import { useProfile } from "../../src/hooks/useProfile";
-import { supabase } from "../../src/lib/supabase";
-import { colors } from "../../src/theme/colors";
+import { Tabs } from "expo-router";
+import { Image, StyleSheet, Text } from "react-native";
+import type { ImageSourcePropType } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { tabBarIconSources } from "../../src/components/icons/tabBarIconSources";
+import { useCardRealtime } from "../../src/features/card";
+import { ProfileHeaderButton } from "../../src/features/profile/components/ProfileHeaderButton";
+import { colors, opacity } from "../../src/theme/colors";
+import { spacing } from "../../src/theme/spacing";
+import { typography } from "../../src/theme/typography";
 
-function ProfileButton() {
-  const router = useRouter();
-  const queryClient = useQueryClient();
-  const { displayName, photoSource, reset } = useOnboarding();
-  const { card } = useCard();
-  const { profile } = useProfile();
-  const [isSigningOut, setIsSigningOut] = useState(false);
-  const savedImageUrl = profile?.avatarUrl ?? card?.avatarSourceUrl;
-  const imageUri = savedImageUrl ?? photoSource?.uri;
-  const effectiveName = profile?.displayName || card?.displayName || displayName;
-  const initial = effectiveName.trim().charAt(0).toUpperCase() || "?";
+const TAB_BAR_CONTENT_HEIGHT = 64;
+const TAB_BAR_TOP_PADDING = spacing.sm;
+const TAB_BAR_ITEM_HEIGHT = TAB_BAR_CONTENT_HEIGHT - TAB_BAR_TOP_PADDING;
+const TAB_ICON_SIZE = 26;
+const TAB_ICON_LABEL_GAP = 4;
 
-  const handleSignOut = async () => {
-    setIsSigningOut(true);
+/** Caveat swashes extend past measured glyph bounds — pad the trailing edge generously. */
+const CAVEAT_HEADER_PAD_LEFT = spacing.sm;
+const CAVEAT_HEADER_PAD_RIGHT = spacing.xl;
 
-    try {
-      const { error } = await supabase.auth.signOut();
-
-      if (error) {
-        throw error;
-      }
-
-      reset();
-      queryClient.clear();
-      router.replace(APP_ROUTES.onboarding.selectNation);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Please try again.";
-      Alert.alert("Sign-out failed", message);
-    } finally {
-      setIsSigningOut(false);
-    }
-  };
-
-  const showAccountMenu = () => {
-    Alert.alert("Account", effectiveName || "GoGaffa account", [
-      { text: "Cancel", style: "cancel" },
-      {
-        onPress: () => void handleSignOut(),
-        style: "destructive",
-        text: isSigningOut ? "Signing out..." : "Sign out"
-      }
-    ]);
-  };
-
+function TabHeaderTitle({ children }: { children: string }) {
   return (
-    <Pressable
-      style={profileStyles.root}
-      disabled={isSigningOut}
-      onPress={showAccountMenu}
-    >
-      {imageUri ? (
-        <Image source={{ uri: imageUri }} style={profileStyles.image} />
-      ) : (
-        <Text style={profileStyles.initial}>{initial}</Text>
-      )}
-    </Pressable>
+    <Text numberOfLines={1} style={headerTitleStyles.title}>
+      {children}
+    </Text>
   );
 }
 
-const profileStyles = StyleSheet.create({
-  image: {
-    height: "100%",
-    width: "100%"
+const headerTitleStyles = StyleSheet.create({
+  title: {
+    ...typography.titleScreen,
+    color: colors.ink,
+    lineHeight: 40,
+    paddingLeft: CAVEAT_HEADER_PAD_LEFT,
+    paddingRight: CAVEAT_HEADER_PAD_RIGHT,
+    textAlign: "center",
   },
-  initial: {
-    color: colors.gold,
-    fontSize: 14,
-    fontWeight: "900"
-  },
-  root: {
-    alignItems: "center",
-    backgroundColor: "rgba(214, 161, 30, 0.18)",
-    borderColor: colors.gold,
-    borderRadius: 18,
-    borderWidth: 2,
-    height: 36,
-    justifyContent: "center",
-    marginLeft: 16,
-    overflow: "hidden",
-    width: 36
-  }
 });
 
-const tabIcon = (emoji: string) =>
+function TabBarImageIcon({
+  source,
+  focused,
+}: {
+  source: ImageSourcePropType;
+  focused: boolean;
+}) {
+  return (
+    <Image
+      resizeMode="contain"
+      source={source}
+      style={{
+        height: TAB_ICON_SIZE,
+        tintColor: focused ? colors.red : opacity.ink55,
+        width: TAB_ICON_SIZE,
+      }}
+    />
+  );
+}
+
+const tabIcon =
+  (source: ImageSourcePropType) =>
   ({ focused }: { focused: boolean }) => (
-    <Text style={{ fontSize: focused ? 24 : 20 }}>{emoji}</Text>
+    <TabBarImageIcon focused={focused} source={source} />
   );
 
 export default function TabsLayout() {
   useCardRealtime();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
       screenOptions={{
         headerShown: true,
-        headerStyle: { backgroundColor: colors.pitch },
-        headerTitleStyle: { color: colors.cream, fontWeight: "900" },
+        headerStyle: { backgroundColor: colors.cream },
+        headerTitle: ({ children }) => (
+          <TabHeaderTitle>{typeof children === "string" ? children : ""}</TabHeaderTitle>
+        ),
         headerTitleAlign: "center",
-        headerTintColor: colors.cream,
-        headerLeft: () => <ProfileButton />,
-        tabBarStyle: {
-          backgroundColor: colors.pitch,
-          borderTopColor: "rgba(255, 248, 234, 0.1)"
+        headerTitleContainerStyle: {
+          alignItems: "center",
+          justifyContent: "center",
+          maxWidth: "100%",
+          overflow: "visible",
+          paddingTop: spacing.xs,
         },
-        tabBarActiveTintColor: colors.gold,
-        tabBarInactiveTintColor: "rgba(255, 248, 234, 0.55)",
-        tabBarLabelStyle: { fontWeight: "700", fontSize: 11 }
+        headerTintColor: colors.ink,
+        headerLeft: () => <ProfileHeaderButton />,
+        headerShadowVisible: false,
+        tabBarActiveTintColor: colors.red,
+        tabBarInactiveTintColor: opacity.ink55,
+        tabBarIconStyle: {
+          marginBottom: TAB_ICON_LABEL_GAP,
+        },
+        tabBarItemStyle: {
+          height: TAB_BAR_ITEM_HEIGHT,
+          justifyContent: "center",
+          paddingVertical: 0,
+        },
+        tabBarLabelStyle: {
+          fontFamily: typography.bodySmall.fontFamily,
+          fontSize: 11,
+          marginTop: 0,
+        },
+        tabBarStyle: {
+          backgroundColor: colors.cream,
+          borderTopColor: opacity.ink10,
+          borderTopWidth: 0.5,
+          height: TAB_BAR_CONTENT_HEIGHT + insets.bottom,
+          paddingBottom: insets.bottom,
+          paddingTop: TAB_BAR_TOP_PADDING,
+        },
       }}
     >
-      <Tabs.Screen name="home" options={{ title: "Home", tabBarIcon: tabIcon("🏠") }} />
-      <Tabs.Screen name="bracket" options={{ title: "Bracket", tabBarIcon: tabIcon("🏆") }} />
-      <Tabs.Screen name="groups" options={{ title: "Groups", tabBarIcon: tabIcon("👥") }} />
-      <Tabs.Screen name="trivia" options={{ title: "Trivia", tabBarIcon: tabIcon("❓") }} />
-      <Tabs.Screen name="card" options={{ title: "Card", tabBarIcon: tabIcon("⚽") }} />
-      <Tabs.Screen name="schedule" options={{ title: "Schedule", tabBarIcon: tabIcon("📅") }} />
+      <Tabs.Screen name="home" options={{ title: "Home", tabBarIcon: tabIcon(tabBarIconSources.home) }} />
+      <Tabs.Screen
+        name="bracket"
+        options={{ title: "Bracket", tabBarIcon: tabIcon(tabBarIconSources.bracket) }}
+      />
+      <Tabs.Screen
+        name="groups"
+        options={{ title: "Groups", tabBarIcon: tabIcon(tabBarIconSources.groups) }}
+      />
+      <Tabs.Screen
+        name="trivia"
+        options={{ title: "Trivia", tabBarIcon: tabIcon(tabBarIconSources.trivia) }}
+      />
+      <Tabs.Screen name="card" options={{ title: "Card", tabBarIcon: tabIcon(tabBarIconSources.card) }} />
+      <Tabs.Screen
+        name="schedule"
+        options={{ title: "Schedule", tabBarIcon: tabIcon(tabBarIconSources.schedule) }}
+      />
       <Tabs.Screen name="locker-room" options={{ href: null }} />
     </Tabs>
   );

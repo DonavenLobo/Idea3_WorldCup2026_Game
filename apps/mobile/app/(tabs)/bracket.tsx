@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { GROUP_IDS } from "@world-cup-game/config";
+import { BrandButton } from "../../src/components/brand";
+import { Screen, ScreenHeader } from "../../src/components/layout";
 import {
   BracketSummary,
   GroupPicker,
@@ -11,9 +13,7 @@ import {
 } from "../../src/features/bracket";
 import type { SubTab } from "../../src/features/bracket";
 import { colors } from "../../src/theme/colors";
-import { radius } from "../../src/theme/radius";
 import { spacing } from "../../src/theme/spacing";
-import { typography } from "../../src/theme/typography";
 
 export default function BracketScreen() {
   const { isCreated, start, picks, isLoadingSavedBracket, lastSavedAt } = useBracket();
@@ -93,35 +93,53 @@ export default function BracketScreen() {
 
   if (isLoadingSavedBracket) {
     return (
-      <View style={styles.empty}>
-        <Text style={styles.emptyEyebrow}>BRACKET CHALLENGE</Text>
-        <Text style={styles.emptyTitle}>Loading Your Bracket</Text>
-        <Text style={styles.emptyBody}>
-          Checking whether you already saved tournament picks.
-        </Text>
-      </View>
+      <Screen
+        scroll
+        edges={["left", "right"]}
+        bottomInset={32}
+        contentContainerStyle={styles.emptyContent}
+      >
+        <ScreenHeader
+          eyebrow="BRACKET CHALLENGE"
+          title="Loading Your Bracket"
+          subtitle="Checking whether you already saved tournament picks."
+        />
+      </Screen>
     );
   }
 
   if (!isCreated) {
     return (
-      <View style={styles.empty}>
-        <Text style={styles.emptyEyebrow}>BRACKET CHALLENGE</Text>
-        <Text style={styles.emptyTitle}>Step 1: Create Your Bracket</Text>
-        <Text style={styles.emptyBody}>
-          Predict the group winners, then call every knockout from the Round of 32 to the Final.
-        </Text>
-        <Pressable style={styles.cta} onPress={handleStart}>
-          <Text style={styles.ctaText}>Create Your Bracket</Text>
-        </Pressable>
-      </View>
+      <Screen
+        scroll
+        edges={["left", "right"]}
+        bottomInset={32}
+        contentContainerStyle={styles.emptyContent}
+      >
+        <ScreenHeader
+          eyebrow="BRACKET CHALLENGE"
+          title="Step 1: Create Your Bracket"
+          subtitle="Predict the group winners, then call every knockout from the Round of 32 to the Final."
+        />
+        <BrandButton
+          label="Create Your Bracket"
+          onPress={handleStart}
+          style={styles.cta}
+        />
+      </Screen>
     );
   }
 
   return (
     <View style={styles.root}>
       <SubTabBar value={subTab} onChange={setSubTab} />
-      <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
+      <Screen
+        scroll
+        ref={scrollRef}
+        edges={["left", "right"]}
+        bottomInset={32}
+        contentContainerStyle={styles.content}
+      >
         {subTab === "groups" && (
           <GroupPicker
             index={groupIndex}
@@ -146,7 +164,7 @@ export default function BracketScreen() {
             }}
           />
         )}
-      </ScrollView>
+      </Screen>
     </View>
   );
 }
@@ -154,48 +172,19 @@ export default function BracketScreen() {
 const styles = StyleSheet.create({
   content: {
     paddingBottom: spacing.xl,
+    paddingHorizontal: 0,
     paddingTop: spacing.sm
   },
   cta: {
+    alignSelf: "stretch",
+    marginTop: spacing.xl
+  },
+  emptyContent: {
     alignItems: "center",
-    backgroundColor: colors.gold,
-    borderRadius: radius.pill,
-    marginTop: spacing.xl,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md
-  },
-  ctaText: {
-    color: colors.pitch,
-    fontSize: 17,
-    fontWeight: "900"
-  },
-  empty: {
-    alignItems: "center",
-    backgroundColor: colors.pitch,
-    flex: 1,
-    justifyContent: "center",
-    padding: spacing.xl
-  },
-  emptyBody: {
-    color: "rgba(255, 248, 234, 0.7)",
-    marginTop: spacing.sm,
-    textAlign: "center",
-    ...typography.body
-  },
-  emptyEyebrow: {
-    color: colors.gold,
-    fontSize: 12,
-    fontWeight: "900",
-    letterSpacing: 1.2
-  },
-  emptyTitle: {
-    color: colors.cream,
-    marginTop: spacing.xs,
-    textAlign: "center",
-    ...typography.display
+    justifyContent: "center"
   },
   root: {
-    backgroundColor: colors.pitch,
+    backgroundColor: colors.cream,
     flex: 1
   }
 });

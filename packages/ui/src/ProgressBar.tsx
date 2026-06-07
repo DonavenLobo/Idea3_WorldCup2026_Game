@@ -17,15 +17,15 @@ export function ProgressBar({ value, max }: ProgressBarProps) {
 
 const styles = StyleSheet.create({
   fill: {
-    backgroundColor: "#D6A11E",
+    backgroundColor: "#e63946",
     borderRadius: 999,
-    height: "100%"
+    height: "100%",
   },
   track: {
-    backgroundColor: "rgba(12, 59, 46, 0.14)",
+    backgroundColor: "rgba(26, 26, 46, 0.12)",
     borderRadius: 999,
     height: 10,
     overflow: "hidden",
-    width: "100%"
-  }
+    width: "100%",
+  },
 });

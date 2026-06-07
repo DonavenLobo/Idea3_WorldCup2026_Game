@@ -1,8 +1,10 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Fixture } from "@world-cup-game/config";
-import { colors } from "../../../theme/colors";
-import { radius } from "../../../theme/radius";
+import { ContentCard } from "../../../components/brand";
+import { colors, opacity } from "../../../theme/colors";
 import { spacing } from "../../../theme/spacing";
+import { pressableFeedback } from "../../../theme/pressable";
+import { typography } from "../../../theme/typography";
 import { formatKickoffTime } from "../utils";
 import { TeamLabel } from "./TeamLabel";
 
@@ -14,7 +16,7 @@ interface FixtureRowProps {
 
 export function FixtureRow({ fixture, timeZone, onVenuePress }: FixtureRowProps) {
   return (
-    <View style={styles.row}>
+    <ContentCard style={styles.row}>
       <View style={styles.teams}>
         <TeamLabel name={fixture.team1} align="left" />
         <View style={styles.center}>
@@ -22,43 +24,43 @@ export function FixtureRow({ fixture, timeZone, onVenuePress }: FixtureRowProps)
         </View>
         <TeamLabel name={fixture.team2} align="right" />
       </View>
-      <Pressable onPress={() => onVenuePress(fixture.venueCity)} hitSlop={6}>
+      <Pressable
+        onPress={() => onVenuePress(fixture.venueCity)}
+        hitSlop={6}
+        style={({ pressed }) => pressed && pressableFeedback(true)}
+      >
         <Text style={styles.venue} numberOfLines={1}>
           {fixture.group ? `${fixture.group} · ` : ""}
           {fixture.venueCity} ›
         </Text>
       </Pressable>
-    </View>
+    </ContentCard>
   );
 }
 
 const styles = StyleSheet.create({
   center: {
     alignItems: "center",
-    minWidth: 64
+    flexShrink: 0,
+    width: 90,
   },
   row: {
-    backgroundColor: "rgba(255, 248, 234, 0.05)",
-    borderRadius: radius.md,
     gap: spacing.sm,
     marginHorizontal: spacing.lg,
-    marginVertical: spacing.xs,
-    padding: spacing.md
   },
   teams: {
     alignItems: "center",
     flexDirection: "row",
-    gap: spacing.sm
+    gap: spacing.xs,
   },
   time: {
-    color: colors.gold,
-    fontSize: 14,
-    fontWeight: "800"
+    ...typography.label,
+    color: colors.red,
   },
   venue: {
-    color: "rgba(255, 248, 234, 0.6)",
-    fontSize: 12,
-    fontWeight: "700",
-    textAlign: "center"
-  }
+    ...typography.caption,
+    color: opacity.ink55,
+    fontFamily: typography.label.fontFamily,
+    textAlign: "center",
+  },
 });

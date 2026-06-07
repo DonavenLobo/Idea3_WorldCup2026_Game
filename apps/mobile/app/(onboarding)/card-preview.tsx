@@ -1,12 +1,10 @@
 import { useRouter } from "expo-router";
-import { Alert, Pressable, ScrollView, StyleSheet, Text } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Alert, Pressable, StyleSheet, Text } from "react-native";
 import { APP_ROUTES } from "@world-cup-game/config";
 import { RenderedPlayerCard } from "../../src/features/card";
 import { useOnboarding } from "../../src/features/onboarding";
-import { BackButton } from "../../src/components/common/BackButton";
-import { colors } from "../../src/theme/colors";
-import { radius } from "../../src/theme/radius";
+import { OnboardingButton, OnboardingShell } from "../../src/components/onboarding";
+import { opacity } from "../../src/theme/colors";
 import { spacing } from "../../src/theme/spacing";
 import { typography } from "../../src/theme/typography";
 
@@ -28,78 +26,47 @@ export default function CardPreviewScreen() {
           onPress: () => {
             reset();
             router.navigate(APP_ROUTES.onboarding.selectNation);
-          }
-        }
+          },
+        },
       ]
     );
   };
 
   return (
-    <SafeAreaView style={styles.root}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <BackButton variant="dark" />
-        <Text style={styles.title}>Meet {friendlyName}</Text>
-
-        <RenderedPlayerCard
-          concealUntilGenerated
-          displayName={displayName}
-          photoSource={photoSource}
-          selectedNationCode={nation?.code}
-        />
-        <Text style={styles.pending}>Sign up to generate your AI card</Text>
-
-        <Pressable
-          style={styles.button}
+    <OnboardingShell
+      step={4}
+      totalSteps={4}
+      title={`Meet ${friendlyName}`}
+      subtitle="Sign up to generate your AI card"
+      footer={
+        <OnboardingButton
+          label="Create account to save"
           onPress={() => router.push(APP_ROUTES.auth.signUp)}
-        >
-          <Text style={styles.buttonText}>Create Account to Save</Text>
-        </Pressable>
+        />
+      }
+    >
+      <RenderedPlayerCard
+        concealUntilGenerated
+        displayName={displayName}
+        photoSource={photoSource}
+        selectedNationCode={nation?.code}
+      />
 
-        <Pressable onPress={handleStartOver}>
-          <Text style={styles.startOver}>Start over</Text>
-        </Pressable>
-      </ScrollView>
-    </SafeAreaView>
+      <Pressable onPress={handleStartOver} style={styles.startOverWrap}>
+        <Text style={styles.startOver}>Start over</Text>
+      </Pressable>
+    </OnboardingShell>
   );
 }
 
 const styles = StyleSheet.create({
-  button: {
-    alignItems: "center",
-    backgroundColor: colors.pitch,
-    borderRadius: radius.pill,
-    marginTop: spacing.xl,
-    padding: spacing.md
-  },
-  buttonText: {
-    color: colors.cream,
-    fontSize: 17,
-    fontWeight: "900"
-  },
-  content: {
-    padding: spacing.lg
-  },
-  pending: {
-    color: "rgba(12, 59, 46, 0.7)",
-    fontSize: 14,
-    fontWeight: "800",
-    marginTop: spacing.md,
-    textAlign: "center"
-  },
-  root: {
-    backgroundColor: colors.cream,
-    flex: 1
-  },
   startOver: {
-    color: "rgba(12, 59, 46, 0.6)",
-    fontSize: 15,
-    fontWeight: "700",
-    marginTop: spacing.lg,
-    textAlign: "center"
+    ...typography.caption,
+    color: opacity.ink55,
+    textAlign: "center",
   },
-  title: {
-    color: colors.pitch,
-    marginBottom: spacing.lg,
-    ...typography.display
-  }
+  startOverWrap: {
+    marginTop: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
 });

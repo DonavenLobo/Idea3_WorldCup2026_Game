@@ -4,7 +4,7 @@ import { startCardGeneration } from "../../card/api/startCardGeneration";
 import { uploadCardImage } from "../../../lib/imageUpload";
 import { queryClient } from "../../../lib/queryClient";
 import { supabase } from "../../../lib/supabase";
-import { upsertCurrentProfile } from "../../../hooks/useProfile";
+import { upsertCurrentProfile } from "../../profile/api/profile";
 import type { OnboardingData } from "../types";
 
 function getCompletedOnboardingData(data: OnboardingData) {

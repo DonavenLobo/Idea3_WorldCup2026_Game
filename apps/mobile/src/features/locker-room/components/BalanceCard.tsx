@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 import { LOCKER_TIERS } from "@world-cup-game/config";
 import type { LockerProgress, LockerWallet } from "../types";
-import { colors } from "../../../theme/colors";
+import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
 
@@ -12,7 +12,7 @@ interface BalanceCardProps {
 
 export function BalanceCard({ progress, wallet }: BalanceCardProps) {
   const tierConfig = LOCKER_TIERS.find((t) => t.id === progress.tier);
-  const badgeColor = tierConfig?.badgeColor ?? colors.gold;
+  const badgeColor = tierConfig?.badgeColor ?? colors.red;
 
   return (
     <View style={styles.card}>
@@ -45,47 +45,47 @@ export function BalanceCard({ progress, wallet }: BalanceCardProps) {
 
 const styles = StyleSheet.create({
   balance: {
-    color: colors.cream,
+    color: colors.ink,
     fontSize: 32,
-    fontWeight: "900",
+    fontWeight: "700",
     marginTop: 2
   },
   balanceCol: {
     flex: 1
   },
   breakdown: {
-    color: "rgba(255, 248, 234, 0.55)",
+    color: opacity.ink55,
     fontSize: 12,
     fontWeight: "700",
     marginTop: 2
   },
   card: {
-    backgroundColor: "rgba(255, 248, 234, 0.06)",
-    borderColor: "rgba(255, 248, 234, 0.12)",
+    backgroundColor: opacity.ink12,
+    borderColor: opacity.ink15,
     borderRadius: radius.lg,
     borderWidth: 1,
     marginVertical: spacing.md,
     padding: spacing.lg
   },
   label: {
-    color: colors.gold,
+    color: colors.red,
     fontSize: 12,
-    fontWeight: "900",
+    fontWeight: "700",
     letterSpacing: 1.2
   },
   progressFill: {
-    backgroundColor: colors.gold,
+    backgroundColor: colors.red,
     borderRadius: 999,
     height: "100%"
   },
   progressLabel: {
-    color: "rgba(255, 248, 234, 0.65)",
+    color: opacity.ink55,
     fontSize: 12,
     fontWeight: "700",
     marginTop: spacing.sm
   },
   progressTrack: {
-    backgroundColor: "rgba(255, 248, 234, 0.12)",
+    backgroundColor: opacity.ink12,
     borderRadius: 999,
     height: 8,
     marginTop: spacing.md,
@@ -103,15 +103,15 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm
   },
   tierLabel: {
-    color: colors.pitch,
+    color: colors.cream,
     fontSize: 13,
-    fontWeight: "900",
+    fontWeight: "700",
     letterSpacing: 1
   },
   tierSub: {
-    color: "rgba(12, 59, 46, 0.7)",
+    color: opacity.cream75,
     fontSize: 11,
-    fontWeight: "900",
+    fontWeight: "700",
     marginTop: 2
   }
 });

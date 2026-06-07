@@ -5,11 +5,13 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  View
+  View,
 } from "react-native";
-import { colors } from "../../../theme/colors";
+import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
+import { pressableFeedback } from "../../../theme/pressable";
+import { typography } from "../../../theme/typography";
 
 export interface FilterOption<T extends string> {
   id: T;
@@ -23,25 +25,34 @@ interface FilterDropdownProps<T extends string> {
   onSelect: (id: T) => void;
 }
 
+const LABEL_SLOT_HEIGHT = 32;
+
 export function FilterDropdown<T extends string>({
   label,
   value,
   options,
-  onSelect
+  onSelect,
 }: FilterDropdownProps<T>) {
   const [open, setOpen] = useState(false);
   const current = options.find((o) => o.id === value);
 
   return (
     <View style={styles.wrap}>
-      <Pressable style={styles.trigger} onPress={() => setOpen(true)}>
-        <View style={styles.triggerText}>
-          <Text style={styles.label}>{label}</Text>
+      <Pressable
+        style={({ pressed }) => [styles.trigger, pressed && pressableFeedback(true)]}
+        onPress={() => setOpen(true)}
+      >
+        <View style={styles.labelSlot}>
+          <Text style={styles.label} numberOfLines={2}>
+            {label}
+          </Text>
+        </View>
+        <View style={styles.valueRow}>
           <Text style={styles.value} numberOfLines={1}>
             {current?.label ?? value}
           </Text>
+          <Text style={styles.chevron}>▾</Text>
         </View>
-        <Text style={styles.chevron}>▼</Text>
       </Pressable>
 
       <Modal
@@ -59,7 +70,11 @@ export function FilterDropdown<T extends string>({
                 return (
                   <Pressable
                     key={opt.id}
-                    style={[styles.option, active ? styles.optionActive : null]}
+                    style={({ pressed }) => [
+                      styles.option,
+                      active ? styles.optionActive : null,
+                      pressed && pressableFeedback(true),
+                    ]}
                     onPress={() => {
                       onSelect(opt.id);
                       setOpen(false);
@@ -88,76 +103,77 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     flex: 1,
     justifyContent: "center",
-    padding: spacing.lg
+    padding: spacing.lg,
   },
   check: {
-    color: colors.pitch,
-    fontSize: 16,
-    fontWeight: "900"
+    ...typography.label,
+    color: colors.red,
   },
   chevron: {
-    color: "rgba(12, 59, 46, 0.6)",
-    fontSize: 12
+    ...typography.caption,
+    color: opacity.ink55,
+    marginLeft: spacing.xs,
   },
   label: {
-    color: "rgba(12, 59, 46, 0.6)",
-    fontSize: 12,
-    fontWeight: "700"
+    ...typography.caption,
+    color: opacity.ink55,
+    fontFamily: typography.label.fontFamily,
+  },
+  labelSlot: {
+    height: LABEL_SLOT_HEIGHT,
+    justifyContent: "flex-end",
   },
   option: {
     alignItems: "center",
-    borderRadius: radius.md,
+    borderRadius: radius.card,
     flexDirection: "row",
     justifyContent: "space-between",
-    padding: spacing.md
+    padding: spacing.md,
   },
   optionActive: {
-    backgroundColor: "rgba(214, 161, 30, 0.18)"
+    backgroundColor: opacity.red18,
   },
   optionText: {
-    color: colors.pitch,
-    fontSize: 16,
-    fontWeight: "700"
+    ...typography.bodyDefault,
+    color: colors.ink,
+    fontFamily: typography.label.fontFamily,
   },
   optionTextActive: {
-    fontWeight: "900"
+    color: colors.ink,
   },
   optionsScroll: {
-    maxHeight: 360
+    maxHeight: 360,
   },
   sheet: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.cream,
     borderRadius: radius.lg,
     maxHeight: 480,
     padding: spacing.md,
-    width: "100%"
+    width: "100%",
   },
   sheetTitle: {
-    color: colors.pitch,
-    fontSize: 16,
-    fontWeight: "900",
+    ...typography.headingCard,
+    color: colors.ink,
     marginBottom: spacing.sm,
-    paddingHorizontal: spacing.sm
+    paddingHorizontal: spacing.sm,
   },
   trigger: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: radius.md,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    padding: spacing.md
-  },
-  triggerText: {
-    flex: 1,
-    marginRight: spacing.sm
+    backgroundColor: colors.cream,
+    borderRadius: radius.card,
+    padding: spacing.md,
   },
   value: {
-    color: colors.pitch,
-    fontSize: 16,
-    fontWeight: "900",
-    marginTop: 2
+    ...typography.label,
+    color: colors.ink,
+    flex: 1,
+    minWidth: 0,
+  },
+  valueRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    marginTop: spacing.xs,
   },
   wrap: {
-    flex: 1
-  }
+    flex: 1,
+  },
 });

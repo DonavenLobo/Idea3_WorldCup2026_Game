@@ -16,10 +16,12 @@ export function Avatar({ imageUrl, size = 56 }: AvatarProps) {
 const styles = StyleSheet.create({
   image: {
     height: "100%",
-    width: "100%"
+    width: "100%",
   },
   shell: {
-    backgroundColor: "#D9E7CB",
-    overflow: "hidden"
-  }
+    backgroundColor: "rgba(26, 26, 46, 0.08)",
+    borderColor: "rgba(26, 26, 46, 0.15)",
+    borderWidth: 2,
+    overflow: "hidden",
+  },
 });

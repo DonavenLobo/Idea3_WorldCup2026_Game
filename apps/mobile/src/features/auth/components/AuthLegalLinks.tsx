@@ -5,7 +5,7 @@ import {
   SUPPORT_URL,
   TERMS_OF_SERVICE_URL
 } from "../../../lib/constants";
-import { colors } from "../../../theme/colors";
+import { colors, opacity } from "../../../theme/colors";
 import { spacing } from "../../../theme/spacing";
 
 function openUrl(url: string) {
@@ -34,12 +34,12 @@ export function AuthLegalLinks() {
 
 const styles = StyleSheet.create({
   link: {
-    color: colors.pitch,
-    fontWeight: "900",
+    color: colors.ink,
+    fontWeight: "700",
     textDecorationLine: "underline"
   },
   text: {
-    color: "rgba(12, 59, 46, 0.65)",
+    color: opacity.ink60,
     fontSize: 12,
     lineHeight: 18,
     marginTop: spacing.md,

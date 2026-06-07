@@ -1,23 +1,15 @@
 import { useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { APP_ROUTES } from "@world-cup-game/config";
-import { colors } from "../../src/theme/colors";
-import { radius } from "../../src/theme/radius";
+import { AuthShell } from "../../src/components/auth";
+import { OnboardingButton } from "../../src/components/onboarding";
+import { colors, opacity } from "../../src/theme/colors";
 import { spacing } from "../../src/theme/spacing";
 import { typography } from "../../src/theme/typography";
 
 const CODE_LENGTH = 6;
+const BOX_WIDTH = 44;
 
 export default function VerifyScreen() {
   const router = useRouter();
@@ -37,143 +29,88 @@ export default function VerifyScreen() {
   const focusInput = () => inputRef.current?.focus();
 
   return (
-    <SafeAreaView style={styles.root}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={styles.kav}
-      >
-        <ScrollView
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Text style={styles.eyebrow}>
-            VERIFY {method === "phone" ? "PHONE" : "EMAIL"}
-          </Text>
-          <Text style={styles.title}>Enter your 6-digit code</Text>
-          <Text style={styles.subtitle}>
-            Code sent to {value}. Verification takes you to your home screen.
-          </Text>
+    <AuthShell
+      keyboard
+      showBack={false}
+      title="Enter your 6-digit code"
+      subtitle={`Code sent to ${value}. Verification takes you to your home screen.`}
+      footer={
+        <OnboardingButton label="Verify" onPress={handleVerify} disabled={!isValid} />
+      }
+    >
+      <Text style={styles.label}>Verification code</Text>
+      <Text style={styles.target}>{value}</Text>
 
-          <View style={styles.card}>
-            <Text style={styles.label}>Verification code</Text>
-            <Text style={styles.target}>{value}</Text>
-
-            <Pressable onPress={focusInput} style={styles.boxesContainer}>
-              <View style={styles.boxes} pointerEvents="none">
-                {Array.from({ length: CODE_LENGTH }).map((_, i) => {
-                  const digit = code[i] ?? "";
-                  const active = code.length === i;
-                  return (
-                    <View
-                      key={i}
-                      style={[styles.box, active ? styles.boxActive : null]}
-                    >
-                      <Text style={styles.boxText}>{digit}</Text>
-                    </View>
-                  );
-                })}
+      <Pressable onPress={focusInput} style={styles.boxesContainer}>
+        <View style={styles.boxes} pointerEvents="none">
+          {Array.from({ length: CODE_LENGTH }).map((_, i) => {
+            const digit = code[i] ?? "";
+            const active = code.length === i;
+            return (
+              <View key={i} style={[styles.box, active ? styles.boxActive : null]}>
+                <Text style={styles.boxText}>{digit}</Text>
               </View>
-              <TextInput
-                ref={inputRef}
-                style={styles.hiddenInput}
-                value={code}
-                onChangeText={(t) => setCode(t.replace(/\D/g, "").slice(0, CODE_LENGTH))}
-                keyboardType="number-pad"
-                maxLength={CODE_LENGTH}
-                autoFocus
-                caretHidden
-                textContentType="oneTimeCode"
-              />
-            </Pressable>
+            );
+          })}
+        </View>
+        <TextInput
+          ref={inputRef}
+          style={styles.hiddenInput}
+          value={code}
+          onChangeText={(t) => setCode(t.replace(/\D/g, "").slice(0, CODE_LENGTH))}
+          keyboardType="number-pad"
+          maxLength={CODE_LENGTH}
+          autoFocus
+          caretHidden
+          textContentType="oneTimeCode"
+        />
+      </Pressable>
 
-            <Text style={styles.hint}>
-              Check spam or junk if it does not arrive right away.
-            </Text>
+      <Text style={styles.hint}>Check spam or junk if it does not arrive right away.</Text>
 
-            <Pressable
-              style={[styles.button, !isValid ? styles.buttonDisabled : null]}
-              onPress={handleVerify}
-              disabled={!isValid}
-            >
-              <Text style={styles.buttonText}>Verify</Text>
-            </Pressable>
-          </View>
-
-          <Pressable onPress={() => router.back()}>
-            <Text style={styles.altText}>
-              Use a different {method === "phone" ? "phone" : "email"}
-            </Text>
-          </Pressable>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      <Pressable onPress={() => router.back()}>
+        <Text style={styles.altText}>
+          Use a different {method === "phone" ? "phone" : "email"}
+        </Text>
+      </Pressable>
+    </AuthShell>
   );
 }
 
 const styles = StyleSheet.create({
   altText: {
-    color: "rgba(255, 248, 234, 0.75)",
-    fontSize: 14,
-    fontWeight: "700",
+    ...typography.caption,
+    color: opacity.ink60,
+    fontFamily: typography.eyebrow.fontFamily,
     marginTop: spacing.lg,
-    textAlign: "center"
+    textAlign: "center",
   },
   box: {
     alignItems: "center",
-    backgroundColor: "#FFF3DD",
-    borderColor: "rgba(12, 59, 46, 0.15)",
-    borderRadius: radius.md,
-    borderWidth: 2,
-    flex: 1,
-    height: 56,
-    justifyContent: "center"
+    backgroundColor: colors.cream,
+    borderBottomColor: opacity.ink15,
+    borderBottomWidth: 2,
+    height: 52,
+    justifyContent: "center",
+    width: BOX_WIDTH,
   },
   boxActive: {
-    borderColor: colors.gold
+    borderBottomColor: colors.red,
   },
   boxText: {
-    color: colors.pitch,
-    fontSize: 24,
-    fontWeight: "900"
+    color: colors.ink,
+    fontFamily: typography.eyebrow.fontFamily,
+    fontSize: 22,
+    lineHeight: 26,
   },
   boxes: {
     flexDirection: "row",
-    gap: spacing.sm
+    gap: spacing.xs,
+    justifyContent: "center",
   },
   boxesContainer: {
     marginTop: spacing.sm,
-    position: "relative"
-  },
-  button: {
-    alignItems: "center",
-    backgroundColor: colors.gold,
-    borderRadius: radius.pill,
-    marginTop: spacing.lg,
-    padding: spacing.md
-  },
-  buttonDisabled: { opacity: 0.5 },
-  buttonText: {
-    color: colors.pitch,
-    fontSize: 16,
-    fontWeight: "900"
-  },
-  card: {
-    backgroundColor: colors.cream,
-    borderColor: "rgba(12, 59, 46, 0.12)",
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    marginTop: spacing.lg,
-    padding: spacing.lg
-  },
-  content: {
-    padding: spacing.lg
-  },
-  eyebrow: {
-    color: colors.gold,
-    fontSize: 12,
-    fontWeight: "900",
-    letterSpacing: 1.2,
-    textTransform: "uppercase"
+    position: "relative",
   },
   hiddenInput: {
     bottom: 0,
@@ -183,36 +120,21 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 0,
     top: 0,
-    width: "100%"
+    width: "100%",
   },
   hint: {
-    color: "rgba(12, 59, 46, 0.65)",
-    fontSize: 13,
-    marginTop: spacing.md
+    ...typography.caption,
+    color: opacity.ink60,
+    marginTop: spacing.md,
   },
-  kav: { flex: 1 },
   label: {
-    color: colors.pitch,
-    fontSize: 14,
-    fontWeight: "800"
-  },
-  root: {
-    backgroundColor: colors.pitch,
-    flex: 1
-  },
-  subtitle: {
-    color: "rgba(255, 248, 234, 0.75)",
-    marginTop: spacing.xs,
-    ...typography.body
+    ...typography.caption,
+    color: colors.ink,
+    fontFamily: typography.eyebrow.fontFamily,
   },
   target: {
-    color: "rgba(12, 59, 46, 0.65)",
-    fontSize: 14,
-    marginTop: 2
+    ...typography.caption,
+    color: opacity.ink60,
+    marginTop: 2,
   },
-  title: {
-    color: colors.cream,
-    marginTop: spacing.xs,
-    ...typography.display
-  }
 });
