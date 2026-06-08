@@ -350,13 +350,26 @@ Legal/content assets to prepare:
 9. Fix review blockers and crash issues.
 10. Submit for public review only after the card creation/share loop is reliable.
 
-## Not Ready Yet
+## Resolved For v1 (updated June 7, 2026)
 
-The current app should not be submitted publicly yet because these are still unresolved:
+Engineering blockers closed for the first submission:
 
-- Auth verification is mock-only.
-- Card creation is in-memory and not persisted.
-- AI generation is not wired.
-- App access is not gated by a saved card/session.
-- Store icons/screenshots and final privacy answers are missing.
-- App Store/Google Play records and credentials are not configured.
+- Auth is real Apple + Google OAuth. The mock phone/email/verify screens (which granted access with no session) were removed. See [mvp_decisions.md → v1 App Store Submission Decisions](../product/mvp_decisions.md).
+- Card creation is persisted to Supabase (`cards` table, RLS).
+- AI card generation is wired via the `generate-card-avatar` Edge Function (OpenAI, with server-side moderation + push-on-ready).
+- In-app account deletion is implemented (`delete-account` Edge Function + "Delete account" in the account menu) — Guideline 5.1.1(v).
+- UGC safety: in-app report + block (`content_reports`, `user_blocks`) and a content-policy acknowledgment at card creation — Guideline 1.2. AI images rely on the provider's generation guardrails.
+- No IAP ships at launch (Locker Room is a "Coming Soon" placeholder), so the StoreKit review surface is empty.
+
+## Still Required Before Submission
+
+Not blockers in code, but must be done before/at upload:
+
+- Deploy the new Edge Function (`supabase functions deploy delete-account`) and apply migrations through `000025` to the production project.
+- Run the EAS **production** build and install it on physical iOS + Android devices; test the full loop, account deletion, and report/block.
+- Replace placeholder store assets: app icon polish, screenshots for required device sizes.
+- Complete App Store privacy nutrition labels + Google Play Data safety (email, photos, user content, user ID, push token).
+- Age rating (13+) and content rating questionnaires.
+- App Review notes + a demo path (Sign in with Apple works for reviewers); state the 24-hour report-review commitment and that the app is an unofficial fan game.
+- Optional but recommended: review "World Cup 2026" copy for any implied FIFA affiliation.
+- Confirm full-app access is gated behind a completed base card/session (product-completeness polish).

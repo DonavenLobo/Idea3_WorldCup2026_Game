@@ -38,7 +38,7 @@ export const AccountBottomSheetGorhom = forwardRef<
   ref
 ) {
   const sheetRef = useRef<BottomSheetModalType>(null);
-  const { handleDismiss, queueNavigation, queueSignOut, resetPending } =
+  const { handleDismiss, queueNavigation, queueSignOut, queueDeleteAccount, resetPending } =
     useAccountSheetActions(onOpenChange);
 
   const dismissSheet = useCallback(() => {
@@ -79,6 +79,11 @@ export const AccountBottomSheetGorhom = forwardRef<
     dismissSheet();
   }, [dismissSheet, queueSignOut]);
 
+  const handleRequestDeleteAccount = useCallback(() => {
+    queueDeleteAccount();
+    dismissSheet();
+  }, [dismissSheet, queueDeleteAccount]);
+
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => <BlurredSheetBackdrop {...props} />,
     []
@@ -113,6 +118,7 @@ export const AccountBottomSheetGorhom = forwardRef<
           onOpenLeaderboard={handleOpenLeaderboard}
           onOpenLockerRoom={handleOpenLockerRoom}
           onRequestSignOut={handleRequestSignOut}
+          onRequestDeleteAccount={handleRequestDeleteAccount}
         />
       </BottomSheetScrollView>
     </BottomSheetModal>

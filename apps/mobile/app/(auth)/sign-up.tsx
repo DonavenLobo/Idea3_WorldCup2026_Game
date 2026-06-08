@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { APP_ROUTES } from "@world-cup-game/config";
-import { AuthOptionRow, AuthShell } from "../../src/components/auth";
+import { AuthShell } from "../../src/components/auth";
 import { AuthLegalLinks, OAuthButtons } from "../../src/features/auth";
 import { colors, opacity } from "../../src/theme/colors";
 import { spacing } from "../../src/theme/spacing";
@@ -22,18 +22,6 @@ export default function SignUpScreen() {
       subtitle="Create an account to keep your card, join groups, and climb the tournament leaderboard."
     >
       <OAuthButtons />
-
-      <AuthOptionRow
-        label="Continue with Phone Number"
-        onPress={() => router.push(APP_ROUTES.auth.enterPhone)}
-        variant="primary"
-      />
-
-      <AuthOptionRow
-        label="Continue with Email"
-        onPress={() => router.push(APP_ROUTES.auth.enterEmail)}
-        variant="secondary"
-      />
 
       <Pressable onPress={() => router.push(APP_ROUTES.auth.signIn)} style={styles.signInLink}>
         <Text style={styles.signInText}>I already have an account</Text>

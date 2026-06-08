@@ -8,11 +8,7 @@ export const APP_ROUTES = {
   },
   auth: {
     signUp: "/(auth)/sign-up",
-    signIn: "/(auth)/sign-in",
-    forgotPassword: "/(auth)/forgot-password",
-    enterEmail: "/(auth)/enter-email",
-    enterPhone: "/(auth)/enter-phone",
-    verify: "/(auth)/verify"
+    signIn: "/(auth)/sign-in"
   },
   tabs: {
     home: "/(tabs)/home",

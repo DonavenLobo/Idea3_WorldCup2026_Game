@@ -62,3 +62,13 @@ The AI footballer card is the core identity, monetization, and sharing surface. 
 2. Head-to-head trivia is deferred until there is enough participation density.
 3. Sponsored integrations, affiliate commerce, and large-scale ad monetization are later-stage opportunities.
 4. Live bounties should start operationally simple before relying on real-time automation.
+
+## v1 App Store Submission Decisions
+
+Locked on June 7, 2026 while preparing the first App Store / Google Play submission. These maximize first-pass review approval.
+
+1. **Auth for v1 is Apple + Google OAuth only.** Phone and Email OTP screens were mock-only (no real session) and were removed, along with their routes, to avoid a broken-functionality rejection (Guideline 2.1). "Continue with Google" is the primary (red) button; "Continue with Apple" is secondary. Real phone/email OTP is deferred to a later update.
+2. **Account deletion is in-app and immediate** (Guideline 5.1.1(v)). The `delete-account` Edge Function removes the user's storage objects and hard-deletes the auth user, which cascades every user-owned row. Surfaced as "Delete account" in the account menu with a destructive confirmation.
+3. **No in-app purchases ship at launch.** No StoreKit/billing library is wired and the Locker Room is a labeled "Coming Soon" placeholder, so the IAP review surface is intentionally empty. Paid regeneration/cosmetics come in a later update and must use native IAP when they do.
+4. **UGC safety (Guideline 1.2):** AI-generated card images rely on the image provider's (OpenAI) safety guardrails, enforced server-side in `generate-card-avatar` (`moderation_rejected` status). User-to-user content (display names, group/leaderboard visibility) is covered by in-app **report** + **block** (`content_reports`, `user_blocks` tables) and a content-policy acknowledgment at card creation. Blocked users are hidden from member lists and all leaderboards. Reports are reviewed within 24 hours (state this in App Review notes).
+5. **Public copy must avoid implied official FIFA affiliation.** "World Cup 2026" appears as descriptive fan-game copy only; no FIFA marks, logos, or affiliation claims.

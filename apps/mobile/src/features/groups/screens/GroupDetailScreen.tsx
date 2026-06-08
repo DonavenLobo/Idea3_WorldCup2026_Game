@@ -26,6 +26,7 @@ import {
   uniqueCountryCodes
 } from "../../leaderboard";
 import type { CountryFilter, FilterOption } from "../../leaderboard";
+import { MemberActions, useBlockedUsers } from "../../moderation";
 import { getErrorMessage } from "../../../utils/errors";
 
 type DetailTab = "leaderboard" | "members";
@@ -158,6 +159,7 @@ export function GroupDetailScreen() {
               <MembersPanel
                 members={membersQuery.data ?? []}
                 currentUserId={user?.id ?? null}
+                groupId={group.id}
                 isLoading={membersQuery.isLoading}
                 error={membersQuery.error}
               />
@@ -208,19 +210,26 @@ function GroupHero({
 function MembersPanel({
   members,
   currentUserId,
+  groupId,
   isLoading,
   error
 }: {
   members: GroupMember[];
   currentUserId: string | null;
+  groupId: string;
   isLoading: boolean;
   error: unknown;
 }) {
+  const { blockedSet } = useBlockedUsers();
+  const visibleMembers = members.filter(
+    (member) => member.userId === currentUserId || !blockedSet.has(member.userId)
+  );
+
   return (
     <View style={styles.panel}>
       <View style={styles.panelHeader}>
         <Text style={styles.sectionTitle}>Members</Text>
-        <Text style={styles.sectionCount}>{members.length}</Text>
+        <Text style={styles.sectionCount}>{visibleMembers.length}</Text>
       </View>
 
       {isLoading ? (
@@ -229,14 +238,15 @@ function MembersPanel({
         <Text style={styles.panelStatus}>
           {getErrorMessage(error, "Could not load members.")}
         </Text>
-      ) : members.length === 0 ? (
+      ) : visibleMembers.length === 0 ? (
         <Text style={styles.panelStatus}>No members found yet.</Text>
       ) : (
         <View style={styles.memberList}>
-          {members.map((member) => (
+          {visibleMembers.map((member) => (
             <MemberRow
               key={member.userId}
               member={member}
+              groupId={groupId}
               isCurrentUser={member.userId === currentUserId}
             />
           ))}
@@ -248,10 +258,12 @@ function MembersPanel({
 
 function MemberRow({
   member,
-  isCurrentUser
+  isCurrentUser,
+  groupId
 }: {
   member: GroupMember;
   isCurrentUser: boolean;
+  groupId: string;
 }) {
   return (
     <View style={[styles.memberRow, isCurrentUser ? styles.memberRowCurrent : null]}>
@@ -269,6 +281,14 @@ function MemberRow({
       <View style={styles.rolePill}>
         <Text style={styles.roleText}>{roleLabel(member.role)}</Text>
       </View>
+      {isCurrentUser ? null : (
+        <MemberActions
+          context="group_member"
+          contextId={groupId}
+          displayName={member.displayName}
+          userId={member.userId}
+        />
+      )}
     </View>
   );
 }
@@ -282,6 +302,7 @@ function GroupLeaderboard({
 }) {
   const [stage, setStage] = useState<LeaderboardStage>("overall");
   const [country, setCountry] = useState<CountryFilter>(COUNTRY_ALL);
+  const { blockedSet } = useBlockedUsers();
 
   const stageOptions: FilterOption<LeaderboardStage>[] = useMemo(
     () => LEADERBOARD_STAGES.map((s) => ({ id: s.id, label: s.label })),
@@ -314,8 +335,11 @@ function GroupLeaderboard({
   }, [allRows]);
 
   const rows = useMemo(
-    () => filterLeaderboardRows(allRows, country),
-    [allRows, country]
+    () =>
+      filterLeaderboardRows(allRows, country).filter(
+        (row) => row.isCurrentUser || !blockedSet.has(row.id)
+      ),
+    [allRows, blockedSet, country]
   );
 
   return (

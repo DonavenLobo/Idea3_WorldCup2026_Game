@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import { ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet, Text, View } from "react-native";
+import * as Linking from "expo-linking";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { APP_ROUTES } from "@world-cup-game/config";
 import { OnboardingButton, OnboardingInput, OnboardingShell } from "../../src/components/onboarding";
 import { useOnboarding } from "../../src/features/onboarding";
+import { TERMS_OF_SERVICE_URL } from "../../src/lib/constants";
 import { colors, opacity } from "../../src/theme/colors";
 import { spacing } from "../../src/theme/spacing";
 import { typography } from "../../src/theme/typography";
@@ -47,11 +49,23 @@ export default function CreateCardScreen() {
       title="Name your card"
       subtitle="This name appears on your footballer card."
       footer={
-        <OnboardingButton
-          label="Create My Card"
-          onPress={handleCreate}
-          disabled={!canCreate}
-        />
+        <View style={styles.footerCol}>
+          <Text style={styles.policyNote}>
+            By creating a card you agree to our{" "}
+            <Text
+              style={styles.policyLink}
+              onPress={() => void Linking.openURL(TERMS_OF_SERVICE_URL)}
+            >
+              Content Guidelines
+            </Text>
+            . No offensive, harmful, or infringing content.
+          </Text>
+          <OnboardingButton
+            label="Create My Card"
+            onPress={handleCreate}
+            disabled={!canCreate}
+          />
+        </View>
       }
     >
       <KeyboardAvoidingView
@@ -107,6 +121,21 @@ const styles = StyleSheet.create({
   input: {
     fontSize: 28,
     lineHeight: 34,
+    textAlign: "center",
+  },
+  footerCol: {
+    width: "100%",
+  },
+  policyLink: {
+    color: colors.ink,
+    fontWeight: "700",
+    textDecorationLine: "underline",
+  },
+  policyNote: {
+    color: opacity.ink55,
+    fontSize: 12,
+    lineHeight: 17,
+    marginBottom: spacing.md,
     textAlign: "center",
   },
   root: {

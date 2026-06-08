@@ -16,6 +16,7 @@ import {
 } from "../src/features/leaderboard";
 import type { CountryFilter, FilterOption } from "../src/features/leaderboard";
 import { useSession } from "../src/features/auth";
+import { useBlockedUsers } from "../src/features/moderation";
 import { colors, opacity } from "../src/theme/colors";
 import { radius } from "../src/theme/radius";
 import { spacing } from "../src/theme/spacing";
@@ -29,6 +30,7 @@ export default function LeaderboardScreen() {
 
   const [stage, setStage] = useState<LeaderboardStage>("overall");
   const [country, setCountry] = useState<CountryFilter>(COUNTRY_ALL);
+  const { blockedSet } = useBlockedUsers();
 
   const stageOptions: FilterOption<LeaderboardStage>[] = useMemo(
     () => LEADERBOARD_STAGES.map((s) => ({ id: s.id, label: s.label })),
@@ -61,8 +63,11 @@ export default function LeaderboardScreen() {
   }, [allRows]);
 
   const rows = useMemo(
-    () => filterLeaderboardRows(allRows, country),
-    [allRows, country]
+    () =>
+      filterLeaderboardRows(allRows, country).filter(
+        (row) => row.isCurrentUser || !blockedSet.has(row.id)
+      ),
+    [allRows, blockedSet, country]
   );
 
   return (

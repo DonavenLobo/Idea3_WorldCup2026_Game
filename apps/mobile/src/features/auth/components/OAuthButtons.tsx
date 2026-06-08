@@ -13,9 +13,10 @@ type OAuthButtonProvider = Extract<AuthProvider, "apple" | "google">;
 const PROVIDERS: Array<{
   label: string;
   provider: OAuthButtonProvider;
+  variant: "primary" | "secondary";
 }> = [
-  { label: "Continue with Google", provider: "google" },
-  { label: "Continue with Apple", provider: "apple" },
+  { label: "Continue with Google", provider: "google", variant: "primary" },
+  { label: "Continue with Apple", provider: "apple", variant: "secondary" },
 ];
 
 function getErrorMessage(error: unknown) {
@@ -58,7 +59,7 @@ export function OAuthButtons() {
           onPress={() => void handlePress(item.provider)}
           disabled={loadingProvider !== null}
           loading={loadingProvider === item.provider}
-          variant="secondary"
+          variant={item.variant}
         />
       ))}
     </View>

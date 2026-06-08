@@ -25,6 +25,7 @@ export interface AccountMenuContentProps {
   onOpenLeaderboard: () => void;
   onOpenLockerRoom: () => void;
   onRequestSignOut: () => void;
+  onRequestDeleteAccount: () => void;
 }
 
 interface AccountAction {
@@ -46,6 +47,7 @@ export function AccountMenuContent({
   onOpenLeaderboard,
   onOpenLockerRoom,
   onRequestSignOut,
+  onRequestDeleteAccount,
 }: AccountMenuContentProps) {
   const nation = SUPPORTED_NATIONS.find((candidate) => candidate.code === nationCode);
   const initial = displayName.trim().charAt(0).toUpperCase() || "?";
@@ -140,6 +142,13 @@ export function AccountMenuContent({
           style={({ pressed }) => [styles.signOutRow, pressed && pressableFeedback(true)]}
         >
           <Text style={styles.signOutLabel}>Sign out</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => handleActionPress(onRequestDeleteAccount)}
+          style={({ pressed }) => [styles.deleteRow, pressed && pressableFeedback(true)]}
+        >
+          <Text style={styles.deleteLabel}>Delete account</Text>
         </Pressable>
       </View>
     </View>
@@ -327,5 +336,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     minHeight: 44,
     paddingVertical: spacing.xs,
+  },
+  deleteRow: {
+    alignItems: "center",
+    minHeight: 36,
+    paddingVertical: spacing.xs,
+  },
+  deleteLabel: {
+    ...typography.caption,
+    color: opacity.ink55,
+    textAlign: "center",
+    textDecorationLine: "underline",
   },
 });
