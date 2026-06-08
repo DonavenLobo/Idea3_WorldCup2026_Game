@@ -9,6 +9,7 @@ import {
 interface TriviaQuestionRow {
   id: string;
   correct_answer_key: AnswerKey;
+  question_order: number;
 }
 
 interface TriviaAttemptRow {
@@ -35,10 +36,22 @@ interface ScoredAnswer extends TriviaAnswerSubmission {
   points: number;
 }
 
+// Per-question tier configuration — MIRRORS packages/config/src/xpRules.ts.
+// Edge functions run in Deno and can't import workspace packages, so this
+// is an inline copy. Keep in sync manually when scoring rules change.
+const TRIVIA_QUESTION_TIERS = [
+  { difficulty: "easy",   basePoints: 100, maxSpeedBonus: 20, timeLimitMs: 20_000 },
+  { difficulty: "medium", basePoints: 150, maxSpeedBonus: 30, timeLimitMs: 30_000 },
+  { difficulty: "hard",   basePoints: 200, maxSpeedBonus: 40, timeLimitMs: 45_000 }
+] as const;
+
+function getTriviaTierForOrder(questionOrder: number) {
+  const idx = Math.max(0, Math.min(TRIVIA_QUESTION_TIERS.length - 1, questionOrder - 1));
+  return TRIVIA_QUESTION_TIERS[idx]!;
+}
+
 const TRIVIA_RULES = {
-  questionsPerDay: 5,
-  correctAnswerCompetitivePoints: 100,
-  maxSpeedBonusPerQuestion: 20,
+  questionsPerDay: 3,
   correctAnswerCardXp: 25,
   completedDailyTriviaCardXp: 50
 } as const;
@@ -62,14 +75,19 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
-function calculateAnswerPoints(isCorrect: boolean, responseTimeMs: number): number {
+function calculateAnswerPoints(
+  isCorrect: boolean,
+  responseTimeMs: number,
+  questionOrder: number
+): number {
   if (!isCorrect) return 0;
 
-  const cappedMs = Math.max(0, Math.min(responseTimeMs, 30_000));
-  const remainingRatio = (30_000 - cappedMs) / 30_000;
-  const speedBonus = Math.round(TRIVIA_RULES.maxSpeedBonusPerQuestion * remainingRatio);
+  const tier = getTriviaTierForOrder(questionOrder);
+  const cappedMs = Math.max(0, Math.min(responseTimeMs, tier.timeLimitMs));
+  const remainingRatio = (tier.timeLimitMs - cappedMs) / tier.timeLimitMs;
+  const speedBonus = Math.round(tier.maxSpeedBonus * remainingRatio);
 
-  return TRIVIA_RULES.correctAnswerCompetitivePoints + speedBonus;
+  return tier.basePoints + speedBonus;
 }
 
 function mapAttempt(row: TriviaAttemptRow, answers: ScoredAnswer[]) {
@@ -96,17 +114,17 @@ function scoreAnswers(
   submissions: TriviaAnswerSubmission[],
   questions: TriviaQuestionRow[]
 ): ScoredAnswer[] {
-  const correctByQuestionId = Object.fromEntries(
-    questions.map((question) => [question.id, question.correct_answer_key])
-  );
+  const byId = Object.fromEntries(questions.map((q) => [q.id, q]));
 
   return submissions.map((submission) => {
-    const isCorrect = correctByQuestionId[submission.questionId] === submission.selectedAnswerKey;
+    const question = byId[submission.questionId];
+    const isCorrect = question?.correct_answer_key === submission.selectedAnswerKey;
+    const questionOrder = question?.question_order ?? 1;
 
     return {
       ...submission,
       isCorrect,
-      points: calculateAnswerPoints(isCorrect, submission.responseTimeMs)
+      points: calculateAnswerPoints(isCorrect, submission.responseTimeMs, questionOrder)
     };
   });
 }
@@ -133,22 +151,27 @@ async function loadExistingAttempt(
 
   const { data: answerRows, error: answersError } = await supabaseAdmin
     .from("trivia_attempt_answers")
-    .select("question_id, selected_answer_key, is_correct, response_time_ms")
+    .select(
+      "question_id, selected_answer_key, is_correct, response_time_ms, trivia_questions(question_order)"
+    )
     .eq("attempt_id", existingAttempt.id)
     .order("created_at", { ascending: true })
-    .returns<TriviaAttemptAnswerRow[]>();
+    .returns<Array<TriviaAttemptAnswerRow & { trivia_questions: { question_order: number } | null }>>();
 
   if (answersError) {
     throw answersError;
   }
 
-  const scoredAnswers = answerRows.map((answer) => ({
-    questionId: answer.question_id,
-    selectedAnswerKey: answer.selected_answer_key,
-    responseTimeMs: answer.response_time_ms,
-    isCorrect: answer.is_correct,
-    points: calculateAnswerPoints(answer.is_correct, answer.response_time_ms)
-  }));
+  const scoredAnswers = answerRows.map((answer) => {
+    const questionOrder = answer.trivia_questions?.question_order ?? 1;
+    return {
+      questionId: answer.question_id,
+      selectedAnswerKey: answer.selected_answer_key,
+      responseTimeMs: answer.response_time_ms,
+      isCorrect: answer.is_correct,
+      points: calculateAnswerPoints(answer.is_correct, answer.response_time_ms, questionOrder)
+    };
+  });
 
   return mapAttempt(existingAttempt, scoredAnswers);
 }
@@ -219,7 +242,7 @@ Deno.serve(async (request) => {
 
     const { data: questions, error: questionsError } = await supabaseAdmin
       .from("trivia_questions")
-      .select("id, correct_answer_key")
+      .select("id, correct_answer_key, question_order")
       .eq("active_date", input.activeDate)
       .returns<TriviaQuestionRow[]>();
 

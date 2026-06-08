@@ -31,6 +31,8 @@ interface TriviaAttemptAnswerRow {
   selected_answer_key: AnswerKey;
   is_correct: boolean;
   response_time_ms: number;
+  /** Populated via a join with trivia_questions when reading; used for tier-aware scoring display. */
+  trivia_questions?: { question_order: number } | null;
 }
 
 interface ScoreTriviaAttemptResponse {
@@ -120,13 +122,14 @@ function mapQuestion(row: TriviaQuestionRow): DailyTriviaQuestion {
 }
 
 function mapAttemptAnswer(row: TriviaAttemptAnswerRow): DailyAnswer {
+  const questionOrder = row.trivia_questions?.question_order ?? 1;
   return {
     questionId: row.question_id,
     selectedAnswerKey: row.selected_answer_key,
     selectedIndex: ["A", "B", "C", "D"].indexOf(row.selected_answer_key),
     responseTimeMs: row.response_time_ms,
     isCorrect: row.is_correct,
-    points: calculateTriviaAnswerPoints(row.is_correct, row.response_time_ms)
+    points: calculateTriviaAnswerPoints(row.is_correct, row.response_time_ms, questionOrder)
   };
 }
 
@@ -214,7 +217,9 @@ export async function getCompletedTriviaAttempt(activeDate: string): Promise<Sco
 
   const { data: answerRows, error: answersError } = await supabase
     .from("trivia_attempt_answers")
-    .select("question_id, selected_answer_key, is_correct, response_time_ms")
+    .select(
+      "question_id, selected_answer_key, is_correct, response_time_ms, trivia_questions(question_order)"
+    )
     .eq("attempt_id", attempt.id)
     .order("created_at", { ascending: true })
     .returns<TriviaAttemptAnswerRow[]>();
