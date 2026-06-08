@@ -18,6 +18,7 @@ export interface BracketPicks {
 export interface PersistedBracketPicks {
   groupRankings: Record<GroupId, string[]>;
   picks: BracketPicks;
+  finalizedGroups?: GroupId[];
 }
 
 export interface BracketState {
@@ -27,6 +28,7 @@ export interface BracketState {
   lastSavedAt: string | null;
   saveError: Error | null;
   groupRankings: Record<GroupId, string[]>;
+  finalizedGroups: GroupId[];
   picks: BracketPicks;
 }
 

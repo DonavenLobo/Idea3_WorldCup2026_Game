@@ -10,14 +10,21 @@
       "web"
     ],
     "orientation": "portrait",
+    "icon": "./assets/brand/app-icon.png",
     "userInterfaceStyle": "light",
     "backgroundColor": "#f5f0e8",
     "splash": {
+      "image": "./assets/brand/app-icon-light.png",
       "backgroundColor": "#f5f0e8"
     },
     "ios": {
       "bundleIdentifier": "com.ivs.gogaffa",
       "buildNumber": "1",
+      "icon": {
+        "light": "./assets/brand/app-icon.png",
+        "dark": "./assets/brand/app-icon-dark.png",
+        "tinted": "./assets/brand/app-icon-tinted.png"
+      },
       "supportsTablet": false,
       "infoPlist": {
         "NSCameraUsageDescription": "GoGaffa uses your camera so you can capture a photo for your tournament card.",
@@ -43,6 +50,18 @@
       "expo-secure-store",
       "expo-notifications",
       [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#f5f0e8",
+          "image": "./assets/brand/app-icon-light.png",
+          "imageWidth": 160,
+          "dark": {
+            "backgroundColor": "#171f2f",
+            "image": "./assets/brand/app-icon-dark.png"
+          }
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "cameraPermission": "GoGaffa uses your camera so you can capture a photo for your tournament card.",
@@ -50,6 +69,9 @@
         }
       ]
     ],
+    "web": {
+      "favicon": "./assets/brand/app-icon.png"
+    },
     "experiments": {
       "typedRoutes": true
     },

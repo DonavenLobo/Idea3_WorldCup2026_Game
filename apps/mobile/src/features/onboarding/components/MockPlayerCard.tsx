@@ -2,6 +2,7 @@ import { Image, StyleSheet, Text, View } from "react-native";
 import { BASE_CARD_STATS, CARD_STATS } from "@world-cup-game/config";
 import type { NationConfig } from "@world-cup-game/config";
 import type { CardStats } from "@world-cup-game/types";
+import { TeamLogo } from "../../../components/team";
 import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
@@ -31,14 +32,14 @@ export function MockPlayerCard({
           <Text style={styles.overall}>{MOCK_OVERALL}</Text>
           <Text style={styles.overallLabel}>OVR</Text>
         </View>
-        <Text style={styles.flag}>{nation?.flagEmoji ?? "⚽️"}</Text>
+        <TeamLogo code={nation?.code} name={nation?.name} size={50} />
       </View>
 
       <View style={styles.avatar}>
         {photoSource?.uri ? (
           <Image source={{ uri: photoSource.uri }} style={styles.avatarImage} />
         ) : (
-          <Text style={styles.avatarEmoji}>{nation?.flagEmoji ?? "⚽️"}</Text>
+          <TeamLogo code={nation?.code} name={nation?.name} size={112} />
         )}
       </View>
 
@@ -71,9 +72,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     width: 180
   },
-  avatarEmoji: {
-    fontSize: 80
-  },
   avatarImage: {
     height: "100%",
     width: "100%"
@@ -97,9 +95,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     borderWidth: 3,
     padding: spacing.lg
-  },
-  flag: {
-    fontSize: 40
   },
   name: {
     color: colors.ink,

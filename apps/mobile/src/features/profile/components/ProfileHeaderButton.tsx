@@ -15,7 +15,7 @@ import {
 } from "./AccountBottomSheet";
 
 export function ProfileHeaderButton() {
-  const { displayName, photoSource } = useOnboarding();
+  const { displayName } = useOnboarding();
   const { card } = useCurrentUserCard();
   const { profile } = useProfile();
   const { user } = useSession();
@@ -38,9 +38,8 @@ export function ProfileHeaderButton() {
     };
   }, []);
 
-  const savedImageUrl = profile?.avatarUrl ?? card?.avatarSourceUrl;
-  const imageUri = savedImageUrl ?? photoSource?.uri;
-  const effectiveName = profile?.displayName || card?.displayName || displayName;
+  const imageUri = card?.avatarGeneratedUrl;
+  const effectiveName = card?.displayName || profile?.displayName || displayName;
   const nationCode = card?.selectedNationCode ?? profile?.selectedNationCode;
   const initial = effectiveName.trim().charAt(0).toUpperCase() || "?";
 

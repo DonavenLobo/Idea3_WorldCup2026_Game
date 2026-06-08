@@ -7,21 +7,20 @@ export const GROUP_IDS: readonly GroupId[] = [
   "G", "H", "I", "J", "K", "L"
 ];
 
-// Provisional group assignments for development. Uses our 48 provisional
-// nations split across 12 groups of 4, balanced across confederations.
-// NOT the official 2026 draw - replace with the official assignments
-// before launch.
+// Group assignments derived from packages/config/src/data/worldcup.json.
+// Keep this aligned with the ingested fixture schedule used by the Schedule
+// tab and match lockout seed data.
 export const BRACKET_GROUPS: Record<GroupId, readonly string[]> = {
-  A: ["USA", "BRA", "IRN", "MAR"],
-  B: ["MEX", "ARG", "JPN", "SEN"],
-  C: ["CAN", "COL", "KOR", "EGY"],
-  D: ["ENG", "FRA", "KSA", "NGA"],
-  E: ["ESP", "GER", "AUS", "CMR"],
-  F: ["POR", "NED", "QAT", "GHA"],
-  G: ["BEL", "ITA", "UZB", "TUN"],
-  H: ["CRO", "SUI", "IRQ", "ALG"],
-  I: ["DEN", "POL", "CRC", "CIV"],
-  J: ["NOR", "SWE", "PAN", "URU"],
-  K: ["AUT", "SRB", "JAM", "PER"],
-  L: ["HON", "PAR", "ECU", "NZL"]
+  A: ["Mexico", "South Africa", "South Korea", "Czech Republic"],
+  B: ["Canada", "Bosnia & Herzegovina", "Qatar", "Switzerland"],
+  C: ["Brazil", "Morocco", "Haiti", "Scotland"],
+  D: ["USA", "Paraguay", "Australia", "Turkey"],
+  E: ["Germany", "Curaçao", "Ivory Coast", "Ecuador"],
+  F: ["Netherlands", "Japan", "Sweden", "Tunisia"],
+  G: ["Belgium", "Egypt", "Iran", "New Zealand"],
+  H: ["Spain", "Cape Verde", "Saudi Arabia", "Uruguay"],
+  I: ["France", "Senegal", "Iraq", "Norway"],
+  J: ["Argentina", "Algeria", "Austria", "Jordan"],
+  K: ["Portugal", "DR Congo", "Uzbekistan", "Colombia"],
+  L: ["England", "Croatia", "Ghana", "Panama"]
 };

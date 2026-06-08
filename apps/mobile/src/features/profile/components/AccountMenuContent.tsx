@@ -3,6 +3,7 @@ import type { ImageSourcePropType } from "react-native";
 import { SUPPORTED_NATIONS } from "@world-cup-game/config";
 import { BrandButton, Eyebrow } from "../../../components/brand";
 import { accountMenuIconSources } from "../../../components/icons/accountMenuIconSources";
+import { TeamLogo } from "../../../components/team";
 import { triggerLightImpact, triggerSelection } from "../../../lib/haptics";
 import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
@@ -34,7 +35,6 @@ interface AccountAction {
 }
 
 export function AccountMenuContent({
-  creditBalance = 0,
   leaderboardScore = 0,
   displayName,
   email,
@@ -62,7 +62,7 @@ export function AccountMenuContent({
       iconSource: accountMenuIconSources.home,
       label: "Locker Room",
       onPress: onOpenLockerRoom,
-      trailing: `${creditBalance.toLocaleString()} CR`,
+      trailing: "Soon",
     },
   ];
 
@@ -104,7 +104,7 @@ export function AccountMenuContent({
         <View style={styles.metaRow}>
           {nation ? (
             <View style={styles.metaChip}>
-              <Text style={styles.metaFlag}>{nation.flagEmoji}</Text>
+              <TeamLogo code={nation.code} name={nation.name} size={18} />
               <Text style={styles.metaText}>{nation.code}</Text>
             </View>
           ) : null}
@@ -256,10 +256,6 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
-  },
-  metaFlag: {
-    fontSize: 13,
-    lineHeight: 16,
   },
   metaRow: {
     flexDirection: "row",

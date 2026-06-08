@@ -54,7 +54,7 @@ export default function LeaderboardScreen() {
       const nationConfig = SUPPORTED_NATIONS.find((n) => n.code === code);
       opts.push({
         id: code,
-        label: nationConfig ? `${nationConfig.flagEmoji} ${nationConfig.name}` : code,
+        label: nationConfig?.name ?? code,
       });
     }
     return opts;

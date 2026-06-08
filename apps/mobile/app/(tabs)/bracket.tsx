@@ -30,6 +30,9 @@ export default function BracketScreen() {
     phase,
     nextLockAt,
     nextLockLabel,
+    stageState,
+    areAllGroupsFinalized,
+    finalizedGroups,
     isGroupLocked,
     isMatchLocked
   } = useBracket();
@@ -42,7 +45,6 @@ export default function BracketScreen() {
     : 0;
 
   const allGroupsLocked = lockedGroupCount === GROUP_IDS.length;
-  const isPhase2HintActive = phase === "pre" || phase === "phase1-closing";
   const allRoundLocked = (round: "r32" | "r16" | "qf" | "sf" | "final" | "third"): boolean => {
     if (!fixtures) return false;
     const inRound = fixtures.knockouts.filter((k) => k.round === round);
@@ -50,21 +52,28 @@ export default function BracketScreen() {
     return inRound.every((k) => isMatchLocked(round, k.index));
   };
 
+  const canViewSummary = stageState.currentStage === "groups"
+    ? areAllGroupsFinalized
+    : Boolean(lastSavedAt);
+
   const subTabItems: ReadonlyArray<SubTabItem> = [
-    { id: "groups",  label: "Groups",     isLocked: allGroupsLocked },
-    { id: "r32",     label: "R32",        isLocked: allRoundLocked("r32"),  phase2Hint: isPhase2HintActive },
-    { id: "r16",     label: "R16",        isLocked: allRoundLocked("r16"),  phase2Hint: isPhase2HintActive },
-    { id: "qf",      label: "QF",         isLocked: allRoundLocked("qf"),   phase2Hint: isPhase2HintActive },
-    { id: "sf",      label: "SF",         isLocked: allRoundLocked("sf"),   phase2Hint: isPhase2HintActive },
-    { id: "final",   label: "Final",      isLocked: allRoundLocked("final"),phase2Hint: isPhase2HintActive },
-    { id: "third",   label: "3rd",        isLocked: allRoundLocked("third"),phase2Hint: isPhase2HintActive },
-    { id: "summary", label: "My Bracket" }
+    { id: "summary", label: "My Bracket", disabled: !canViewSummary },
+    { id: "groups",  label: "Groups", disabled: !stageState.isSubTabEnabled("groups"), isLocked: allGroupsLocked },
+    { id: "r32",     label: "R32", disabled: !stageState.isSubTabEnabled("r32"), isLocked: allRoundLocked("r32") },
+    { id: "r16",     label: "R16", disabled: !stageState.isSubTabEnabled("r16"), isLocked: allRoundLocked("r16") },
+    { id: "qf",      label: "QF", disabled: !stageState.isSubTabEnabled("qf"), isLocked: allRoundLocked("qf") },
+    { id: "sf",      label: "SF", disabled: !stageState.isSubTabEnabled("sf"), isLocked: allRoundLocked("sf") },
+    { id: "final",   label: "Final", disabled: !stageState.isSubTabEnabled("final"), isLocked: allRoundLocked("final") },
+    { id: "third",   label: "3rd", disabled: !stageState.isSubTabEnabled("third"), isLocked: allRoundLocked("third") }
   ];
 
   const [subTab, setSubTab] = useState<SubTab>("groups");
   const [groupIndex, setGroupIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
-  const shouldShowSavedSummary = isCreated && !isLoadingSavedBracket && Boolean(lastSavedAt);
+  const didRestoreSavedProgress = useRef(false);
+  const shouldShowSavedSummary =
+    isCreated && !isLoadingSavedBracket && canViewSummary && Boolean(lastSavedAt);
+  const firstIncompleteGroupIndex = GROUP_IDS.findIndex((group) => !finalizedGroups.includes(group));
 
   // Track the previous pick counts so auto-advance only fires on the
   // transition from incomplete -> complete (not every time a complete
@@ -89,22 +98,50 @@ export default function BracketScreen() {
 
     const prev = prevCounts.current;
 
-    if (subTab === "r32" && r32 === 16 && prev.r32 < 16) {
+    if (subTab === "r32" && r32 === 16 && prev.r32 < 16 && stageState.isSubTabEnabled("r16")) {
       setSubTab("r16");
-    } else if (subTab === "r16" && r16 === 8 && prev.r16 < 8) {
+    } else if (subTab === "r16" && r16 === 8 && prev.r16 < 8 && stageState.isSubTabEnabled("qf")) {
       setSubTab("qf");
-    } else if (subTab === "qf" && qf === 4 && prev.qf < 4) {
+    } else if (subTab === "qf" && qf === 4 && prev.qf < 4 && stageState.isSubTabEnabled("sf")) {
       setSubTab("sf");
-    } else if (subTab === "sf" && sf === 2 && prev.sf < 2) {
+    } else if (subTab === "sf" && sf === 2 && prev.sf < 2 && stageState.isSubTabEnabled("final")) {
       setSubTab("final");
-    } else if (subTab === "final" && finalDone && !prev.final) {
+    } else if (subTab === "final" && finalDone && !prev.final && stageState.isSubTabEnabled("third")) {
       setSubTab("third");
     } else if (subTab === "third" && thirdDone && !prev.third) {
       setSubTab("summary");
     }
 
     prevCounts.current = { r32, r16, qf, sf, final: finalDone, third: thirdDone };
-  }, [subTab, picks]);
+  }, [subTab, picks, stageState]);
+
+  useEffect(() => {
+    if (subTab === "summary" && canViewSummary) return;
+    if (subTab !== "summary" && stageState.isSubTabEnabled(subTab)) return;
+    setSubTab(stageState.firstEnabledSubTab ?? "summary");
+  }, [canViewSummary, stageState, subTab]);
+
+  useEffect(() => {
+    if (!isCreated) {
+      didRestoreSavedProgress.current = false;
+    }
+  }, [isCreated]);
+
+  useEffect(() => {
+    if (isLoadingSavedBracket || !isCreated || didRestoreSavedProgress.current) return;
+
+    didRestoreSavedProgress.current = true;
+
+    if (!areAllGroupsFinalized && firstIncompleteGroupIndex > 0) {
+      setGroupIndex(firstIncompleteGroupIndex);
+      setSubTab("groups");
+    }
+  }, [
+    areAllGroupsFinalized,
+    firstIncompleteGroupIndex,
+    isCreated,
+    isLoadingSavedBracket
+  ]);
 
   // Reset the vertical scroll to the top whenever the sub-tab changes.
   useEffect(() => {
@@ -181,12 +218,28 @@ export default function BracketScreen() {
         nextLockAt={nextLockAt}
         nextLockLabel={nextLockLabel}
         now={now}
+        currentStage={stageState.currentStage}
+        currentStageLabel={stageState.currentStageLabel}
+        nextStageUnlockAt={stageState.nextStageUnlockAt}
+        nextStageLabel={stageState.nextStageLabel}
       />
       <LateJoinerBanner
         lockedGroupCount={lockedGroupCount}
         lockedMatchCount={lockedMatchCount}
       />
-      <SubTabBar value={subTab} onChange={setSubTab} items={subTabItems} />
+      <SubTabBar
+        value={subTab}
+        onChange={(next) => {
+          if (next === "summary" && canViewSummary) {
+            setSubTab(next);
+            return;
+          }
+          if (next !== "summary" && stageState.isSubTabEnabled(next)) {
+            setSubTab(next);
+          }
+        }}
+        items={subTabItems}
+      />
       <Screen
         scroll
         ref={scrollRef}
@@ -198,7 +251,7 @@ export default function BracketScreen() {
           <GroupPicker
             index={groupIndex}
             onIndexChange={setGroupIndex}
-            onComplete={() => setSubTab("r32")}
+            onComplete={() => setSubTab("summary")}
           />
         )}
         {subTab === "r32" && <KnockoutRound round="r32" />}
@@ -216,6 +269,8 @@ export default function BracketScreen() {
                 setSubTab("groups");
               }
             }}
+            canOpenGroups={stageState.isSubTabEnabled("groups")}
+            canEditGroups={stageState.isSubTabEnabled("groups") && !areAllGroupsFinalized}
           />
         )}
       </Screen>

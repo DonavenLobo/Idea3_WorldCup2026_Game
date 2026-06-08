@@ -1,13 +1,14 @@
 import { StyleSheet, Text, View } from "react-native";
-import { flagForTeam, formatTeamName } from "@world-cup-game/config";
+import { formatTeamName } from "@world-cup-game/config";
+import { TeamLogo, teamLogoSourceForName } from "../../../components/team";
 import { colors, opacity } from "../../../theme/colors";
 import { spacing } from "../../../theme/spacing";
 
 export function TeamLabel({ name, align }: { name: string; align: "left" | "right" }) {
   const displayName = formatTeamName(name);
-  const flag = flagForTeam(name);
-  const marker = flag ? (
-    <Text style={styles.flag}>{flag}</Text>
+  const logo = teamLogoSourceForName(name);
+  const marker = logo ? (
+    <TeamLogo name={name} size={24} />
   ) : (
     <View style={styles.placeholder} />
   );
@@ -23,10 +24,6 @@ export function TeamLabel({ name, align }: { name: string; align: "left" | "righ
 }
 
 const styles = StyleSheet.create({
-  flag: {
-    flexShrink: 0,
-    fontSize: 20,
-  },
   name: {
     color: colors.ink,
     flex: 1,

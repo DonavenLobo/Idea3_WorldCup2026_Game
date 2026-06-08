@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LEADERBOARD_STAGES, SUPPORTED_NATIONS } from "@world-cup-game/config";
+import { TeamLogo } from "../../../components/team";
 import type { LeaderboardStage } from "@world-cup-game/config";
 import { useSession } from "../../auth/hooks/useSession";
 import { colors, opacity } from "../../../theme/colors";
@@ -33,11 +34,6 @@ function roleLabel(role: GroupMember["role"]): string {
   if (role === "owner") return "Owner";
   if (role === "admin") return "Admin";
   return "Member";
-}
-
-function flagFor(code: string): string {
-  const nation = SUPPORTED_NATIONS.find((n) => n.code === code);
-  return nation?.flagEmoji ?? "??";
 }
 
 function nationName(code: string): string {
@@ -260,7 +256,7 @@ function MemberRow({
   return (
     <View style={[styles.memberRow, isCurrentUser ? styles.memberRowCurrent : null]}>
       <View style={styles.memberAvatar}>
-        <Text style={styles.memberFlag}>{flagFor(member.countryCode)}</Text>
+        <TeamLogo code={member.countryCode} size={34} />
       </View>
       <View style={styles.memberInfo}>
         <Text style={styles.memberName} numberOfLines={1}>
@@ -311,7 +307,7 @@ function GroupLeaderboard({
       const nationConfig = SUPPORTED_NATIONS.find((n) => n.code === code);
       opts.push({
         id: code,
-        label: nationConfig ? `${nationConfig.flagEmoji} ${nationConfig.name}` : code
+        label: nationConfig?.name ?? code
       });
     }
     return opts;
@@ -518,9 +514,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: 44
   },
-  memberFlag: {
-    fontSize: 22
-  },
   memberInfo: {
     flex: 1
   },
@@ -632,7 +625,9 @@ const styles = StyleSheet.create({
   table: {
     backgroundColor: colors.cream,
     borderRadius: radius.lg,
-    overflow: "hidden"
+    overflow: "hidden",
+    paddingBottom: spacing.xs,
+    paddingTop: spacing.md
   },
   tableHeader: {
     alignItems: "center",

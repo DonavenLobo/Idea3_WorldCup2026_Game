@@ -5,6 +5,7 @@ export interface BracketPick {
 
 export interface BracketDraftPicks {
   groupRankings: Record<string, string[]>;
+  finalizedGroups?: string[];
   picks: {
     r32: Record<string, string>;
     r16: Record<string, string>;

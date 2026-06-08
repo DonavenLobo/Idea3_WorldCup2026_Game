@@ -8,10 +8,12 @@ export interface SubTabItem {
   id: SubTab;
   label: string;
   isLocked?: boolean;
+  disabled?: boolean;
   phase2Hint?: boolean;
 }
 
 const TABS: readonly SubTabItem[] = [
+  { id: "summary", label: "My Bracket" },
   { id: "groups", label: "Groups" },
   { id: "r32", label: "R32" },
   { id: "r16", label: "R16" },
@@ -19,7 +21,6 @@ const TABS: readonly SubTabItem[] = [
   { id: "sf", label: "SF" },
   { id: "final", label: "Final" },
   { id: "third", label: "3rd" },
-  { id: "summary", label: "My Bracket" },
 ];
 
 interface SubTabBarProps {
@@ -50,10 +51,11 @@ export function SubTabBar({ value, onChange, items }: SubTabBarProps) {
       contentContainerStyle={styles.scrollContent}
     >
       {tabs.map((tab) => {
-        const label = `${tab.phase2Hint ? "P2 " : ""}${tab.label}${tab.isLocked ? " 🔒" : ""}`;
+        const label = `${tab.phase2Hint ? "P2 " : ""}${tab.label}${tab.isLocked ? " Locked" : ""}`;
         return (
           <FilterPill
             key={tab.id}
+            disabled={tab.disabled}
             label={label}
             selected={tab.id === value}
             onLayout={(e) => {

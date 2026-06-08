@@ -28,6 +28,7 @@ import {
 import { CardStatOverlays } from "./CardStatOverlays";
 import { CardTextOverlays } from "./CardTextOverlays";
 import { CardStatusBadge } from "./CardStatusBadge";
+import { teamLogoSourceForCode } from "../../../components/team";
 
 interface RenderedPlayerCardProps {
   card?: PlayerCardData | null;
@@ -99,6 +100,7 @@ export function RenderedPlayerCard({
   const resolvedStats = stats ?? card?.stats ?? BASE_CARD_STATS;
   const resolvedDisplayName = displayName ?? card?.displayName ?? "Rookie";
   const resolvedOverall = overall ?? card?.overall ?? 50;
+  const resolvedNationCode = selectedNationCode ?? card?.selectedNationCode ?? "USA";
   const useSketchTextOverlays = isLevel00SketchTemplate(template);
 
   return (
@@ -118,9 +120,10 @@ export function RenderedPlayerCard({
             card={{
               avatarGeneratedUrl: card?.avatarGeneratedUrl,
               avatarSourceUrl: card?.avatarSourceUrl ?? photoSource?.uri,
+              badgeImageSource: teamLogoSourceForCode(resolvedNationCode),
               displayName: resolvedDisplayName,
               overall: resolvedOverall,
-              selectedNationCode: selectedNationCode ?? card?.selectedNationCode ?? "USA",
+              selectedNationCode: resolvedNationCode,
               stats: resolvedStats,
               tier: tier ?? card?.tier ?? "bronze"
             }}

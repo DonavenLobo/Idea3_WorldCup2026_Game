@@ -1,22 +1,13 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import {
-  CREDIT_PACKS,
-  LOCKER_TIERS
-} from "@world-cup-game/config";
-import type { CosmeticCategory, CreditPack } from "@world-cup-game/config";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { LOCKER_TIERS } from "@world-cup-game/config";
 import type { PlayerCard as PlayerCardData } from "@world-cup-game/types";
 import { BrandButton, Eyebrow } from "../../../components/brand";
 import { Screen } from "../../../components/layout";
 import { RenderedPlayerCard } from "../components/RenderedPlayerCard";
-import {
-  BalanceCard,
-  CosmeticItemCard,
-  CreditPackButton,
-  useLockerRoom
-} from "../../locker-room";
-import type { LockerItem, LockerProgress, LockerWallet } from "../../locker-room";
+import { useLockerRoom } from "../../locker-room";
+import type { LockerProgress } from "../../locker-room";
 import { useCurrentUserCard } from "../hooks/useCurrentUserCard";
 import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
@@ -26,26 +17,9 @@ import { getErrorMessage } from "../../../utils/errors";
 
 type CardSubTab = "card" | "locker";
 
-const CATEGORY_LABELS: Record<CosmeticCategory, string> = {
-  frame: "Card Frames",
-  badge: "Badges",
-  background: "Backgrounds"
-};
-
-const CATEGORY_ORDER: CosmeticCategory[] = ["frame", "badge", "background"];
-
 export function CardScreen() {
   const { card, error: cardError, isLoading: isCardLoading } = useCurrentUserCard();
-  const {
-    items,
-    wallet,
-    progress,
-    isLoading: isLockerLoading,
-    error: lockerError,
-    isOwned,
-    canRedeem,
-    redeem
-  } = useLockerRoom();
+  const { progress } = useLockerRoom();
   const [subTab, setSubTab] = useState<CardSubTab>("card");
   const scrollRef = useRef<ScrollView>(null);
 
@@ -54,72 +28,6 @@ export function CardScreen() {
       scrollRef.current?.scrollTo({ y: 0, animated: false });
     }, [])
   );
-
-  const grouped = useMemo(() => {
-    const map: Record<CosmeticCategory, LockerItem[]> = {
-      frame: [],
-      badge: [],
-      background: []
-    };
-    for (const item of items) {
-      map[item.category].push(item);
-    }
-    return map;
-  }, [items]);
-
-  const handleRedeem = (item: LockerItem) => {
-    if (isOwned(item.id)) {
-      return;
-    }
-    if (!canRedeem(item.id)) {
-      // Locked by tier requirement — explain how to unlock instead of doing nothing.
-      const tierConfig = item.requiredTier
-        ? LOCKER_TIERS.find((tier) => tier.id === item.requiredTier)
-        : null;
-      const tierLabel = tierConfig?.label ?? item.requiredTier ?? "the next tier";
-      const remaining = progress.ownedToNextTier ?? 0;
-      const remainingHint =
-        progress.nextTierLabel === tierLabel && remaining > 0
-          ? `Own ${remaining} more cosmetic${remaining === 1 ? "" : "s"} to unlock ${tierLabel}.`
-          : `Reach ${tierLabel} to unlock this item.`;
-      Alert.alert(
-        `${item.name} is locked`,
-        `${remainingHint} Locker tier gates cosmetics — it does not affect competitive points.`,
-        [{ text: "Got it" }]
-      );
-      return;
-    }
-    Alert.alert(
-      `Redeem ${item.name}?`,
-      `${item.priceCredits} credits will be deducted from your wallet.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Redeem",
-          onPress: () => {
-            void redeem(item.id)
-              .then(() => {
-                Alert.alert("Unlocked!", `${item.name} is now in your locker.`);
-              })
-              .catch((redeemError) => {
-                Alert.alert(
-                  "Could not redeem",
-                  getErrorMessage(redeemError, "Try again in a moment.")
-                );
-              });
-          }
-        }
-      ]
-    );
-  };
-
-  const handleBuyPack = (pack: CreditPack) => {
-    Alert.alert(
-      "Payments not connected yet",
-      `${pack.credits.toLocaleString()} credits for ${pack.priceUsd} is a display placeholder. We need verified App Store / Play Store IAP before adding credits.`,
-      [{ text: "OK" }]
-    );
-  };
 
   return (
     <View style={styles.root}>
@@ -158,17 +66,7 @@ export function CardScreen() {
             onOpenLocker={() => setSubTab("locker")}
           />
         ) : (
-          <LockerRoomPanel
-            error={lockerError}
-            grouped={grouped}
-            isLoading={isLockerLoading}
-            isOwned={isOwned}
-            canRedeem={canRedeem}
-            onRedeem={handleRedeem}
-            onBuyPack={handleBuyPack}
-            progress={progress}
-            wallet={wallet}
-          />
+          <LockerRoomComingSoonPanel />
         )}
       </Screen>
     </View>
@@ -232,7 +130,7 @@ function MyCardPanel({
       </View>
 
       <BrandButton
-        label="Open Locker Room ->"
+        label="Open Locker Room"
         onPress={onOpenLocker}
         style={styles.lockerCta}
       />
@@ -244,85 +142,36 @@ function MyCardPanel({
   );
 }
 
-function LockerRoomPanel({
-  error,
-  grouped,
-  isLoading,
-  isOwned,
-  canRedeem,
-  onRedeem,
-  onBuyPack,
-  progress,
-  wallet
-}: {
-  error: Error | null;
-  grouped: Record<CosmeticCategory, LockerItem[]>;
-  isLoading: boolean;
-  isOwned: (id: string) => boolean;
-  canRedeem: (id: string) => boolean;
-  onRedeem: (item: LockerItem) => void;
-  onBuyPack: (pack: CreditPack) => void;
-  progress: LockerProgress;
-  wallet: LockerWallet;
-}) {
+function LockerRoomComingSoonPanel() {
   return (
-    <View>
-      <BalanceCard wallet={wallet} progress={progress} />
-
-      {error ? (
-        <Text style={styles.statusText}>{error.message}</Text>
-      ) : null}
-
-      {isLoading && CATEGORY_ORDER.every((category) => grouped[category].length === 0) ? (
-        <Text style={styles.statusText}>Loading locker room...</Text>
-      ) : null}
-
-      {CATEGORY_ORDER.map((category) => (
-        <View key={category} style={styles.section}>
-          <Eyebrow label={CATEGORY_LABELS[category]} />
-          {grouped[category].length === 0 ? (
-            <Text style={styles.sectionBody}>No active items configured yet.</Text>
-          ) : (
-            <View style={styles.grid}>
-              {grouped[category].map((item) => (
-                <View key={item.id} style={styles.cell}>
-                  <CosmeticItemCard
-                    item={item}
-                    isOwned={isOwned(item.id)}
-                    canRedeem={canRedeem(item.id)}
-                    onPress={() => onRedeem(item)}
-                  />
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
-      ))}
-
-      <View style={styles.section}>
-        <Eyebrow label="Get More Credits" />
-        <Text style={styles.sectionBody}>
-          Credit packs are display-only until verified in-app purchases are connected.
-        </Text>
-        <View style={styles.packsGrid}>
-          {CREDIT_PACKS.map((pack) => (
-            <View key={pack.id} style={styles.packCell}>
-              <CreditPackButton
-                pack={pack}
-                onPress={() => onBuyPack(pack)}
-              />
-            </View>
-          ))}
-        </View>
-      </View>
+    <View style={styles.comingSoonPanel}>
+      <Eyebrow label="COMING SOON" />
+      <Text style={styles.comingSoonTitle}>Locker Room Coming Soon</Text>
+      <Text style={styles.comingSoonBody}>
+        Cosmetics and card upgrades will be available in an app update.
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  cell: {
-    flexBasis: "32%",
-    flexGrow: 0
+  comingSoonBody: {
+    ...typography.bodySmall,
+    color: opacity.ink60,
+    marginTop: spacing.sm,
+    textAlign: "center",
+  },
+  comingSoonPanel: {
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 360,
+    paddingHorizontal: spacing.lg,
+  },
+  comingSoonTitle: {
+    ...typography.titleScreen,
+    color: colors.ink,
+    marginTop: spacing.sm,
+    textAlign: "center",
   },
   content: {
     paddingBottom: spacing.xl,
@@ -335,12 +184,6 @@ const styles = StyleSheet.create({
   playerCard: {
     marginTop: -15,
   },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.xs,
-    marginTop: spacing.xs
-  },
   lockerCta: {
     alignSelf: "stretch",
     marginTop: spacing.lg
@@ -352,27 +195,9 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     textAlign: "center",
   },
-  packCell: {
-    flexBasis: "48%",
-    flexGrow: 0
-  },
-  packsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
-    marginTop: spacing.sm
-  },
   root: {
     backgroundColor: colors.cream,
     flex: 1
-  },
-  section: {
-    marginTop: spacing.md
-  },
-  sectionBody: {
-    ...typography.caption,
-    color: opacity.ink60,
-    marginTop: spacing.xs,
   },
   statusText: {
     ...typography.label,

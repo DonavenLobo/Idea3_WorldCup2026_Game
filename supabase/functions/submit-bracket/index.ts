@@ -23,6 +23,8 @@ interface ExistingBracketRow {
   locked_at: string | null;
 }
 
+type SupabaseClient = ReturnType<typeof createClient<any>>;
+
 const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -55,7 +57,7 @@ function mapBracket(row: BracketRow) {
 }
 
 async function isGroupMember(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   groupId: string,
   userId: string
 ): Promise<boolean> {
@@ -70,7 +72,7 @@ async function isGroupMember(
 }
 
 async function fetchExistingPicks(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   bracketId: string
 ): Promise<BracketPicksPayload | null> {
   const { data, error } = await supabase
@@ -96,9 +98,10 @@ Deno.serve(async (request) => {
     const input = parseSubmitBracketRequest(await request.json());
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const authorization = request.headers.get("Authorization");
 
-    if (!supabaseUrl || !supabaseAnonKey) {
+    if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
       return jsonResponse({ error: "Supabase environment is not configured." }, 500);
     }
 
@@ -106,7 +109,7 @@ Deno.serve(async (request) => {
       return jsonResponse({ error: "Missing Authorization header." }, 401);
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: false
       },
@@ -117,13 +120,19 @@ Deno.serve(async (request) => {
       }
     });
 
-    const { data: userData, error: userError } = await supabase.auth.getUser();
+    const { data: userData, error: userError } = await supabaseUser.auth.getUser();
 
     if (userError || !userData.user) {
       return jsonResponse({ error: "Unauthorized." }, 401);
     }
 
-    let existingQuery = supabase
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
+      auth: {
+        persistSession: false
+      }
+    });
+
+    let existingQuery = supabaseAdmin
       .from("brackets")
       .select("id,locked_at")
       .eq("user_id", userData.user.id)
@@ -143,7 +152,7 @@ Deno.serve(async (request) => {
 
     // Group bracket: confirm membership before allowing the write.
     if (input.groupId) {
-      const isMember = await isGroupMember(supabase, input.groupId, userData.user.id);
+      const isMember = await isGroupMember(supabaseAdmin, input.groupId, userData.user.id);
       if (!isMember) {
         return jsonResponse({ ok: false, code: "NOT_GROUP_MEMBER" });
       }
@@ -151,8 +160,8 @@ Deno.serve(async (request) => {
 
     // Fixture validation: any CHANGED pick on a passed-kickoff unit is rejected.
     const [existingPicks, kickoffMaps] = await Promise.all([
-      existingBracket ? fetchExistingPicks(supabase, existingBracket.id) : Promise.resolve(null),
-      loadKickoffMaps(supabase)
+      existingBracket ? fetchExistingPicks(supabaseAdmin, existingBracket.id) : Promise.resolve(null),
+      loadKickoffMaps(supabaseAdmin)
     ]);
 
     const validation = validateBracketAgainstFixtures(
@@ -184,12 +193,12 @@ Deno.serve(async (request) => {
     };
 
     const writeQuery = existingBracket
-      ? supabase
+      ? supabaseAdmin
         .from("brackets")
         .update(writePayload)
         .eq("id", existingBracket.id)
         .is("locked_at", null)
-      : supabase
+      : supabaseAdmin
         .from("brackets")
         .insert({
           ...writePayload,

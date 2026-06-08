@@ -1,10 +1,10 @@
 import { useCallback, useRef } from "react";
-import { ActionSheetIOS, Alert, Platform } from "react-native";
+import { Alert } from "react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import { APP_ROUTES } from "@world-cup-game/config";
 import { useRouter, type Href } from "expo-router";
 import { triggerWarning } from "../../../lib/haptics";
-import { supabase } from "../../../lib/supabase";
+import { signOutSupabaseUser } from "../../auth/api/sessionRecovery";
 import { useOnboarding } from "../../onboarding";
 
 export function useAccountSheetActions(onOpenChange?: (open: boolean) => void) {
@@ -23,12 +23,7 @@ export function useAccountSheetActions(onOpenChange?: (open: boolean) => void) {
     isSigningOutRef.current = true;
 
     try {
-      const { error } = await supabase.auth.signOut();
-
-      if (error) {
-        throw error;
-      }
-
+      await signOutSupabaseUser();
       reset();
       queryClient.clear();
       router.replace(APP_ROUTES.onboarding.selectNation);
@@ -42,24 +37,6 @@ export function useAccountSheetActions(onOpenChange?: (open: boolean) => void) {
 
   const confirmSignOut = useCallback(() => {
     triggerWarning();
-
-    if (Platform.OS === "ios") {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          cancelButtonIndex: 1,
-          destructiveButtonIndex: 0,
-          message: "You can sign back in anytime and pick up where you left off.",
-          options: ["Sign out", "Cancel"],
-          title: "Sign out of GoGaffa?",
-        },
-        (buttonIndex) => {
-          if (buttonIndex === 0) {
-            void executeSignOut();
-          }
-        }
-      );
-      return;
-    }
 
     Alert.alert(
       "Sign out of GoGaffa?",

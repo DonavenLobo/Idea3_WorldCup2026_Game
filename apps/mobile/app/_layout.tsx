@@ -22,7 +22,6 @@ import { BracketProvider } from "../src/features/bracket";
 import { GroupsProvider } from "../src/features/groups";
 import { LockerRoomProvider } from "../src/features/locker-room";
 import { OnboardingProvider } from "../src/features/onboarding";
-import { TriviaProvider } from "../src/features/trivia";
 import { queryClient } from "../src/lib/queryClient";
 import { colors } from "../src/theme/colors";
 
@@ -68,13 +67,11 @@ export default function RootLayout() {
         <SafeAreaProvider>
           <OnboardingProvider>
             <BracketProvider>
-              <TriviaProvider>
-                <GroupsProvider>
-                  <LockerRoomProvider>
-                    <RootStack />
-                  </LockerRoomProvider>
-                </GroupsProvider>
-              </TriviaProvider>
+              <GroupsProvider>
+                <LockerRoomProvider>
+                  <RootStack />
+                </LockerRoomProvider>
+              </GroupsProvider>
             </BracketProvider>
           </OnboardingProvider>
         </SafeAreaProvider>

@@ -1,6 +1,7 @@
 // apps/mobile/src/features/bracket/components/PhaseHeroCard.tsx
 import { StyleSheet, Text, View } from "react-native";
 import type { TournamentPhase } from "../lib/computeBracketLockState";
+import type { BracketPredictionStage } from "../lib/computeBracketStageState";
 import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
@@ -10,6 +11,10 @@ interface PhaseHeroCardProps {
   nextLockAt: Date | null;
   nextLockLabel: string | null;
   now: Date;
+  currentStage?: BracketPredictionStage;
+  currentStageLabel?: string;
+  nextStageUnlockAt?: Date | null;
+  nextStageLabel?: string | null;
 }
 
 function formatRelative(target: Date, now: Date): string {
@@ -26,49 +31,74 @@ function formatRelative(target: Date, now: Date): string {
   return `${days}d`;
 }
 
-export function PhaseHeroCard({ phase, nextLockAt, nextLockLabel, now }: PhaseHeroCardProps) {
+export function PhaseHeroCard({
+  phase,
+  nextLockAt,
+  nextLockLabel,
+  now,
+  currentStage,
+  currentStageLabel,
+  nextStageUnlockAt,
+  nextStageLabel,
+}: PhaseHeroCardProps) {
   let eyebrow = "";
   let title = "";
   let body = "";
   let tone: "green" | "amber" | "neutral" = "green";
 
-  switch (phase) {
-    case "pre":
-      eyebrow = "PHASE 1";
-      title = "Group Stage";
-      body = nextLockAt
-        ? `Predict the group standings. First lock in ${formatRelative(nextLockAt, now)}.`
-        : "Predict the group standings.";
-      tone = "green";
-      break;
-    case "phase1-closing":
-      eyebrow = "PHASE 1 CLOSING";
-      title = nextLockLabel ? `${nextLockLabel} locks soon` : "Groups closing";
-      body = nextLockAt
-        ? `Next lock: ${nextLockLabel ?? "soon"} in ${formatRelative(nextLockAt, now)}.`
-        : "Some groups already locked.";
-      tone = "amber";
-      break;
-    case "between":
-      eyebrow = "PHASE 2";
-      title = "Knockouts unlocked";
-      body = "Group stage is in the books. Time to pick the bracket.";
-      tone = "green";
-      break;
-    case "phase2-closing":
-      eyebrow = "PHASE 2 CLOSING";
-      title = nextLockLabel ? `${nextLockLabel} locks soon` : "Knockouts closing";
-      body = nextLockAt
-        ? `Next match locks in ${formatRelative(nextLockAt, now)}.`
-        : "Some matches already locked.";
-      tone = "amber";
-      break;
-    case "complete":
-      eyebrow = "TOURNAMENT COMPLETE";
-      title = "🏁 The final whistle";
-      body = "See your final score on the leaderboard.";
-      tone = "neutral";
-      break;
+  if (currentStage && currentStage !== "complete") {
+    eyebrow = "CURRENT STAGE";
+    title = currentStageLabel ?? "Bracket Picks";
+    body = currentStage === "finals" && nextStageUnlockAt
+      ? `Pick the champion and third place. Tournament completes in ${formatRelative(nextStageUnlockAt, now)}.`
+      : nextStageUnlockAt && nextStageLabel
+      ? `${nextStageLabel} unlocks in ${formatRelative(nextStageUnlockAt, now)}.`
+      : "Only this stage is editable right now.";
+    tone = currentStage === "groups" ? "green" : "amber";
+  } else if (currentStage === "complete") {
+    eyebrow = "TOURNAMENT COMPLETE";
+    title = "Final whistle";
+    body = "See your final score on the leaderboard.";
+    tone = "neutral";
+  } else {
+    switch (phase) {
+      case "pre":
+        eyebrow = "PHASE 1";
+        title = "Group Stage";
+        body = nextLockAt
+          ? `Predict the group standings. First lock in ${formatRelative(nextLockAt, now)}.`
+          : "Predict the group standings.";
+        tone = "green";
+        break;
+      case "phase1-closing":
+        eyebrow = "PHASE 1 CLOSING";
+        title = nextLockLabel ? `${nextLockLabel} locks soon` : "Groups closing";
+        body = nextLockAt
+          ? `Next lock: ${nextLockLabel ?? "soon"} in ${formatRelative(nextLockAt, now)}.`
+          : "Some groups already locked.";
+        tone = "amber";
+        break;
+      case "between":
+        eyebrow = "PHASE 2";
+        title = "Knockouts unlocked";
+        body = "Group stage is in the books. Time to pick the bracket.";
+        tone = "green";
+        break;
+      case "phase2-closing":
+        eyebrow = "PHASE 2 CLOSING";
+        title = nextLockLabel ? `${nextLockLabel} locks soon` : "Knockouts closing";
+        body = nextLockAt
+          ? `Next match locks in ${formatRelative(nextLockAt, now)}.`
+          : "Some matches already locked.";
+        tone = "amber";
+        break;
+      case "complete":
+        eyebrow = "TOURNAMENT COMPLETE";
+        title = "Final whistle";
+        body = "See your final score on the leaderboard.";
+        tone = "neutral";
+        break;
+    }
   }
 
   const borderColor =

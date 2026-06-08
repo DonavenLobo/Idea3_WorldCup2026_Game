@@ -13,13 +13,20 @@ export default function SignInScreen() {
   return (
     <AuthShell
       title="Sign in to GoGaffa"
-      subtitle="Return to your card, groups, trivia streaks, and tournament progress."
+      subtitle="Return to your card, groups, bracket, and tournament progress."
     >
       <OAuthButtons />
 
       <AuthOptionRow
-        label="Use email instead"
+        label="Continue with Phone Number"
+        onPress={() => router.push(APP_ROUTES.auth.enterPhone)}
+        variant="primary"
+      />
+
+      <AuthOptionRow
+        label="Continue with Email"
         onPress={() => router.push(APP_ROUTES.auth.enterEmail)}
+        variant="secondary"
       />
 
       <Pressable onPress={() => router.push(APP_ROUTES.auth.signUp)} style={styles.signUpLink}>
@@ -33,7 +40,10 @@ export default function SignInScreen() {
 
 const styles = StyleSheet.create({
   signUpLink: {
+    alignSelf: "center",
     marginTop: spacing.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   signUpText: {
     ...typography.body,

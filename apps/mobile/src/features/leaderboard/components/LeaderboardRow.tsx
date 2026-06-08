@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
-import { SUPPORTED_NATIONS } from "@world-cup-game/config";
+import { TeamLogo } from "../../../components/team";
 import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
@@ -17,11 +17,6 @@ interface LeaderboardRowProps {
   isCurrentUser: boolean;
 }
 
-function flagFor(code: string): string {
-  const nation = SUPPORTED_NATIONS.find((n) => n.code === code);
-  return nation?.flagEmoji ?? "🏳️";
-}
-
 export function LeaderboardRow({
   rank,
   displayName,
@@ -36,7 +31,7 @@ export function LeaderboardRow({
       <View style={[styles.row, isCurrentUser ? styles.rowCurrent : styles.rowDefault]}>
         <Text style={[styles.rank, textStyle]}>{rank}</Text>
         <View style={styles.flagCircle}>
-          <Text style={styles.flag}>{flagFor(countryCode)}</Text>
+          <TeamLogo code={countryCode} size={24} />
         </View>
         <Text style={[styles.name, textStyle]} numberOfLines={1}>
           {displayName}
@@ -56,9 +51,6 @@ export const leaderboardRowMetrics = {
 } as const;
 
 const styles = StyleSheet.create({
-  flag: {
-    fontSize: 18,
-  },
   flagCircle: {
     alignItems: "center",
     backgroundColor: colors.cream,

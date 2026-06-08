@@ -8,7 +8,7 @@ import { spacing } from "../../src/theme/spacing";
 import { typography } from "../../src/theme/typography";
 
 const FEATURES = [
-  { title: "Predict", body: "Pick your bracket and play daily trivia." },
+  { title: "Predict", body: "Pick your World Cup bracket." },
   { title: "Compete", body: "Climb leaderboards with your friend group." },
   { title: "Follow", body: "Track your nation's matches live." },
 ] as const;
@@ -24,14 +24,15 @@ export default function SignUpScreen() {
       <OAuthButtons />
 
       <AuthOptionRow
-        accent
         label="Continue with Phone Number"
         onPress={() => router.push(APP_ROUTES.auth.enterPhone)}
+        variant="primary"
       />
 
       <AuthOptionRow
-        label="Use Email"
+        label="Continue with Email"
         onPress={() => router.push(APP_ROUTES.auth.enterEmail)}
+        variant="secondary"
       />
 
       <Pressable onPress={() => router.push(APP_ROUTES.auth.signIn)} style={styles.signInLink}>
@@ -85,7 +86,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   signInLink: {
+    alignSelf: "center",
     marginTop: spacing.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   signInText: {
     ...typography.body,

@@ -67,7 +67,8 @@ export function PlayerCard({
         <PlayerStatsLayer stats={card.stats} layer={template.metadata.layers.stats} />
       ) : null}
       <BadgeLayer
-        label={nation?.flagEmoji ?? card.selectedNationCode}
+        imageSource={card.badgeImageSource}
+        label={nation?.code ?? card.selectedNationCode}
         layer={template.metadata.layers.badge}
       />
     </PlayerCardTemplate>

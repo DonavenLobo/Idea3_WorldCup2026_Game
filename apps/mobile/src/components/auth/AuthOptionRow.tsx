@@ -1,14 +1,20 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
 import { colors, opacity } from "../../theme/colors";
+import { radius } from "../../theme/radius";
+import { shadows } from "../../theme/shadows";
 import { spacing } from "../../theme/spacing";
 import { pressableFeedback } from "../../theme/pressable";
 import { typography } from "../../theme/typography";
+
+type AuthOptionVariant = "primary" | "secondary";
 
 export interface AuthOptionRowProps {
   label: string;
   onPress?: () => void;
   disabled?: boolean;
   loading?: boolean;
+  variant?: AuthOptionVariant;
+  /** @deprecated Use variant="primary". */
   accent?: boolean;
 }
 
@@ -17,66 +23,69 @@ export function AuthOptionRow({
   onPress,
   disabled = false,
   loading = false,
+  variant,
   accent = false,
 }: AuthOptionRowProps) {
+  const resolvedVariant: AuthOptionVariant = variant ?? (accent ? "primary" : "secondary");
+  const isPrimary = resolvedVariant === "primary";
+  const isDisabled = disabled || loading;
+
   return (
     <Pressable
       accessibilityRole="button"
-      disabled={disabled || loading}
+      accessibilityState={{ busy: loading, disabled: isDisabled }}
+      disabled={isDisabled}
       onPress={onPress}
       style={({ pressed }) => [
-        styles.row,
-        accent && styles.rowAccent,
-        pressed && !disabled && !loading && pressableFeedback(true),
+        styles.base,
+        isPrimary ? styles.primary : styles.secondary,
+        !isDisabled && isPrimary ? shadows.buttonCta : null,
+        pressed && !isDisabled && pressableFeedback(true),
         disabled && styles.disabled,
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={accent ? colors.cream : colors.ink} size="small" />
+        <ActivityIndicator color={isPrimary ? colors.cream : colors.ink} size="small" />
       ) : (
-        <Text style={[styles.label, accent && styles.labelAccent]}>{label}</Text>
+        <Text style={[styles.label, isPrimary ? styles.labelPrimary : styles.labelSecondary]}>
+          {label}
+        </Text>
       )}
-      {!loading && !accent ? <Text style={styles.chevron}>›</Text> : null}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  chevron: {
-    color: opacity.ink35,
-    fontSize: 22,
-    lineHeight: 26,
+  base: {
+    alignItems: "center",
+    borderRadius: radius.button,
+    borderWidth: 2,
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: spacing.sm,
+    minHeight: 52,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
   },
   disabled: {
     opacity: 0.45,
   },
   label: {
-    ...typography.body,
-    color: colors.ink,
-    flex: 1,
-    fontSize: 17,
-  },
-  labelAccent: {
     ...typography.label,
-    color: colors.cream,
     textAlign: "center",
   },
-  row: {
-    alignItems: "center",
-    borderBottomColor: opacity.ink12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    minHeight: 52,
-    paddingVertical: spacing.md,
+  labelPrimary: {
+    color: colors.cream,
   },
-  rowAccent: {
+  labelSecondary: {
+    color: colors.ink,
+  },
+  primary: {
     backgroundColor: colors.red,
-    borderBottomWidth: 0,
-    borderRadius: 12,
-    justifyContent: "center",
-    marginTop: spacing.md,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    borderColor: colors.ink,
+  },
+  secondary: {
+    backgroundColor: colors.cream,
+    borderColor: opacity.ink35,
   },
 });

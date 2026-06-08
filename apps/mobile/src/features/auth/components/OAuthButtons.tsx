@@ -58,6 +58,7 @@ export function OAuthButtons() {
           onPress={() => void handlePress(item.provider)}
           disabled={loadingProvider !== null}
           loading={loadingProvider === item.provider}
+          variant="secondary"
         />
       ))}
     </View>

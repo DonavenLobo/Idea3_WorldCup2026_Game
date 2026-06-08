@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import { getValidatedSupabaseUser } from "../../auth/api/sessionRecovery";
 import { supabase } from "../../../lib/supabase";
 
 export async function savePushToken(token: string): Promise<void> {
@@ -9,6 +10,11 @@ export async function savePushToken(token: string): Promise<void> {
       : null;
 
   if (!platform) {
+    return;
+  }
+
+  const user = await getValidatedSupabaseUser();
+  if (!user) {
     return;
   }
 
