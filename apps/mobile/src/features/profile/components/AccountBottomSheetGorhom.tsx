@@ -3,7 +3,7 @@ import { Dimensions } from "react-native";
 import { APP_ROUTES } from "@world-cup-game/config";
 import {
   BottomSheetModal,
-  BottomSheetView,
+  BottomSheetScrollView,
   type BottomSheetBackdropProps,
   type BottomSheetModal as BottomSheetModalType,
 } from "@gorhom/bottom-sheet";
@@ -93,10 +93,13 @@ export const AccountBottomSheetGorhom = forwardRef<
       enablePanDownToClose
       handleIndicatorStyle={styles.handleIndicator}
       keyboardBehavior="interactive"
-      maxDynamicContentSize={SCREEN_HEIGHT * 0.62}
+      maxDynamicContentSize={SCREEN_HEIGHT * 0.85}
       onDismiss={handleDismiss}
     >
-      <BottomSheetView>
+      <BottomSheetScrollView
+        bounces={false}
+        showsVerticalScrollIndicator={false}
+      >
         <AccountMenuContent
           creditBalance={creditBalance}
           leaderboardScore={leaderboardScore}
@@ -111,7 +114,7 @@ export const AccountBottomSheetGorhom = forwardRef<
           onOpenLockerRoom={handleOpenLockerRoom}
           onRequestSignOut={handleRequestSignOut}
         />
-      </BottomSheetView>
+      </BottomSheetScrollView>
     </BottomSheetModal>
   );
 });
