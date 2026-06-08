@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { Alert } from "react-native";
 import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
 import { APP_ROUTES } from "@world-cup-game/config";
@@ -6,7 +7,8 @@ import {
   createSessionFromOAuthUrl,
   isSupabaseAuthCallbackUrl
 } from "../api/signInWithProvider";
-import { saveCompletedOnboarding, useOnboarding } from "../../onboarding";
+import { useOnboarding } from "../../onboarding";
+import { finalizeSignIn } from "../api/finalizeSignIn";
 
 export function useAuthRedirectHandler() {
   const router = useRouter();
@@ -23,15 +25,22 @@ export function useAuthRedirectHandler() {
 
     void createSessionFromOAuthUrl(url)
       .then(async (session) => {
-        if (session) {
-          try {
-            await saveCompletedOnboarding(onboarding);
-          } catch (saveError) {
-            console.warn("Failed to save onboarding after auth callback", saveError);
-          }
-
-          router.replace(APP_ROUTES.tabs.home);
+        if (!session) {
+          return;
         }
+
+        const outcome = await finalizeSignIn(onboarding);
+
+        if (outcome === "needs-onboarding") {
+          Alert.alert(
+            "No account yet",
+            "We couldn't find a GoGaffa account for that login. Let's create your footballer card first."
+          );
+          router.replace(APP_ROUTES.onboarding.selectNation);
+          return;
+        }
+
+        router.replace(APP_ROUTES.tabs.home);
       })
       .catch((error: unknown) => {
         console.warn("Failed to handle Supabase auth callback", error);

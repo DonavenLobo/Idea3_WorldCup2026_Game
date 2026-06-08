@@ -5,13 +5,14 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-type SupabaseClient = ReturnType<typeof createClient>;
+type SupabaseClient = ReturnType<typeof createClient<any>>;
 
 export type GroupId = "A"|"B"|"C"|"D"|"E"|"F"|"G"|"H"|"I"|"J"|"K"|"L";
 export type KnockoutRoundId = "r32"|"r16"|"qf"|"sf"|"final"|"third";
 
 export interface BracketPicksPayload {
   groupRankings: Record<string, string[]>;
+  finalizedGroups?: string[];
   picks: {
     r32: Record<string, string>;
     r16: Record<string, string>;

@@ -48,6 +48,7 @@ export default function CardPreviewScreen() {
       <RenderedPlayerCard
         concealUntilGenerated
         displayName={displayName}
+        maxHeightRatio={0.48}
         photoSource={photoSource}
         selectedNationCode={nation?.code}
       />
@@ -66,7 +67,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   startOverWrap: {
-    marginTop: spacing.lg,
-    paddingVertical: spacing.sm,
+    alignSelf: "center",
+    minHeight: 44,
+    justifyContent: "center",
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.lg,
   },
 });

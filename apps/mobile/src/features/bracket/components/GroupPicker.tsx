@@ -1,12 +1,72 @@
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { formatTeamName, GROUP_IDS, SUPPORTED_NATIONS } from "@world-cup-game/config";
+import type { GroupId } from "@world-cup-game/config";
+import { BrandButton } from "../../../components/brand";
+import { TeamLogo } from "../../../components/team";
 import { useBracket } from "../BracketContext";
 import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
 
-function nationByCode(code: string) {
-  return SUPPORTED_NATIONS.find((n) => n.code === code);
+const GROUP_SAVE_WARNING_STORAGE_KEY = "gogaffa.bracket.groupSaveWarningDismissed";
+
+function nationByTeam(team: string) {
+  return SUPPORTED_NATIONS.find((n) => n.code === team || n.name === team);
+}
+
+function MoveChevron({ direction }: { direction: "up" | "down" }) {
+  return (
+    <View style={[styles.moveTriangle, direction === "up" ? styles.moveTriangleUp : styles.moveTriangleDown]} />
+  );
+}
+
+interface GroupStatusTabsProps {
+  index: number;
+  isGroupFinalized: (group: GroupId) => boolean;
+  onIndexChange: (next: number) => void;
+}
+
+function GroupStatusTabs({ index, isGroupFinalized, onIndexChange }: GroupStatusTabsProps) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.groupTabsScroll}
+      contentContainerStyle={styles.groupTabsContent}
+    >
+      {GROUP_IDS.map((group, groupIndex) => {
+        const selected = groupIndex === index;
+        const saved = isGroupFinalized(group);
+
+        return (
+          <Pressable
+            accessibilityLabel={`Open Group ${group}${saved ? ", saved" : ", unsaved"}`}
+            accessibilityRole="button"
+            accessibilityState={{ selected }}
+            key={group}
+            onPress={() => onIndexChange(groupIndex)}
+            style={[
+              styles.groupTab,
+              saved ? styles.groupTabSaved : styles.groupTabUnsaved,
+              selected ? styles.groupTabSelected : null
+            ]}
+          >
+            <Text
+              style={[
+                styles.groupTabText,
+                saved ? styles.groupTabTextSaved : styles.groupTabTextUnsaved,
+                selected ? styles.groupTabTextSelected : null
+              ]}
+            >
+              {group}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
+  );
 }
 
 interface GroupPickerProps {
@@ -16,14 +76,29 @@ interface GroupPickerProps {
 }
 
 export function GroupPicker({ index, onIndexChange, onComplete }: GroupPickerProps) {
+  const [skipSaveWarning, setSkipSaveWarning] = useState(false);
   const {
     groupRankings, moveTeamUp, moveTeamDown, resetGroup,
-    isGroupLocked, saveBracket
+    areAllGroupsFinalized, isGroupLocked, isGroupFinalized, saveGroup, isSaving, lastSavedAt, saveError
   } = useBracket();
 
   const groupId = GROUP_IDS[index];
+
+  useEffect(() => {
+    let isMounted = true;
+    void AsyncStorage.getItem(GROUP_SAVE_WARNING_STORAGE_KEY).then((value) => {
+      if (isMounted) {
+        setSkipSaveWarning(value === "true");
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   if (!groupId) return null;
-  const locked = isGroupLocked(groupId);
+  const finalized = isGroupFinalized(groupId);
+  const locked = isGroupLocked(groupId) || finalized;
   const teams = groupRankings[groupId] ?? [];
 
   const isFirst = index === 0;
@@ -38,40 +113,93 @@ export function GroupPicker({ index, onIndexChange, onComplete }: GroupPickerPro
     onIndexChange(Math.min(GROUP_IDS.length - 1, index + 1));
   };
 
+  const saveCurrentGroup = async (dontAskAgain = false) => {
+    if (dontAskAgain) {
+      setSkipSaveWarning(true);
+      await AsyncStorage.setItem(GROUP_SAVE_WARNING_STORAGE_KEY, "true");
+    }
+
+    const willFinalizeAllGroups = GROUP_IDS.every((group) =>
+      group === groupId || isGroupFinalized(group)
+    );
+    const saved = await saveGroup(groupId);
+    if (saved && willFinalizeAllGroups) {
+      onComplete?.();
+    }
+  };
+
+  const handleSaveGroup = () => {
+    if (skipSaveWarning) {
+      void saveCurrentGroup();
+      return;
+    }
+
+    Alert.alert(
+      `Save Group ${groupId}?`,
+      "Once this group is saved, you cannot alter it again unless you reset the complete bracket.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Save",
+          onPress: () => {
+            void saveCurrentGroup();
+          }
+        },
+        {
+          text: "Save & don't ask again",
+          onPress: () => {
+            void saveCurrentGroup(true);
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <View style={styles.root}>
+      <GroupStatusTabs
+        index={index}
+        isGroupFinalized={isGroupFinalized}
+        onIndexChange={onIndexChange}
+      />
+
       <View style={styles.card}>
         <Text style={styles.groupTitle}>
           GROUP {groupId}
-          {locked ? <Text style={styles.lockChip}>  🔒 LOCKED</Text> : null}
+          {finalized ? <Text style={styles.lockChip}>  SAVED</Text> : null}
+          {!finalized && locked ? <Text style={styles.lockChip}>  LOCKED</Text> : null}
         </Text>
 
-        {teams.map((code, i) => {
-          const nation = nationByCode(code);
+        {teams.map((team, i) => {
+          const nation = nationByTeam(team);
           const upDisabled = i === 0;
           const downDisabled = i === teams.length - 1;
           return (
-            <View key={code} style={styles.row}>
+            <View key={team} style={styles.row}>
               <Text style={styles.position}>{i + 1}</Text>
-              <Text style={styles.flag}>{nation?.flagEmoji ?? "🏴"}</Text>
+              <TeamLogo code={nation?.code} name={nation?.name ?? team} size={30} />
               <Text style={styles.nationName} numberOfLines={1}>
-                {nation?.name ? formatTeamName(nation.name) : code}
+                {formatTeamName(nation?.name ?? team)}
               </Text>
               {!locked ? (
                 <View style={styles.arrows}>
                   <Pressable
+                    accessibilityLabel={`Move ${formatTeamName(nation?.name ?? team)} up`}
+                    accessibilityRole="button"
                     style={[styles.arrowButton, upDisabled ? styles.arrowDisabled : null]}
                     disabled={upDisabled}
                     onPress={() => moveTeamUp(groupId, i)}
                   >
-                    <Text style={styles.arrowText}>▲</Text>
+                    <MoveChevron direction="up" />
                   </Pressable>
                   <Pressable
+                    accessibilityLabel={`Move ${formatTeamName(nation?.name ?? team)} down`}
+                    accessibilityRole="button"
                     style={[styles.arrowButton, downDisabled ? styles.arrowDisabled : null]}
                     disabled={downDisabled}
                     onPress={() => moveTeamDown(groupId, i)}
                   >
-                    <Text style={styles.arrowText}>▼</Text>
+                    <MoveChevron direction="down" />
                   </Pressable>
                 </View>
               ) : null}
@@ -80,10 +208,40 @@ export function GroupPicker({ index, onIndexChange, onComplete }: GroupPickerPro
         })}
 
         {!locked ? (
-          <Pressable style={styles.resetButton} onPress={() => resetGroup(groupId)}>
-            <Text style={styles.resetText}>Reset group</Text>
-          </Pressable>
+          <View style={styles.groupActionRow}>
+            <Pressable style={styles.resetButton} onPress={() => resetGroup(groupId)}>
+              <Text style={styles.resetText}>Reset group</Text>
+            </Pressable>
+            <BrandButton
+              label={`Save Group ${groupId}`}
+              onPress={handleSaveGroup}
+              disabled={isSaving}
+              loading={isSaving}
+              style={styles.saveCta}
+            />
+          </View>
+        ) : finalized ? (
+          <>
+            <View style={styles.groupActionRow}>
+              <BrandButton
+                label={`Group ${groupId} Saved`}
+                disabled
+                variant="secondary"
+                style={styles.saveCta}
+              />
+            </View>
+            <Text style={styles.lockedHint}>
+              This group is saved. Reset the complete bracket to change it.
+            </Text>
+          </>
+        ) : (
+          <Text style={styles.lockedHint}>This group has locked and can no longer be edited.</Text>
+        )}
+
+        {lastSavedAt && finalized ? (
+          <Text style={styles.saveStatus}>Saved {new Date(lastSavedAt).toLocaleTimeString()}</Text>
         ) : null}
+        {saveError ? <Text style={styles.saveError}>{saveError.message}</Text> : null}
       </View>
 
       <View style={styles.navRow}>
@@ -92,42 +250,22 @@ export function GroupPicker({ index, onIndexChange, onComplete }: GroupPickerPro
           disabled={isFirst}
           onPress={handlePrev}
         >
-          <Text style={styles.navText}>← Prev</Text>
+          <Text style={styles.navText}>Prev</Text>
         </Pressable>
         <Text style={styles.indicator}>
           {index + 1} of {GROUP_IDS.length}
         </Text>
         {isLast ? (
-          <View style={styles.dualCtaRow}>
-            <Pressable
-              style={styles.saveButton}
-              onPress={async () => {
-                await saveBracket();
-                Alert.alert(
-                  "Group picks saved",
-                  "Come back June 28 to pick the knockouts — or set them now.",
-                  [
-                    { text: "Set Knockouts Now", onPress: () => onComplete?.() },
-                    { text: "Back to Bracket", style: "cancel" }
-                  ]
-                );
-              }}
-            >
-              <Text style={styles.saveButtonText}>Save Group Stage</Text>
-            </Pressable>
-            <Pressable
-              style={styles.navButtonPrimary}
-              onPress={async () => {
-                await saveBracket();
-                onComplete?.();
-              }}
-            >
-              <Text style={styles.navTextPrimary}>Set Knockouts Now →</Text>
-            </Pressable>
-          </View>
+          <Pressable
+            disabled={!areAllGroupsFinalized}
+            style={[styles.navButtonPrimary, !areAllGroupsFinalized ? styles.navDisabled : null]}
+            onPress={onComplete}
+          >
+            <Text style={styles.navTextPrimary}>My Bracket</Text>
+          </Pressable>
         ) : (
           <Pressable style={styles.navButtonPrimary} onPress={handleNext}>
-            <Text style={styles.navTextPrimary}>Next →</Text>
+            <Text style={styles.navTextPrimary}>Next</Text>
           </Pressable>
         )}
       </View>
@@ -136,10 +274,61 @@ export function GroupPicker({ index, onIndexChange, onComplete }: GroupPickerPro
 }
 
 const styles = StyleSheet.create({
-  dualCtaRow: {
+  card: {
+    backgroundColor: colors.cream,
+    borderRadius: radius.lg,
+    padding: spacing.lg
+  },
+  groupActionRow: {
+    alignItems: "center",
     flexDirection: "row",
-    flex: 1,
-    gap: spacing.sm
+    gap: spacing.sm,
+    justifyContent: "space-between",
+    marginTop: spacing.md
+  },
+  groupTab: {
+    alignItems: "center",
+    borderRadius: radius.pill,
+    borderWidth: 2,
+    height: 38,
+    justifyContent: "center",
+    minWidth: 44,
+    paddingHorizontal: spacing.sm
+  },
+  groupTabSaved: {
+    backgroundColor: colors.success,
+    borderColor: colors.success
+  },
+  groupTabSelected: {
+    borderColor: colors.red
+  },
+  groupTabsContent: {
+    alignItems: "center",
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm
+  },
+  groupTabsScroll: {
+    flexGrow: 0,
+    marginHorizontal: -spacing.lg,
+    marginBottom: spacing.sm
+  },
+  groupTabText: {
+    fontSize: 13,
+    fontWeight: "900"
+  },
+  groupTabTextSaved: {
+    color: colors.cream
+  },
+  groupTabTextSelected: {
+    color: colors.ink
+  },
+  groupTabTextUnsaved: {
+    color: opacity.ink60
+  },
+  groupTabUnsaved: {
+    backgroundColor: opacity.ink12,
+    borderColor: "transparent"
   },
   lockChip: {
     color: opacity.ink60,
@@ -147,18 +336,28 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: 0.8
   },
-  saveButton: {
-    borderColor: colors.red,
-    borderRadius: radius.pill,
-    borderWidth: 2,
-    flex: 1,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 10
+  lockedHint: {
+    color: opacity.ink55,
+    fontSize: 13,
+    fontWeight: "700",
+    marginTop: spacing.md,
+    textAlign: "center"
   },
-  saveButtonText: {
+  saveCta: {
+    flex: 1
+  },
+  saveError: {
     color: colors.red,
-    fontSize: 14,
-    fontWeight: "900",
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: spacing.xs,
+    textAlign: "center"
+  },
+  saveStatus: {
+    color: opacity.ink55,
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: spacing.xs,
     textAlign: "center"
   },
   arrowButton: {
@@ -172,22 +371,25 @@ const styles = StyleSheet.create({
   arrowDisabled: {
     opacity: 0.25
   },
-  arrowText: {
-    color: colors.ink,
-    fontSize: 14,
-    fontWeight: "700"
-  },
   arrows: {
     flexDirection: "row",
     gap: spacing.xs
   },
-  card: {
-    backgroundColor: colors.cream,
-    borderRadius: radius.lg,
-    padding: spacing.lg
+  moveTriangle: {
+    borderLeftColor: "transparent",
+    borderLeftWidth: 6,
+    borderRightColor: "transparent",
+    borderRightWidth: 6,
+    height: 0,
+    width: 0
   },
-  flag: {
-    fontSize: 24
+  moveTriangleDown: {
+    borderTopColor: colors.ink,
+    borderTopWidth: 9
+  },
+  moveTriangleUp: {
+    borderBottomColor: colors.ink,
+    borderBottomWidth: 9
   },
   groupTitle: {
     color: colors.ink,
@@ -245,10 +447,13 @@ const styles = StyleSheet.create({
     width: 22
   },
   resetButton: {
-    alignSelf: "flex-end",
-    marginTop: spacing.sm,
+    alignItems: "center",
+    backgroundColor: opacity.ink12,
+    borderRadius: radius.button,
+    justifyContent: "center",
+    minHeight: 52,
     paddingHorizontal: spacing.sm,
-    paddingVertical: 4
+    paddingVertical: spacing.md
   },
   resetText: {
     color: opacity.ink55,

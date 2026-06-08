@@ -28,6 +28,7 @@ import {
 import { CardStatOverlays } from "./CardStatOverlays";
 import { CardTextOverlays } from "./CardTextOverlays";
 import { CardStatusBadge } from "./CardStatusBadge";
+import { teamLogoSourceForCode } from "../../../components/team";
 
 interface RenderedPlayerCardProps {
   card?: PlayerCardData | null;
@@ -39,6 +40,7 @@ interface RenderedPlayerCardProps {
   stats?: CardStats;
   templateId?: string | null;
   tier?: CardTier;
+  maxHeightRatio?: number;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -64,16 +66,24 @@ export function RenderedPlayerCard({
   stats,
   templateId,
   tier,
+  maxHeightRatio,
   style,
 }: RenderedPlayerCardProps) {
   const { height: windowHeight } = useWindowDimensions();
-  const maxCardHeight = windowHeight * 0.55;
   const [isRetrying, setIsRetrying] = useState(false);
   const { templates } = useCardTemplates();
   const selectedTemplateId = templateId ?? card?.templateId ?? LEVEL_00_SKETCH_TEMPLATE.id;
   const template = applyBundledSketchMetadata(
     resolveCardTemplate(templates, selectedTemplateId)
   );
+  const aspectRatio = template.metadata.width / template.metadata.height;
+  const maxCardHeight = windowHeight * (maxHeightRatio ?? 0.65);
+  const cardSizing = maxHeightRatio
+    ? {
+      maxHeight: maxCardHeight,
+      maxWidth: Math.min(420, maxCardHeight * aspectRatio)
+    }
+    : { maxHeight: maxCardHeight };
   const canRetry = card?.status === "failed" && Boolean(card.id);
   const status = card?.status;
   const shouldConceal =
@@ -99,14 +109,21 @@ export function RenderedPlayerCard({
   const resolvedStats = stats ?? card?.stats ?? BASE_CARD_STATS;
   const resolvedDisplayName = displayName ?? card?.displayName ?? "Rookie";
   const resolvedOverall = overall ?? card?.overall ?? 50;
+  const resolvedNationCode = selectedNationCode ?? card?.selectedNationCode ?? "USA";
   const useSketchTextOverlays = isLevel00SketchTemplate(template);
 
   return (
-    <View style={[styles.cardWrap, { maxHeight: maxCardHeight }, style]}>
+    <View style={[styles.cardWrap, cardSizing, style]}>
       {shouldConceal ? (
         <HiddenCardPlaceholder
-          aspectRatio={template.metadata.width / template.metadata.height}
+          displayName={resolvedDisplayName}
+          overall={resolvedOverall}
+          selectedNationCode={resolvedNationCode}
           status={status}
+          stats={resolvedStats}
+          template={template}
+          tier={tier ?? card?.tier ?? "bronze"}
+          useSketchTextOverlays={useSketchTextOverlays}
         />
       ) : (
         <View style={styles.cardSurface}>
@@ -118,9 +135,10 @@ export function RenderedPlayerCard({
             card={{
               avatarGeneratedUrl: card?.avatarGeneratedUrl,
               avatarSourceUrl: card?.avatarSourceUrl ?? photoSource?.uri,
+              badgeImageSource: teamLogoSourceForCode(resolvedNationCode),
               displayName: resolvedDisplayName,
               overall: resolvedOverall,
-              selectedNationCode: selectedNationCode ?? card?.selectedNationCode ?? "USA",
+              selectedNationCode: resolvedNationCode,
               stats: resolvedStats,
               tier: tier ?? card?.tier ?? "bronze"
             }}
@@ -141,11 +159,23 @@ export function RenderedPlayerCard({
 }
 
 function HiddenCardPlaceholder({
-  aspectRatio,
-  status
+  displayName,
+  overall,
+  selectedNationCode,
+  status,
+  stats,
+  template,
+  tier,
+  useSketchTextOverlays
 }: {
-  aspectRatio: number;
+  displayName: string;
+  overall: number;
+  selectedNationCode: string;
   status?: CardStatus;
+  stats: CardStats;
+  template: PlayerCardRenderTemplate;
+  tier: CardTier;
+  useSketchTextOverlays: boolean;
 }) {
   const title =
     status === "failed"
@@ -157,14 +187,37 @@ function HiddenCardPlaceholder({
           : "Card reveal after generation";
 
   return (
-    <View style={[styles.hiddenCard, { aspectRatio }]}>
-      <View style={styles.blurBandTop} />
-      <View style={styles.blurBandMid} />
-      <View style={styles.blurBandBottom} />
-      <View style={styles.hiddenOverlay}>
-        <PulsingQuestionCircle />
-        <Text style={styles.hiddenTitle}>{title}</Text>
-        <Text style={styles.hiddenBody}>Your final card stays hidden until the AI version is ready.</Text>
+    <View style={styles.hiddenCard}>
+      <PlayerCard
+        renderDisplayName={!useSketchTextOverlays}
+        renderOverall={!useSketchTextOverlays}
+        renderStatValues={false}
+        template={template}
+        card={{
+          avatarGeneratedUrl: undefined,
+          avatarSourceUrl: undefined,
+          badgeImageSource: teamLogoSourceForCode(selectedNationCode),
+          displayName,
+          overall,
+          selectedNationCode,
+          stats,
+          tier
+        }}
+      />
+      {useSketchTextOverlays ? (
+        <CardTextOverlays displayName={displayName} overall={overall} />
+      ) : null}
+      <CardStatOverlays stats={stats} />
+      <View pointerEvents="none" style={styles.hiddenMask}>
+        <View style={styles.hiddenTint} />
+        <View style={[styles.hiddenBand, styles.hiddenBandTop]} />
+        <View style={[styles.hiddenBand, styles.hiddenBandMid]} />
+        <View style={[styles.hiddenBand, styles.hiddenBandBottom]} />
+        <View style={styles.hiddenOverlay}>
+          <PulsingQuestionCircle />
+          <Text style={styles.hiddenTitle}>{title}</Text>
+          <Text style={styles.hiddenBody}>Your final card stays hidden until the AI version is ready.</Text>
+        </View>
       </View>
     </View>
   );
@@ -205,33 +258,6 @@ const styles = StyleSheet.create({
     maxWidth: 420,
     width: "100%"
   },
-  blurBandBottom: {
-    backgroundColor: opacity.ink15,
-    borderRadius: 16,
-    bottom: "12%",
-    height: "18%",
-    left: "16%",
-    position: "absolute",
-    right: "16%"
-  },
-  blurBandMid: {
-    backgroundColor: opacity.ink12,
-    borderRadius: 24,
-    height: "34%",
-    left: "18%",
-    position: "absolute",
-    right: "18%",
-    top: "25%"
-  },
-  blurBandTop: {
-    backgroundColor: opacity.cream70,
-    borderRadius: 18,
-    height: "16%",
-    left: "14%",
-    position: "absolute",
-    right: "14%",
-    top: "8%"
-  },
   hiddenBody: {
     color: opacity.cream80,
     fontSize: 13,
@@ -241,24 +267,54 @@ const styles = StyleSheet.create({
     maxWidth: 250,
     textAlign: "center"
   },
+  hiddenBand: {
+    backgroundColor: opacity.cream75,
+    borderRadius: 999,
+    opacity: 0.28,
+    position: "absolute",
+    transform: [{ rotate: "-10deg" }]
+  },
+  hiddenBandBottom: {
+    bottom: "14%",
+    height: "12%",
+    left: "-8%",
+    right: "-8%"
+  },
+  hiddenBandMid: {
+    height: "18%",
+    left: "-16%",
+    right: "-16%",
+    top: "44%"
+  },
+  hiddenBandTop: {
+    height: "14%",
+    left: "-10%",
+    right: "-10%",
+    top: "18%"
+  },
   hiddenCard: {
-    alignItems: "center",
-    backgroundColor: colors.ink,
-    borderColor: opacity.ink30,
-    borderRadius: 28,
-    borderWidth: 2,
-    justifyContent: "center",
     overflow: "hidden",
     position: "relative",
     width: "100%"
   },
+  hiddenMask: {
+    borderRadius: 22,
+    bottom: "6%",
+    left: "9%",
+    overflow: "hidden",
+    position: "absolute",
+    right: "9%",
+    top: "6.5%"
+  },
   hiddenOverlay: {
+    ...StyleSheet.absoluteFillObject,
     alignItems: "center",
-    backgroundColor: opacity.ink70,
-    height: "100%",
     justifyContent: "center",
-    padding: 24,
-    width: "100%"
+    padding: 24
+  },
+  hiddenTint: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: opacity.ink80
   },
   hiddenTitle: {
     color: colors.cream,

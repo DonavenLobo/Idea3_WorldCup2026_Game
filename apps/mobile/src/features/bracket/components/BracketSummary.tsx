@@ -1,31 +1,45 @@
 import { useRouter } from "expo-router";
 import { Alert, Pressable, Share, StyleSheet, Text, View } from "react-native";
 import { BrandButton } from "../../../components/brand";
+import { TeamLogo } from "../../../components/team";
 import { APP_ROUTES, formatTeamName, GROUP_IDS, SUPPORTED_NATIONS } from "@world-cup-game/config";
 import type { GroupId } from "@world-cup-game/config";
+import { WEB_URL } from "../../../lib/constants";
 import { useBracket } from "../BracketContext";
 import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
 
-function nationName(code: string | null): string {
-  if (!code) return "—";
-  const name = SUPPORTED_NATIONS.find((n) => n.code === code)?.name ?? code;
-  return formatTeamName(name);
+function nationForTeam(team: string | null) {
+  if (!team) return null;
+  return SUPPORTED_NATIONS.find((n) => n.code === team || n.name === team) ?? null;
 }
 
-function nationFlag(code: string | null): string {
-  if (!code) return "🏴";
-  return SUPPORTED_NATIONS.find((n) => n.code === code)?.flagEmoji ?? "🏴";
+function nationName(team: string | null): string {
+  if (!team) return "—";
+  const nation = nationForTeam(team);
+  return formatTeamName(nation?.name ?? team);
 }
 
 interface BracketSummaryProps {
   onGroupTap?: (group: GroupId) => void;
+  canOpenGroups?: boolean;
+  canEditGroups?: boolean;
 }
 
-export function BracketSummary({ onGroupTap }: BracketSummaryProps) {
+export function BracketSummary({
+  onGroupTap,
+  canOpenGroups = true,
+  canEditGroups = true
+}: BracketSummaryProps) {
   const router = useRouter();
-  const { groupRankings, picks, resetAll, saveBracket, isSaving, lastSavedAt, saveError, phase, isClockFallback } = useBracket();
+  const {
+    groupRankings,
+    picks,
+    resetAll,
+    stageState,
+    isClockFallback
+  } = useBracket();
 
   const champion = picks.final;
   const third = picks.third;
@@ -37,42 +51,36 @@ export function BracketSummary({ onGroupTap }: BracketSummaryProps) {
     if (!champion || !sf0Winner || !sf1Winner) return null;
     return champion === sf0Winner ? sf1Winner : sf0Winner;
   })();
+  const showPodium = stageState.currentStage === "finals" || stageState.currentStage === "complete";
 
   const handleShare = async () => {
+    const groupWinnerLines = GROUP_IDS.map((g) => {
+      const winner = groupRankings[g]?.[0] ?? null;
+      return `Group ${g}: ${nationName(winner)}`;
+    });
+
     const lines = [
-      "My 2026 tournament bracket prediction:",
+      stageState.currentStage === "groups"
+        ? "My World Cup 2026 Group Winners Prediction:"
+        : "My World Cup 2026 Bracket Prediction:",
       "",
-      champion
-        ? `🏆 Champion: ${nationFlag(champion)} ${nationName(champion)}`
-        : "🏆 Champion: TBD",
-      second
-        ? `🥈 2nd Place: ${nationFlag(second)} ${nationName(second)}`
-        : "🥈 2nd Place: TBD",
-      third
-        ? `🥉 3rd Place: ${nationFlag(third)} ${nationName(third)}`
-        : "🥉 3rd Place: TBD",
+      ...(showPodium
+        ? [
+          champion ? `Champion: ${nationName(champion)}` : "Champion: TBD",
+          second ? `2nd Place: ${nationName(second)}` : "2nd Place: TBD",
+          third ? `3rd Place: ${nationName(third)}` : "3rd Place: TBD",
+          "",
+          "Group winners:",
+        ]
+        : []),
+      ...groupWinnerLines,
       "",
-      "Group winners:",
-      ...GROUP_IDS.map((g) => {
-        const winner = groupRankings[g]?.[0] ?? null;
-        return `  ${g}: ${nationFlag(winner)} ${nationName(winner)}`;
-      })
+      `Sign up at ${WEB_URL}`
     ];
     try {
       await Share.share({ message: lines.join("\n") });
     } catch {
       // user cancelled or share failed - no-op
-    }
-  };
-
-  const handleSave = async () => {
-    try {
-      await saveBracket();
-    } catch (error) {
-      Alert.alert(
-        "Could not save bracket",
-        error instanceof Error ? error.message : "Try again in a moment."
-      );
     }
   };
 
@@ -91,19 +99,6 @@ export function BracketSummary({ onGroupTap }: BracketSummaryProps) {
     );
   };
 
-  const saveButtonLabel = (() => {
-    switch (phase) {
-      case "pre":
-      case "phase1-closing":
-        return isSaving ? "Saving..." : "Save Group Picks";
-      case "between":
-      case "phase2-closing":
-        return isSaving ? "Saving..." : "Save My Bracket";
-      case "complete":
-        return "Tournament Complete";
-    }
-  })();
-
   return (
     <View style={styles.root}>
       {isClockFallback ? (
@@ -111,43 +106,71 @@ export function BracketSummary({ onGroupTap }: BracketSummaryProps) {
           ⚠️ Couldn't reach server clock — lock times may drift slightly.
         </Text>
       ) : null}
-      <View style={styles.championCard}>
-        <Text style={styles.championLabel}>🏆 CHAMPION</Text>
-        <Text style={styles.championFlag}>{nationFlag(champion)}</Text>
-        <Text style={styles.championName}>
-          {champion ? nationName(champion) : "Pick the Final to crown your champion"}
-        </Text>
-      </View>
 
-      <View style={styles.podiumRow}>
-        <View style={styles.podiumCard}>
-          <Text style={styles.podiumLabel}>🥈 2ND</Text>
-          <Text style={styles.podiumFlag}>{nationFlag(second)}</Text>
-          <Text style={styles.podiumName} numberOfLines={1}>
-            {second ? nationName(second) : "TBD"}
-          </Text>
-        </View>
-        <View style={styles.podiumCard}>
-          <Text style={styles.podiumLabel}>🥉 3RD</Text>
-          <Text style={styles.podiumFlag}>{nationFlag(third)}</Text>
-          <Text style={styles.podiumName} numberOfLines={1}>
-            {third ? nationName(third) : "TBD"}
-          </Text>
-        </View>
-      </View>
+      {showPodium ? (
+        <>
+          <View style={styles.championCard}>
+            <Text style={styles.championLabel}>🏆 CHAMPION</Text>
+            <TeamLogo
+              code={nationForTeam(champion)?.code}
+              name={nationForTeam(champion)?.name ?? champion}
+              size={72}
+              style={styles.championLogo}
+            />
+            <Text style={styles.championName}>
+              {champion ? nationName(champion) : "Pick the Final to crown your champion"}
+            </Text>
+          </View>
 
-      <Text style={styles.sectionHeader}>Group winners (tap to edit)</Text>
+          <View style={styles.podiumRow}>
+            <View style={styles.podiumCard}>
+              <Text style={styles.podiumLabel}>🥈 2ND</Text>
+              <TeamLogo
+                code={nationForTeam(second)?.code}
+                name={nationForTeam(second)?.name ?? second}
+                size={42}
+                style={styles.podiumLogo}
+              />
+              <Text style={styles.podiumName} numberOfLines={1}>
+                {second ? nationName(second) : "TBD"}
+              </Text>
+            </View>
+            <View style={styles.podiumCard}>
+              <Text style={styles.podiumLabel}>🥉 3RD</Text>
+              <TeamLogo
+                code={nationForTeam(third)?.code}
+                name={nationForTeam(third)?.name ?? third}
+                size={42}
+                style={styles.podiumLogo}
+              />
+              <Text style={styles.podiumName} numberOfLines={1}>
+                {third ? nationName(third) : "TBD"}
+              </Text>
+            </View>
+          </View>
+        </>
+      ) : null}
+
+      <Text style={styles.sectionHeader}>
+        {canEditGroups
+          ? "Group winners (tap to edit)"
+          : canOpenGroups
+            ? "Group winners (tap to view)"
+            : "Group winners"}
+      </Text>
       <View style={styles.groupGrid}>
         {GROUP_IDS.map((g) => {
           const winner = groupRankings[g]?.[0] ?? null;
+          const nation = nationForTeam(winner);
           return (
             <Pressable
               key={g}
-              style={styles.groupCell}
+              disabled={!canOpenGroups}
+              style={[styles.groupCell, !canOpenGroups ? styles.groupCellDisabled : null]}
               onPress={() => onGroupTap?.(g)}
             >
               <Text style={styles.groupLetter}>{g}</Text>
-              <Text style={styles.groupFlag}>{nationFlag(winner)}</Text>
+              <TeamLogo code={nation?.code} name={nation?.name ?? winner} size={32} />
               <Text style={styles.groupWinner} numberOfLines={1}>
                 {nationName(winner)}
               </Text>
@@ -159,26 +182,12 @@ export function BracketSummary({ onGroupTap }: BracketSummaryProps) {
       <Text style={styles.nextStepsHeader}>What&apos;s next?</Text>
 
       <BrandButton
-        label={saveButtonLabel}
-        onPress={handleSave}
-        disabled={isSaving || phase === "complete"}
-        loading={isSaving}
-      />
-
-      {lastSavedAt ? (
-        <Text style={styles.saveStatus}>Saved {new Date(lastSavedAt).toLocaleTimeString()}</Text>
-      ) : null}
-      {saveError ? <Text style={styles.saveError}>{saveError.message}</Text> : null}
-
-      <BrandButton
-        label="📤  Share My Bracket"
+        label="Share My Bracket"
         onPress={handleShare}
-        variant="secondary"
-        style={styles.secondaryCta}
       />
 
       <BrandButton
-        label="👥  Create or Join a Group"
+        label="Create or Join a Group"
         onPress={handleJoinGroup}
         variant="secondary"
         style={styles.secondaryCta}
@@ -211,8 +220,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     padding: spacing.lg
   },
-  championFlag: {
-    fontSize: 48,
+  championLogo: {
     marginVertical: spacing.sm
   },
   championLabel: {
@@ -236,9 +244,8 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     width: "31%"
   },
-  groupFlag: {
-    fontSize: 22,
-    marginVertical: 4
+  groupCellDisabled: {
+    opacity: 0.55
   },
   groupGrid: {
     flexDirection: "row",
@@ -274,8 +281,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: spacing.md
   },
-  podiumFlag: {
-    fontSize: 28,
+  podiumLogo: {
     marginVertical: 4
   },
   podiumLabel: {
@@ -300,20 +306,6 @@ const styles = StyleSheet.create({
   },
   root: {
     padding: spacing.lg
-  },
-  saveError: {
-    color: colors.red,
-    fontSize: 12,
-    fontWeight: "700",
-    marginTop: spacing.xs,
-    textAlign: "center"
-  },
-  saveStatus: {
-    color: opacity.ink55,
-    fontSize: 12,
-    fontWeight: "700",
-    marginTop: spacing.xs,
-    textAlign: "center"
   },
   secondaryCta: {
     marginTop: spacing.sm,

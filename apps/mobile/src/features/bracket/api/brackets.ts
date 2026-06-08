@@ -1,6 +1,7 @@
 import { GROUP_IDS } from "@world-cup-game/config";
 import type { GroupId } from "@world-cup-game/config";
 import { supabase } from "../../../lib/supabase";
+import { getValidatedSupabaseUser } from "../../auth/api/sessionRecovery";
 import type { BracketPicks, PersistedBracketPicks } from "../types";
 import {
   PickPastLockoutError,
@@ -46,6 +47,16 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((entry) => typeof entry === "string");
 }
 
+function parseFinalizedGroups(value: unknown): GroupId[] {
+  if (value === undefined) return [];
+  if (!isStringArray(value)) {
+    throw new Error("Saved bracket finalized groups are malformed.");
+  }
+  return value.filter((group): group is GroupId =>
+    (GROUP_IDS as readonly string[]).includes(group)
+  );
+}
+
 function isRoundPicks(value: unknown): value is Record<number, string> {
   return isRecord(value) && Object.values(value).every((entry) => typeof entry === "string");
 }
@@ -83,6 +94,7 @@ function parsePersistedPicks(value: unknown): PersistedBracketPicks {
 
   return {
     groupRankings,
+    finalizedGroups: parseFinalizedGroups(value.finalizedGroups),
     picks: {
       r32: rawPicks.r32,
       r16: rawPicks.r16,
@@ -107,20 +119,16 @@ function mapBracketRow(row: BracketRow): SavedBracket {
 }
 
 export async function getCurrentBracket(): Promise<SavedBracket | null> {
-  const { data: authData, error: authError } = await supabase.auth.getUser();
+  const user = await getValidatedSupabaseUser();
 
-  if (authError) {
-    throw authError;
-  }
-
-  if (!authData.user) {
+  if (!user) {
     return null;
   }
 
   const { data, error } = await supabase
     .from("brackets")
     .select(BRACKET_COLUMNS)
-    .eq("user_id", authData.user.id)
+    .eq("user_id", user.id)
     .is("group_id", null)
     .order("updated_at", { ascending: false })
     .limit(1)
@@ -142,19 +150,48 @@ interface SubmitBracketResponse {
   error?: string;
 }
 
-export async function submitCurrentBracket(
-  picks: PersistedBracketPicks,
-  groupId: string | null = null
-): Promise<SavedBracket> {
-  const { data, error } = await supabase.functions.invoke<SubmitBracketResponse>(
-    "submit-bracket",
-    { body: { groupId, picks } }
-  );
+function isResponseLike(value: unknown): value is {
+  clone?: () => unknown;
+  json?: () => Promise<unknown>;
+  text?: () => Promise<string>;
+} {
+  return typeof value === "object" && value !== null;
+}
 
-  if (error) {
-    throw error;
+async function readFunctionErrorResponse(error: unknown): Promise<SubmitBracketResponse | null> {
+  const context = (error as { context?: unknown }).context;
+  if (!isResponseLike(context)) {
+    return null;
   }
 
+  const response = typeof context.clone === "function"
+    ? context.clone()
+    : context;
+
+  if (!isResponseLike(response)) {
+    return null;
+  }
+
+  try {
+    if (typeof response.json === "function") {
+      const body = await response.json();
+      return isRecord(body) ? body as SubmitBracketResponse : null;
+    }
+
+    if (typeof response.text === "function") {
+      const text = await response.text();
+      if (!text) return null;
+      const body = JSON.parse(text);
+      return isRecord(body) ? body as SubmitBracketResponse : null;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+function parseSubmitBracketResponse(data: SubmitBracketResponse | null): SavedBracket {
   if (!data) {
     throw new Error("Bracket save returned no data.");
   }
@@ -179,4 +216,29 @@ export async function submitCurrentBracket(
   }
 
   return data.bracket;
+}
+
+export async function submitCurrentBracket(
+  picks: PersistedBracketPicks,
+  groupId: string | null = null
+): Promise<SavedBracket> {
+  const user = await getValidatedSupabaseUser();
+  if (!user) {
+    throw new Error("Sign in to save your bracket.");
+  }
+
+  const { data, error } = await supabase.functions.invoke<SubmitBracketResponse>(
+    "submit-bracket",
+    { body: { groupId, picks } }
+  );
+
+  if (error) {
+    const errorData = await readFunctionErrorResponse(error);
+    if (errorData) {
+      return parseSubmitBracketResponse(errorData);
+    }
+    throw error;
+  }
+
+  return parseSubmitBracketResponse(data ?? null);
 }

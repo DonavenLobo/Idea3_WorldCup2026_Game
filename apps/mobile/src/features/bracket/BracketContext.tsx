@@ -5,7 +5,9 @@ import { useSession } from "../auth/hooks/useSession";
 import { getCurrentBracket, submitCurrentBracket } from "./api/brackets";
 import type { BracketPicks, BracketState, PersistedBracketPicks, PickRound } from "./types";
 import { useBracketLockState } from "./hooks/useBracketLockState";
+import { useBracketStageState } from "./hooks/useBracketStageState";
 import type { KnockoutRoundId } from "./lib/computeBracketLockState";
+import type { BracketStageState } from "./lib/computeBracketStageState";
 import { PickPastLockoutError } from "./types";
 import { scheduleKnockoutReminder } from "./notifications";
 
@@ -22,16 +24,20 @@ interface BracketContextValue extends BracketState {
   start: () => void;
   resetAll: () => void;
   saveBracket: () => Promise<void>;
+  saveGroup: (group: GroupId) => Promise<boolean>;
   moveTeamUp: (group: GroupId, index: number) => void;
   moveTeamDown: (group: GroupId, index: number) => void;
   resetGroup: (group: GroupId) => void;
   setPick: (round: PickRound, matchIndex: number, code: string) => void;
   setFinal: (code: string | null) => void;
   setThird: (code: string | null) => void;
+  areAllGroupsFinalized: boolean;
+  isGroupFinalized: (group: GroupId) => boolean;
   isGroupLocked: (group: GroupId) => boolean;
   isMatchLocked: (round: KnockoutRoundId, index: number) => boolean;
   isClockFallback: boolean;
   phase: ReturnType<typeof useBracketLockState>["phase"];
+  stageState: BracketStageState;
   nextLockAt: Date | null;
   nextLockLabel: string | null;
   fixturesLoading: boolean;
@@ -49,6 +55,10 @@ function swap(arr: string[], i: number, j: number): string[] | null {
   return next;
 }
 
+function normalizeFinalizedGroups(groups: readonly GroupId[] | undefined): GroupId[] {
+  return GROUP_IDS.filter((group) => groups?.includes(group));
+}
+
 interface BracketProviderProps {
   groupId?: string | null;
   children: React.ReactNode;
@@ -62,8 +72,19 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<Error | null>(null);
   const [groupRankings, setGroupRankings] = useState<Record<GroupId, string[]>>(defaultRankings);
+  const [committedGroupRankings, setCommittedGroupRankings] =
+    useState<Record<GroupId, string[]>>(defaultRankings);
+  const [finalizedGroups, setFinalizedGroups] = useState<GroupId[]>([]);
   const [picks, setPicks] = useState<BracketPicks>(defaultPicks);
+  const [committedPicks, setCommittedPicks] = useState<BracketPicks>(defaultPicks);
   const lockState = useBracketLockState();
+  const stageState = useBracketStageState();
+  const areAllGroupsFinalized = finalizedGroups.length === GROUP_IDS.length;
+
+  const isGroupFinalized = useCallback(
+    (group: GroupId) => finalizedGroups.includes(group),
+    [finalizedGroups]
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -75,8 +96,13 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
     }
 
     if (!user) {
-      setGroupRankings(defaultRankings());
-      setPicks(defaultPicks());
+      const rankings = defaultRankings();
+      const nextPicks = defaultPicks();
+      setGroupRankings(rankings);
+      setCommittedGroupRankings(rankings);
+      setFinalizedGroups([]);
+      setPicks(nextPicks);
+      setCommittedPicks(nextPicks);
       setIsCreated(false);
       setLastSavedAt(null);
       setSaveError(null);
@@ -100,7 +126,10 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
       .then((savedBracket) => {
         if (!isMounted || !savedBracket) return;
         setGroupRankings(savedBracket.picks.groupRankings);
+        setCommittedGroupRankings(savedBracket.picks.groupRankings);
+        setFinalizedGroups(normalizeFinalizedGroups(savedBracket.picks.finalizedGroups));
         setPicks(savedBracket.picks.picks);
+        setCommittedPicks(savedBracket.picks.picks);
         setIsCreated(true);
         setLastSavedAt(savedBracket.updatedAt);
       })
@@ -122,6 +151,7 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
   }, [isSessionLoading, user?.id]);
 
   const moveTeamUp = useCallback((group: GroupId, index: number) => {
+    if (isGroupFinalized(group)) return;
     if (index <= 0) return;
     setLastSavedAt(null);
     setSaveError(null);
@@ -132,9 +162,10 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
       if (!next) return prev;
       return { ...prev, [group]: next };
     });
-  }, []);
+  }, [isGroupFinalized]);
 
   const moveTeamDown = useCallback((group: GroupId, index: number) => {
+    if (isGroupFinalized(group)) return;
     setLastSavedAt(null);
     setSaveError(null);
     setGroupRankings((prev) => {
@@ -144,17 +175,23 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
       if (!next) return prev;
       return { ...prev, [group]: next };
     });
-  }, []);
+  }, [isGroupFinalized]);
 
   const resetGroup = useCallback((group: GroupId) => {
+    if (isGroupFinalized(group)) return;
     setLastSavedAt(null);
     setSaveError(null);
     setGroupRankings((prev) => ({ ...prev, [group]: [...BRACKET_GROUPS[group]] }));
-  }, []);
+  }, [isGroupFinalized]);
 
   const resetAll = useCallback(() => {
-    setGroupRankings(defaultRankings());
-    setPicks(defaultPicks());
+    const rankings = defaultRankings();
+    const nextPicks = defaultPicks();
+    setGroupRankings(rankings);
+    setCommittedGroupRankings(rankings);
+    setFinalizedGroups([]);
+    setPicks(nextPicks);
+    setCommittedPicks(nextPicks);
     setIsCreated(false);
     setLastSavedAt(null);
     setSaveError(null);
@@ -183,6 +220,57 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
 
   const start = useCallback(() => setIsCreated(true), []);
 
+  const saveGroup = useCallback(async (group: GroupId) => {
+    if (!user) {
+      setSaveError(new Error("Sign in to save your bracket."));
+      return false;
+    }
+
+    if (isGroupFinalized(group)) {
+      return true;
+    }
+
+    setIsSaving(true);
+    setSaveError(null);
+
+    const nextFinalizedGroups = normalizeFinalizedGroups([...finalizedGroups, group]);
+    const nextGroupRankings: Record<GroupId, string[]> = {
+      ...committedGroupRankings,
+      [group]: [...(groupRankings[group] ?? BRACKET_GROUPS[group])]
+    };
+    const persisted: PersistedBracketPicks = {
+      groupRankings: nextGroupRankings,
+      finalizedGroups: nextFinalizedGroups,
+      picks: committedPicks
+    };
+
+    try {
+      const saved = await submitCurrentBracket(persisted, groupId);
+      setCommittedGroupRankings(saved.picks.groupRankings);
+      setCommittedPicks(saved.picks.picks);
+      setFinalizedGroups(normalizeFinalizedGroups(saved.picks.finalizedGroups ?? nextFinalizedGroups));
+      setLastSavedAt(saved.updatedAt);
+      setGroupRankings((prev) => ({
+        ...prev,
+        [group]: saved.picks.groupRankings[group] ?? nextGroupRankings[group]
+      }));
+      return true;
+    } catch (err) {
+      setSaveError(err instanceof Error ? err : new Error(String(err)));
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [
+    committedGroupRankings,
+    committedPicks,
+    finalizedGroups,
+    groupId,
+    groupRankings,
+    isGroupFinalized,
+    user
+  ]);
+
   const saveBracket = useCallback(async () => {
     if (!user) {
       setSaveError(new Error("Sign in to save your bracket."));
@@ -192,10 +280,13 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
     setIsSaving(true);
     setSaveError(null);
 
-    const persisted: PersistedBracketPicks = { groupRankings, picks };
+    const persisted: PersistedBracketPicks = { groupRankings, finalizedGroups, picks };
 
     try {
       const saved = await submitCurrentBracket(persisted, groupId);
+      setCommittedGroupRankings(saved.picks.groupRankings);
+      setCommittedPicks(saved.picks.picks);
+      setFinalizedGroups(normalizeFinalizedGroups(saved.picks.finalizedGroups ?? finalizedGroups));
       setLastSavedAt(saved.updatedAt);
     } catch (err) {
       if (err instanceof PickPastLockoutError) {
@@ -227,12 +318,20 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
 
         setGroupRankings(revertedRankings);
         setPicks(revertedPicks);
+        setFinalizedGroups(normalizeFinalizedGroups(fresh?.picks.finalizedGroups ?? finalizedGroups));
 
         try {
           const retried = await submitCurrentBracket(
-            { groupRankings: revertedRankings, picks: revertedPicks },
+            {
+              groupRankings: revertedRankings,
+              finalizedGroups: normalizeFinalizedGroups(fresh?.picks.finalizedGroups ?? finalizedGroups),
+              picks: revertedPicks
+            },
             groupId
           );
+          setCommittedGroupRankings(retried.picks.groupRankings);
+          setCommittedPicks(retried.picks.picks);
+          setFinalizedGroups(normalizeFinalizedGroups(retried.picks.finalizedGroups ?? finalizedGroups));
           setLastSavedAt(retried.updatedAt);
           setSaveError(
             new Error("Some picks were locked while editing — your other picks saved.")
@@ -246,7 +345,7 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
     } finally {
       setIsSaving(false);
     }
-  }, [groupRankings, picks, user, groupId]);
+  }, [finalizedGroups, groupRankings, picks, user, groupId]);
 
   const value = useMemo<BracketContextValue>(
     () => ({
@@ -256,29 +355,34 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
       lastSavedAt,
       saveError,
       groupRankings,
+      finalizedGroups,
       picks,
       start,
       resetAll,
       saveBracket,
+      saveGroup,
       moveTeamUp,
       moveTeamDown,
       resetGroup,
       setPick,
       setFinal,
       setThird,
+      areAllGroupsFinalized,
+      isGroupFinalized,
       isGroupLocked: lockState.isGroupLocked,
       isMatchLocked: lockState.isMatchLocked,
       isClockFallback: lockState.isClockFallback,
       phase: lockState.phase,
+      stageState,
       nextLockAt: lockState.nextLockAt,
       nextLockLabel: lockState.nextLockLabel,
       fixturesLoading: lockState.isLoading
     }),
     [
       isCreated, isLoadingSavedBracket, isSaving, lastSavedAt, saveError,
-      groupRankings, picks, start, resetAll, saveBracket,
+      groupRankings, finalizedGroups, picks, start, resetAll, saveBracket, saveGroup,
       moveTeamUp, moveTeamDown, resetGroup, setPick, setFinal, setThird,
-      lockState
+      areAllGroupsFinalized, isGroupFinalized, lockState, stageState
     ]
   );
 

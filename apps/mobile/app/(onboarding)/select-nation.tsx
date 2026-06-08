@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "expo-router";
+import type { ListRenderItem } from "react-native";
 import { FlatList, Pressable, StyleSheet, Text } from "react-native";
 import { APP_ROUTES, SUPPORTED_NATIONS } from "@world-cup-game/config";
+import type { NationConfig } from "@world-cup-game/config";
 import { OnboardingButton, OnboardingInput, OnboardingShell } from "../../src/components/onboarding";
 import { NationRow, useOnboarding } from "../../src/features/onboarding";
 import { opacity } from "../../src/theme/colors";
@@ -12,6 +14,7 @@ export default function SelectNationScreen() {
   const router = useRouter();
   const { nation, setNation } = useOnboarding();
   const [query, setQuery] = useState("");
+  const selectedNationCode = nation?.code;
 
   const filteredNations = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -20,6 +23,19 @@ export default function SelectNationScreen() {
     }
     return SUPPORTED_NATIONS.filter((item) => item.name.toLowerCase().includes(term));
   }, [query]);
+
+  const keyExtractor = useCallback((item: NationConfig) => item.code, []);
+
+  const renderNation: ListRenderItem<NationConfig> = useCallback(
+    ({ item }) => (
+      <NationRow
+        nation={item}
+        selected={selectedNationCode === item.code}
+        onPress={setNation}
+      />
+    ),
+    [selectedNationCode, setNation]
+  );
 
   return (
     <OnboardingShell
@@ -51,18 +67,18 @@ export default function SelectNationScreen() {
       <FlatList
         style={styles.list}
         data={filteredNations}
-        keyExtractor={(item) => item.code}
+        extraData={selectedNationCode}
+        keyExtractor={keyExtractor}
         contentContainerStyle={styles.listContent}
+        initialNumToRender={12}
         keyboardShouldPersistTaps="handled"
+        maxToRenderPerBatch={8}
+        removeClippedSubviews
         showsVerticalScrollIndicator={false}
+        updateCellsBatchingPeriod={32}
+        windowSize={5}
         ListEmptyComponent={<Text style={styles.empty}>No nations match that search.</Text>}
-        renderItem={({ item }) => (
-          <NationRow
-            nation={item}
-            selected={nation?.code === item.code}
-            onPress={() => setNation(item)}
-          />
-        )}
+        renderItem={renderNation}
       />
     </OnboardingShell>
   );

@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LEADERBOARD_STAGES, SUPPORTED_NATIONS } from "@world-cup-game/config";
+import { TeamLogo } from "../../../components/team";
 import type { LeaderboardStage } from "@world-cup-game/config";
 import { useSession } from "../../auth/hooks/useSession";
 import { colors, opacity } from "../../../theme/colors";
@@ -25,6 +26,7 @@ import {
   uniqueCountryCodes
 } from "../../leaderboard";
 import type { CountryFilter, FilterOption } from "../../leaderboard";
+import { MemberActions, useBlockedUsers } from "../../moderation";
 import { getErrorMessage } from "../../../utils/errors";
 
 type DetailTab = "leaderboard" | "members";
@@ -33,11 +35,6 @@ function roleLabel(role: GroupMember["role"]): string {
   if (role === "owner") return "Owner";
   if (role === "admin") return "Admin";
   return "Member";
-}
-
-function flagFor(code: string): string {
-  const nation = SUPPORTED_NATIONS.find((n) => n.code === code);
-  return nation?.flagEmoji ?? "??";
 }
 
 function nationName(code: string): string {
@@ -162,6 +159,7 @@ export function GroupDetailScreen() {
               <MembersPanel
                 members={membersQuery.data ?? []}
                 currentUserId={user?.id ?? null}
+                groupId={group.id}
                 isLoading={membersQuery.isLoading}
                 error={membersQuery.error}
               />
@@ -212,19 +210,26 @@ function GroupHero({
 function MembersPanel({
   members,
   currentUserId,
+  groupId,
   isLoading,
   error
 }: {
   members: GroupMember[];
   currentUserId: string | null;
+  groupId: string;
   isLoading: boolean;
   error: unknown;
 }) {
+  const { blockedSet } = useBlockedUsers();
+  const visibleMembers = members.filter(
+    (member) => member.userId === currentUserId || !blockedSet.has(member.userId)
+  );
+
   return (
     <View style={styles.panel}>
       <View style={styles.panelHeader}>
         <Text style={styles.sectionTitle}>Members</Text>
-        <Text style={styles.sectionCount}>{members.length}</Text>
+        <Text style={styles.sectionCount}>{visibleMembers.length}</Text>
       </View>
 
       {isLoading ? (
@@ -233,14 +238,15 @@ function MembersPanel({
         <Text style={styles.panelStatus}>
           {getErrorMessage(error, "Could not load members.")}
         </Text>
-      ) : members.length === 0 ? (
+      ) : visibleMembers.length === 0 ? (
         <Text style={styles.panelStatus}>No members found yet.</Text>
       ) : (
         <View style={styles.memberList}>
-          {members.map((member) => (
+          {visibleMembers.map((member) => (
             <MemberRow
               key={member.userId}
               member={member}
+              groupId={groupId}
               isCurrentUser={member.userId === currentUserId}
             />
           ))}
@@ -252,15 +258,17 @@ function MembersPanel({
 
 function MemberRow({
   member,
-  isCurrentUser
+  isCurrentUser,
+  groupId
 }: {
   member: GroupMember;
   isCurrentUser: boolean;
+  groupId: string;
 }) {
   return (
     <View style={[styles.memberRow, isCurrentUser ? styles.memberRowCurrent : null]}>
       <View style={styles.memberAvatar}>
-        <Text style={styles.memberFlag}>{flagFor(member.countryCode)}</Text>
+        <TeamLogo code={member.countryCode} size={34} />
       </View>
       <View style={styles.memberInfo}>
         <Text style={styles.memberName} numberOfLines={1}>
@@ -273,6 +281,14 @@ function MemberRow({
       <View style={styles.rolePill}>
         <Text style={styles.roleText}>{roleLabel(member.role)}</Text>
       </View>
+      {isCurrentUser ? null : (
+        <MemberActions
+          context="group_member"
+          contextId={groupId}
+          displayName={member.displayName}
+          userId={member.userId}
+        />
+      )}
     </View>
   );
 }
@@ -286,6 +302,7 @@ function GroupLeaderboard({
 }) {
   const [stage, setStage] = useState<LeaderboardStage>("overall");
   const [country, setCountry] = useState<CountryFilter>(COUNTRY_ALL);
+  const { blockedSet } = useBlockedUsers();
 
   const stageOptions: FilterOption<LeaderboardStage>[] = useMemo(
     () => LEADERBOARD_STAGES.map((s) => ({ id: s.id, label: s.label })),
@@ -311,15 +328,18 @@ function GroupLeaderboard({
       const nationConfig = SUPPORTED_NATIONS.find((n) => n.code === code);
       opts.push({
         id: code,
-        label: nationConfig ? `${nationConfig.flagEmoji} ${nationConfig.name}` : code
+        label: nationConfig?.name ?? code
       });
     }
     return opts;
   }, [allRows]);
 
   const rows = useMemo(
-    () => filterLeaderboardRows(allRows, country),
-    [allRows, country]
+    () =>
+      filterLeaderboardRows(allRows, country).filter(
+        (row) => row.isCurrentUser || !blockedSet.has(row.id)
+      ),
+    [allRows, blockedSet, country]
   );
 
   return (
@@ -518,9 +538,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: 44
   },
-  memberFlag: {
-    fontSize: 22
-  },
   memberInfo: {
     flex: 1
   },
@@ -632,7 +649,9 @@ const styles = StyleSheet.create({
   table: {
     backgroundColor: colors.cream,
     borderRadius: radius.lg,
-    overflow: "hidden"
+    overflow: "hidden",
+    paddingBottom: spacing.xs,
+    paddingTop: spacing.md
   },
   tableHeader: {
     alignItems: "center",

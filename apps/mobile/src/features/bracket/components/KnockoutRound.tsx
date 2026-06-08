@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { formatTeamName, SUPPORTED_NATIONS } from "@world-cup-game/config";
+import { TeamLogo } from "../../../components/team";
 import { useBracket } from "../BracketContext";
 import {
   getFinalMatch,
@@ -14,9 +15,9 @@ import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
 
-function nationByCode(code: string | null) {
-  if (!code) return null;
-  return SUPPORTED_NATIONS.find((n) => n.code === code) ?? null;
+function nationByTeam(team: string | null) {
+  if (!team) return null;
+  return SUPPORTED_NATIONS.find((n) => n.code === team || n.name === team) ?? null;
 }
 
 function roundLabel(r: Round): string {
@@ -76,8 +77,8 @@ export function KnockoutRound({ round }: KnockoutRoundProps) {
       ) : null}
 
       {matches.map((m) => {
-        const home = nationByCode(m.home);
-        const away = nationByCode(m.away);
+        const home = nationByTeam(m.home);
+        const away = nationByTeam(m.away);
         const pick = getPick(m.index);
         const homeSelected = pick !== null && pick === m.home;
         const awaySelected = pick !== null && pick === m.away;
@@ -86,7 +87,7 @@ export function KnockoutRound({ round }: KnockoutRoundProps) {
         return (
           <View key={m.index} style={styles.matchCard}>
             <Text style={styles.matchLabel}>Match {m.index + 1}</Text>
-            {locked ? <Text style={styles.lockChip}>🔒 LOCKED</Text> : null}
+            {locked ? <Text style={styles.lockChip}>LOCKED</Text> : null}
             <View style={styles.matchRow}>
               <Pressable
                 style={[
@@ -98,12 +99,12 @@ export function KnockoutRound({ round }: KnockoutRoundProps) {
                 disabled={!m.home || locked}
                 onPress={() => m.home && handlePick(m.index, m.home)}
               >
-                <Text style={styles.teamFlag}>{home?.flagEmoji ?? "?"}</Text>
+                <TeamLogo code={home?.code} name={home?.name ?? m.home} size={32} />
                 <Text
                   style={[styles.teamName, homeSelected ? styles.teamNameSelected : null]}
                   numberOfLines={2}
                 >
-                  {home?.name ? formatTeamName(home.name) : "TBD"}
+                  {m.home ? formatTeamName(home?.name ?? m.home) : "TBD"}
                 </Text>
               </Pressable>
 
@@ -119,12 +120,12 @@ export function KnockoutRound({ round }: KnockoutRoundProps) {
                 disabled={!m.away || locked}
                 onPress={() => m.away && handlePick(m.index, m.away)}
               >
-                <Text style={styles.teamFlag}>{away?.flagEmoji ?? "?"}</Text>
+                <TeamLogo code={away?.code} name={away?.name ?? m.away} size={32} />
                 <Text
                   style={[styles.teamName, awaySelected ? styles.teamNameSelected : null]}
                   numberOfLines={2}
                 >
-                  {away?.name ? formatTeamName(away.name) : "TBD"}
+                  {m.away ? formatTeamName(away?.name ?? m.away) : "TBD"}
                 </Text>
               </Pressable>
             </View>
@@ -188,9 +189,6 @@ const styles = StyleSheet.create({
   },
   teamLocked: {
     opacity: 0.5
-  },
-  teamFlag: {
-    fontSize: 24
   },
   teamName: {
     color: colors.ink,

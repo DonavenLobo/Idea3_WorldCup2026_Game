@@ -8,27 +8,39 @@ import { typography } from "../../theme/typography";
 export interface FilterPillProps {
   label: string;
   selected?: boolean;
+  disabled?: boolean;
   onPress?: () => void;
   onLayout?: (event: LayoutChangeEvent) => void;
 }
 
-export function FilterPill({ label, selected = false, onPress, onLayout }: FilterPillProps) {
+export function FilterPill({
+  label,
+  selected = false,
+  disabled = false,
+  onPress,
+  onLayout,
+}: FilterPillProps) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityState={{ selected }}
+      accessibilityState={{ disabled, selected }}
+      disabled={disabled}
       onLayout={onLayout}
       onPress={() => {
+        if (disabled) return;
         triggerLightImpact();
         onPress?.();
       }}
       style={({ pressed }) => [
         styles.pill,
         selected ? styles.pillSelected : styles.pillUnselected,
-        pressed && pressableFeedback(true),
+        disabled ? styles.pillDisabled : null,
+        pressed && !disabled && pressableFeedback(true),
       ]}
     >
-      <Text style={[styles.label, selected && styles.labelSelected]}>{label}</Text>
+      <Text style={[styles.label, selected && styles.labelSelected, disabled && styles.labelDisabled]}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -36,6 +48,9 @@ export function FilterPill({ label, selected = false, onPress, onLayout }: Filte
 const styles = StyleSheet.create({
   label: {
     ...typography.label,
+    color: colors.ink,
+  },
+  labelDisabled: {
     color: colors.ink,
   },
   labelSelected: {
@@ -47,6 +62,9 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: "center",
     paddingHorizontal: 20,
+  },
+  pillDisabled: {
+    opacity: 0.35,
   },
   pillSelected: {
     backgroundColor: colors.red,

@@ -5,7 +5,8 @@ import { APP_ROUTES } from "@world-cup-game/config";
 import type { AuthProvider } from "@world-cup-game/types";
 import { AuthOptionRow } from "../../../components/auth";
 import { spacing } from "../../../theme/spacing";
-import { saveCompletedOnboarding, useOnboarding } from "../../onboarding";
+import { useOnboarding } from "../../onboarding";
+import { finalizeSignIn } from "../api/finalizeSignIn";
 import { signInWithProvider } from "../api/signInWithProvider";
 
 type OAuthButtonProvider = Extract<AuthProvider, "apple" | "google">;
@@ -13,9 +14,10 @@ type OAuthButtonProvider = Extract<AuthProvider, "apple" | "google">;
 const PROVIDERS: Array<{
   label: string;
   provider: OAuthButtonProvider;
+  variant: "primary" | "secondary";
 }> = [
-  { label: "Continue with Google", provider: "google" },
-  { label: "Continue with Apple", provider: "apple" },
+  { label: "Continue with Google", provider: "google", variant: "primary" },
+  { label: "Continue with Apple", provider: "apple", variant: "secondary" },
 ];
 
 function getErrorMessage(error: unknown) {
@@ -33,15 +35,22 @@ export function OAuthButtons() {
     try {
       const session = await signInWithProvider(provider);
 
-      if (session) {
-        try {
-          await saveCompletedOnboarding(onboarding);
-        } catch (saveError) {
-          Alert.alert("Card save failed", getErrorMessage(saveError));
-        }
-
-        router.replace(APP_ROUTES.tabs.home);
+      if (!session) {
+        return;
       }
+
+      const outcome = await finalizeSignIn(onboarding);
+
+      if (outcome === "needs-onboarding") {
+        Alert.alert(
+          "No account yet",
+          "We couldn't find a GoGaffa account for that login. Let's create your footballer card first."
+        );
+        router.replace(APP_ROUTES.onboarding.selectNation);
+        return;
+      }
+
+      router.replace(APP_ROUTES.tabs.home);
     } catch (error) {
       Alert.alert("Sign-in failed", getErrorMessage(error));
     } finally {
@@ -58,6 +67,7 @@ export function OAuthButtons() {
           onPress={() => void handlePress(item.provider)}
           disabled={loadingProvider !== null}
           loading={loadingProvider === item.provider}
+          variant={item.variant}
         />
       ))}
     </View>

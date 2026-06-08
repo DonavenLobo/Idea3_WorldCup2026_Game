@@ -3,6 +3,7 @@ import type { ImageSourcePropType } from "react-native";
 import { SUPPORTED_NATIONS } from "@world-cup-game/config";
 import { BrandButton, Eyebrow } from "../../../components/brand";
 import { accountMenuIconSources } from "../../../components/icons/accountMenuIconSources";
+import { TeamLogo } from "../../../components/team";
 import { triggerLightImpact, triggerSelection } from "../../../lib/haptics";
 import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
@@ -24,6 +25,7 @@ export interface AccountMenuContentProps {
   onOpenLeaderboard: () => void;
   onOpenLockerRoom: () => void;
   onRequestSignOut: () => void;
+  onRequestDeleteAccount: () => void;
 }
 
 interface AccountAction {
@@ -34,7 +36,6 @@ interface AccountAction {
 }
 
 export function AccountMenuContent({
-  creditBalance = 0,
   leaderboardScore = 0,
   displayName,
   email,
@@ -46,6 +47,7 @@ export function AccountMenuContent({
   onOpenLeaderboard,
   onOpenLockerRoom,
   onRequestSignOut,
+  onRequestDeleteAccount,
 }: AccountMenuContentProps) {
   const nation = SUPPORTED_NATIONS.find((candidate) => candidate.code === nationCode);
   const initial = displayName.trim().charAt(0).toUpperCase() || "?";
@@ -62,7 +64,7 @@ export function AccountMenuContent({
       iconSource: accountMenuIconSources.home,
       label: "Locker Room",
       onPress: onOpenLockerRoom,
-      trailing: `${creditBalance.toLocaleString()} CR`,
+      trailing: "Soon",
     },
   ];
 
@@ -104,7 +106,7 @@ export function AccountMenuContent({
         <View style={styles.metaRow}>
           {nation ? (
             <View style={styles.metaChip}>
-              <Text style={styles.metaFlag}>{nation.flagEmoji}</Text>
+              <TeamLogo code={nation.code} name={nation.name} size={18} />
               <Text style={styles.metaText}>{nation.code}</Text>
             </View>
           ) : null}
@@ -140,6 +142,13 @@ export function AccountMenuContent({
           style={({ pressed }) => [styles.signOutRow, pressed && pressableFeedback(true)]}
         >
           <Text style={styles.signOutLabel}>Sign out</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => handleActionPress(onRequestDeleteAccount)}
+          style={({ pressed }) => [styles.deleteRow, pressed && pressableFeedback(true)]}
+        >
+          <Text style={styles.deleteLabel}>Delete account</Text>
         </Pressable>
       </View>
     </View>
@@ -257,10 +266,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
   },
-  metaFlag: {
-    fontSize: 13,
-    lineHeight: 16,
-  },
   metaRow: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -331,5 +336,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     minHeight: 44,
     paddingVertical: spacing.xs,
+  },
+  deleteRow: {
+    alignItems: "center",
+    minHeight: 36,
+    paddingVertical: spacing.xs,
+  },
+  deleteLabel: {
+    ...typography.caption,
+    color: opacity.ink55,
+    textAlign: "center",
+    textDecorationLine: "underline",
   },
 });

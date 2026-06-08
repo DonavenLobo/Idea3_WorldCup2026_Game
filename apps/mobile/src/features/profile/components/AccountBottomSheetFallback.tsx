@@ -33,7 +33,7 @@ export const AccountBottomSheetFallback = forwardRef<
   ref
 ) {
   const [visible, setVisible] = useState(false);
-  const { handleDismiss, queueNavigation, queueSignOut, resetPending } =
+  const { handleDismiss, queueNavigation, queueSignOut, queueDeleteAccount, resetPending } =
     useAccountSheetActions(onOpenChange);
 
   const closeAndFinalize = useCallback(() => {
@@ -77,6 +77,11 @@ export const AccountBottomSheetFallback = forwardRef<
     closeAndFinalize();
   }, [closeAndFinalize, queueSignOut]);
 
+  const handleRequestDeleteAccount = useCallback(() => {
+    queueDeleteAccount();
+    closeAndFinalize();
+  }, [closeAndFinalize, queueDeleteAccount]);
+
   return (
     <Modal
       visible={visible}
@@ -98,6 +103,7 @@ export const AccountBottomSheetFallback = forwardRef<
           onOpenLeaderboard={handleOpenLeaderboard}
           onOpenLockerRoom={handleOpenLockerRoom}
           onRequestSignOut={handleRequestSignOut}
+          onRequestDeleteAccount={handleRequestDeleteAccount}
         />
       </SafeAreaView>
     </Modal>

@@ -3,7 +3,7 @@ import { Dimensions } from "react-native";
 import { APP_ROUTES } from "@world-cup-game/config";
 import {
   BottomSheetModal,
-  BottomSheetView,
+  BottomSheetScrollView,
   type BottomSheetBackdropProps,
   type BottomSheetModal as BottomSheetModalType,
 } from "@gorhom/bottom-sheet";
@@ -38,7 +38,7 @@ export const AccountBottomSheetGorhom = forwardRef<
   ref
 ) {
   const sheetRef = useRef<BottomSheetModalType>(null);
-  const { handleDismiss, queueNavigation, queueSignOut, resetPending } =
+  const { handleDismiss, queueNavigation, queueSignOut, queueDeleteAccount, resetPending } =
     useAccountSheetActions(onOpenChange);
 
   const dismissSheet = useCallback(() => {
@@ -79,6 +79,11 @@ export const AccountBottomSheetGorhom = forwardRef<
     dismissSheet();
   }, [dismissSheet, queueSignOut]);
 
+  const handleRequestDeleteAccount = useCallback(() => {
+    queueDeleteAccount();
+    dismissSheet();
+  }, [dismissSheet, queueDeleteAccount]);
+
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => <BlurredSheetBackdrop {...props} />,
     []
@@ -93,10 +98,13 @@ export const AccountBottomSheetGorhom = forwardRef<
       enablePanDownToClose
       handleIndicatorStyle={styles.handleIndicator}
       keyboardBehavior="interactive"
-      maxDynamicContentSize={SCREEN_HEIGHT * 0.62}
+      maxDynamicContentSize={SCREEN_HEIGHT * 0.85}
       onDismiss={handleDismiss}
     >
-      <BottomSheetView>
+      <BottomSheetScrollView
+        bounces={false}
+        showsVerticalScrollIndicator={false}
+      >
         <AccountMenuContent
           creditBalance={creditBalance}
           leaderboardScore={leaderboardScore}
@@ -110,8 +118,9 @@ export const AccountBottomSheetGorhom = forwardRef<
           onOpenLeaderboard={handleOpenLeaderboard}
           onOpenLockerRoom={handleOpenLockerRoom}
           onRequestSignOut={handleRequestSignOut}
+          onRequestDeleteAccount={handleRequestDeleteAccount}
         />
-      </BottomSheetView>
+      </BottomSheetScrollView>
     </BottomSheetModal>
   );
 });

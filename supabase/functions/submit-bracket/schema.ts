@@ -2,6 +2,7 @@ type RoundPicks = Record<string, string>;
 
 export interface BracketPicksPayload {
   groupRankings: Record<string, string[]>;
+  finalizedGroups: string[];
   picks: {
     r32: RoundPicks;
     r16: RoundPicks;
@@ -59,6 +60,14 @@ function parseRoundPicks(value: unknown, label: string): RoundPicks {
   return parsed;
 }
 
+function parseStringArray(value: unknown, label: string): string[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || !value.every((entry) => typeof entry === "string")) {
+    throw new Error(`${label} must be an array of strings.`);
+  }
+  return value;
+}
+
 function parseNullableTeamCode(value: unknown, label: string): string | null {
   if (value === null || value === undefined) return null;
   if (typeof value !== "string") {
@@ -74,6 +83,7 @@ function parsePicksPayload(value: unknown): BracketPicksPayload {
 
   return {
     groupRankings: parseStringArrayRecord(value.groupRankings, "groupRankings"),
+    finalizedGroups: parseStringArray(value.finalizedGroups, "finalizedGroups"),
     picks: {
       r32: parseRoundPicks(value.picks.r32, "picks.r32"),
       r16: parseRoundPicks(value.picks.r16, "picks.r16"),

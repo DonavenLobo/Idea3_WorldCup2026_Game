@@ -389,7 +389,7 @@ function LeaderboardPanel({ group }: { group: JoinedGroup | null }) {
       const nationConfig = SUPPORTED_NATIONS.find((n) => n.code === code);
       opts.push({
         id: code,
-        label: nationConfig ? `${nationConfig.flagEmoji} ${nationConfig.name}` : code
+        label: nationConfig?.name ?? code
       });
     }
     return opts;
@@ -582,7 +582,9 @@ const lbStyles = StyleSheet.create({
   table: {
     backgroundColor: "#FFFFFF",
     borderRadius: radius.lg,
-    overflow: "hidden"
+    overflow: "hidden",
+    paddingBottom: spacing.xs,
+    paddingTop: spacing.md
   },
   tableHeader: {
     alignItems: "center",

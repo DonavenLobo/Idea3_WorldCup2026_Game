@@ -1,5 +1,7 @@
+import { memo, useCallback } from "react";
 import { Pressable, StyleSheet, Text } from "react-native";
 import type { NationConfig } from "@world-cup-game/config";
+import { TeamLogo } from "../../../components/team";
 import { colors, opacity } from "../../../theme/colors";
 import { spacing } from "../../../theme/spacing";
 import { pressableFeedback } from "../../../theme/pressable";
@@ -8,20 +10,26 @@ import { typography } from "../../../theme/typography";
 interface NationRowProps {
   nation: NationConfig;
   selected: boolean;
-  onPress: () => void;
+  onPress: (nation: NationConfig) => void;
 }
 
-export function NationRow({ nation, selected, onPress }: NationRowProps) {
+function NationRowComponent({ nation, selected, onPress }: NationRowProps) {
+  const handlePress = useCallback(() => {
+    onPress(nation);
+  }, [nation, onPress]);
+
   return (
     <Pressable
-      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      onPress={handlePress}
       style={({ pressed }) => [
         styles.row,
         selected && styles.rowSelected,
         pressed && pressableFeedback(true),
       ]}
     >
-      <Text style={styles.flag}>{nation.flagEmoji}</Text>
+      <TeamLogo code={nation.code} name={nation.name} size={34} />
       <Text style={styles.name} numberOfLines={2}>
         {nation.name}
       </Text>
@@ -30,15 +38,20 @@ export function NationRow({ nation, selected, onPress }: NationRowProps) {
   );
 }
 
+export const NationRow = memo(
+  NationRowComponent,
+  (prev, next) =>
+    prev.nation.code === next.nation.code
+    && prev.selected === next.selected
+    && prev.onPress === next.onPress
+);
+
 const styles = StyleSheet.create({
   check: {
     color: colors.red,
     fontFamily: typography.label.fontFamily,
     fontSize: 18,
     lineHeight: 22,
-  },
-  flag: {
-    fontSize: 28,
   },
   name: {
     ...typography.body,
@@ -53,6 +66,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
     gap: spacing.md,
+    minHeight: 66,
     paddingVertical: spacing.md,
   },
   rowSelected: {

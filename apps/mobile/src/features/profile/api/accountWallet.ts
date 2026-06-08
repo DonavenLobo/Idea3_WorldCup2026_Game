@@ -1,5 +1,4 @@
 import { getLeaderboardRows } from "../../leaderboard/api/leaderboard";
-import { getLockerWallet } from "../../locker-room/api/lockerRoom";
 import { supabase } from "../../../lib/supabase";
 
 export interface AccountStats {
@@ -26,19 +25,16 @@ async function getCurrentUserId() {
 export async function getAccountStats(): Promise<AccountStats> {
   const userId = await getCurrentUserId();
 
-  const [leaderboardRows, wallet] = await Promise.all([
-    getLeaderboardRows({
-      currentUserId: userId,
-      groupId: null,
-      stage: "overall",
-    }),
-    getLockerWallet(),
-  ]);
+  const leaderboardRows = await getLeaderboardRows({
+    currentUserId: userId,
+    groupId: null,
+    stage: "overall",
+  });
 
   const selfRow = leaderboardRows.find((row) => row.id === userId);
 
   return {
-    creditBalance: wallet.balance,
+    creditBalance: 0,
     leaderboardScore: selfRow?.score ?? 0,
   };
 }
