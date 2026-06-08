@@ -31,7 +31,7 @@ The AI footballer card is the core identity, monetization, and sharing surface. 
 15. Card stats are status/identity markers, not gameplay power.
 16. Cards never downgrade. Streaks and competitive rank can fluctuate, but card progression is cumulative.
 17. Daily trivia uses fixed questions for everyone, asynchronous play, and Wordle-like spoiler-safe result sharing.
-18. Daily trivia has 5 multiple-choice questions with 4 answer options each.
+18. Daily trivia has 3 multiple-choice questions with 4 answer options each, ramping in difficulty: Q1 easy (100 base pts, 20s timer), Q2 medium (150 base pts, 30s), Q3 hard (200 base pts, 45s). Each question's max speed bonus is 20% of base. *(Revised June 2026 — was previously 5 questions all worth the same. Tier-aware scoring + reduced question count for faster daily engagement.)*
 19. Only the first daily trivia attempt counts competitively.
 20. Trivia scoring uses correctness plus speed.
 21. Match predictions use simple pre-match outcome picks.
