@@ -1,6 +1,6 @@
 {
   "cli": {
-    "appVersionSource": "local",
+    "appVersionSource": "remote",
     "requireCommit": true
   },
   "build": {
@@ -28,6 +28,7 @@
     "production": {
       "distribution": "store",
       "channel": "production",
+      "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_ENVIRONMENT": "production"
       },
