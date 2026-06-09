@@ -1,6 +1,4 @@
-import { useEffect, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { formatTeamName, GROUP_IDS, SUPPORTED_NATIONS } from "@world-cup-game/config";
 import type { GroupId } from "@world-cup-game/config";
 import { BrandButton } from "../../../components/brand";
@@ -9,8 +7,6 @@ import { useBracket } from "../BracketContext";
 import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
-
-const GROUP_SAVE_WARNING_STORAGE_KEY = "gogaffa.bracket.groupSaveWarningDismissed";
 
 function nationByTeam(team: string) {
   return SUPPORTED_NATIONS.find((n) => n.code === team || n.name === team);
@@ -42,7 +38,7 @@ function GroupStatusTabs({ index, isGroupFinalized, onIndexChange }: GroupStatus
 
         return (
           <Pressable
-            accessibilityLabel={`Open Group ${group}${saved ? ", saved" : ", unsaved"}`}
+            accessibilityLabel={`Open Group ${group}${saved ? ", saved" : ""}`}
             accessibilityRole="button"
             accessibilityState={{ selected }}
             key={group}
@@ -76,26 +72,13 @@ interface GroupPickerProps {
 }
 
 export function GroupPicker({ index, onIndexChange, onComplete }: GroupPickerProps) {
-  const [skipSaveWarning, setSkipSaveWarning] = useState(false);
   const {
     groupRankings, moveTeamUp, moveTeamDown, resetGroup,
-    areAllGroupsFinalized, isGroupLocked, isGroupFinalized, saveGroup, isSaving, lastSavedAt, saveError
+    areAllGroupsFinalized, isGroupLocked, isGroupFinalized,
+    saveAllGroups, isSaving, lastSavedAt, saveError
   } = useBracket();
 
   const groupId = GROUP_IDS[index];
-
-  useEffect(() => {
-    let isMounted = true;
-    void AsyncStorage.getItem(GROUP_SAVE_WARNING_STORAGE_KEY).then((value) => {
-      if (isMounted) {
-        setSkipSaveWarning(value === "true");
-      }
-    });
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
   if (!groupId) return null;
   const finalized = isGroupFinalized(groupId);
   const locked = isGroupLocked(groupId) || finalized;
@@ -106,53 +89,18 @@ export function GroupPicker({ index, onIndexChange, onComplete }: GroupPickerPro
 
   const handlePrev = () => onIndexChange(Math.max(0, index - 1));
   const handleNext = () => {
-    if (isLast) {
-      onComplete?.();
-      return;
-    }
+    if (isLast) return;
     onIndexChange(Math.min(GROUP_IDS.length - 1, index + 1));
   };
 
-  const saveCurrentGroup = async (dontAskAgain = false) => {
-    if (dontAskAgain) {
-      setSkipSaveWarning(true);
-      await AsyncStorage.setItem(GROUP_SAVE_WARNING_STORAGE_KEY, "true");
-    }
-
-    const willFinalizeAllGroups = GROUP_IDS.every((group) =>
-      group === groupId || isGroupFinalized(group)
-    );
-    const saved = await saveGroup(groupId);
-    if (saved && willFinalizeAllGroups) {
+  // Group-stage save is one-shot: finalize all 12 groups in a single round-trip.
+  // Triggered from the last group via "Save Group Stage" (or by tapping "My Bracket"
+  // before finalization, which also auto-saves).
+  const handleSaveGroupStage = async () => {
+    const ok = await saveAllGroups();
+    if (ok) {
       onComplete?.();
     }
-  };
-
-  const handleSaveGroup = () => {
-    if (skipSaveWarning) {
-      void saveCurrentGroup();
-      return;
-    }
-
-    Alert.alert(
-      `Save Group ${groupId}?`,
-      "Once this group is saved, you cannot alter it again unless you reset the complete bracket.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Save",
-          onPress: () => {
-            void saveCurrentGroup();
-          }
-        },
-        {
-          text: "Save & don't ask again",
-          onPress: () => {
-            void saveCurrentGroup(true);
-          }
-        }
-      ]
-    );
   };
 
   return (
@@ -212,33 +160,32 @@ export function GroupPicker({ index, onIndexChange, onComplete }: GroupPickerPro
             <Pressable style={styles.resetButton} onPress={() => resetGroup(groupId)}>
               <Text style={styles.resetText}>Reset group</Text>
             </Pressable>
-            <BrandButton
-              label={`Save Group ${groupId}`}
-              onPress={handleSaveGroup}
-              disabled={isSaving}
-              loading={isSaving}
-              style={styles.saveCta}
-            />
           </View>
         ) : finalized ? (
-          <>
-            <View style={styles.groupActionRow}>
-              <BrandButton
-                label={`Group ${groupId} Saved`}
-                disabled
-                variant="secondary"
-                style={styles.saveCta}
-              />
-            </View>
-            <Text style={styles.lockedHint}>
-              This group is saved. Reset the complete bracket to change it.
-            </Text>
-          </>
+          <Text style={styles.lockedHint}>
+            All group picks saved. Reset the complete bracket to change them.
+          </Text>
         ) : (
           <Text style={styles.lockedHint}>This group has locked and can no longer be edited.</Text>
         )}
 
-        {lastSavedAt && finalized ? (
+        {/* One-shot Save Group Stage CTA — only on Group L, only if not yet finalized. */}
+        {isLast && !areAllGroupsFinalized ? (
+          <View style={styles.saveAllRow}>
+            <BrandButton
+              label="Save Group Stage"
+              onPress={() => void handleSaveGroupStage()}
+              disabled={isSaving}
+              loading={isSaving}
+              style={styles.saveAllCta}
+            />
+            <Text style={styles.saveAllHint}>
+              Locks in your picks for all 12 groups. You won&apos;t be able to change them after.
+            </Text>
+          </View>
+        ) : null}
+
+        {lastSavedAt && areAllGroupsFinalized ? (
           <Text style={styles.saveStatus}>Saved {new Date(lastSavedAt).toLocaleTimeString()}</Text>
         ) : null}
         {saveError ? <Text style={styles.saveError}>{saveError.message}</Text> : null}
@@ -283,7 +230,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     gap: spacing.sm,
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
     marginTop: spacing.md
   },
   groupTab: {
@@ -343,8 +290,18 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     textAlign: "center"
   },
-  saveCta: {
-    flex: 1
+  saveAllCta: {
+    alignSelf: "stretch",
+    width: "100%"
+  },
+  saveAllHint: {
+    color: opacity.ink55,
+    fontSize: 12,
+    marginTop: spacing.xs,
+    textAlign: "center"
+  },
+  saveAllRow: {
+    marginTop: spacing.lg
   },
   saveError: {
     color: colors.red,
@@ -451,9 +408,9 @@ const styles = StyleSheet.create({
     backgroundColor: opacity.ink12,
     borderRadius: radius.button,
     justifyContent: "center",
-    minHeight: 52,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.md
+    minHeight: 44,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm
   },
   resetText: {
     color: opacity.ink55,
