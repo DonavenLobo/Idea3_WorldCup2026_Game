@@ -19,7 +19,16 @@ alter table public.trivia_attempts
 alter table public.trivia_questions
   add column if not exists source_url text;
 
--- 3. question_order must be 1, 2, or 3 (matches three-tier scoring)
+-- 3. Wipe stale trivia rows from the pre-v1 5-questions-per-day era.
+--    These rows have question_order ∈ {1..5} and freeform difficulty,
+--    which violates the new CHECK constraints below. They were test data
+--    only — no real user attempts reference them since no production users
+--    existed before the App-Store submission build. Trivia attempt rows
+--    cascade-delete via FK on trivia_attempt_answers.question_id.
+--    The new content gets seeded by 000027 and 000028.
+delete from public.trivia_questions;
+
+-- 4. question_order must be 1, 2, or 3 (matches three-tier scoring)
 --    Drop any prior constraint with the same name to keep this re-runnable.
 alter table public.trivia_questions
   drop constraint if exists trivia_questions_question_order_check;
@@ -28,7 +37,7 @@ alter table public.trivia_questions
   add constraint trivia_questions_question_order_check
     check (question_order in (1, 2, 3));
 
--- 4. difficulty enum
+-- 5. difficulty enum
 alter table public.trivia_questions
   alter column difficulty set default 'easy';
 
