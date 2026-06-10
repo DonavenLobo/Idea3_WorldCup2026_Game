@@ -13,7 +13,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import { Fragment, useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { RootProviders } from "../src/components/layout/RootProviders";
@@ -21,6 +21,7 @@ import { useAuthRedirectHandler } from "../src/features/auth";
 import { BracketProvider } from "../src/features/bracket";
 import { GroupsProvider } from "../src/features/groups";
 import { LockerRoomProvider } from "../src/features/locker-room";
+import { LoginGate } from "../src/features/login";
 import { OnboardingProvider } from "../src/features/onboarding";
 import { queryClient } from "../src/lib/queryClient";
 import { colors } from "../src/theme/colors";
@@ -69,7 +70,10 @@ export default function RootLayout() {
             <BracketProvider>
               <GroupsProvider>
                 <LockerRoomProvider>
-                  <RootStack />
+                  <Fragment>
+                    <RootStack />
+                    <LoginGate />
+                  </Fragment>
                 </LockerRoomProvider>
               </GroupsProvider>
             </BracketProvider>
