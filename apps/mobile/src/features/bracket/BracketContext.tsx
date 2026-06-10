@@ -24,9 +24,13 @@ interface BracketContextValue extends BracketState {
   start: () => void;
   resetAll: () => void;
   saveBracket: () => Promise<void>;
+  /**
+   * Persist the given group's rankings. Adds the group to `finalizedGroups`
+   * (a "saved at least once" indicator) but does NOT prevent re-editing —
+   * the user can still adjust + re-save until the tournament-wide group
+   * stage deadline (earliest kickoff + 7 days) is reached.
+   */
   saveGroup: (group: GroupId) => Promise<boolean>;
-  /** Finalize all 12 groups at once and persist. Used by the group-stage one-shot save UX. */
-  saveAllGroups: () => Promise<boolean>;
   moveTeamUp: (group: GroupId, index: number) => void;
   moveTeamDown: (group: GroupId, index: number) => void;
   resetGroup: (group: GroupId) => void;
@@ -228,9 +232,10 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
       return false;
     }
 
-    if (isGroupFinalized(group)) {
-      return true;
-    }
+    // Note: previously this short-circuited when isGroupFinalized(group).
+    // We now allow re-save within the group-stage edit window so a user
+    // can adjust their picks after saving. The tournament-wide deadline
+    // (earliest kickoff + 7 days) is the only thing that prevents writes.
 
     setIsSaving(true);
     setSaveError(null);
@@ -270,61 +275,6 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
     groupId,
     groupRankings,
     isGroupFinalized,
-    user
-  ]);
-
-  /**
-   * Finalize ALL 12 groups in a single round-trip.
-   * Replaces the per-group "Save Group X" flow — the user picks rankings
-   * across all 12 groups and saves once at the end of the group stage.
-   * Already-finalized groups are no-ops (their committed rankings stay).
-   */
-  const saveAllGroups = useCallback(async () => {
-    if (!user) {
-      setSaveError(new Error("Sign in to save your bracket."));
-      return false;
-    }
-
-    setIsSaving(true);
-    setSaveError(null);
-
-    // Merge: for each group, prefer committed rankings if already finalized,
-    // otherwise the current in-progress ranking. This preserves any previous
-    // partial save without overwriting it with potentially-rolled-back state.
-    const nextGroupRankings: Record<GroupId, string[]> = {} as Record<GroupId, string[]>;
-    for (const g of GROUP_IDS) {
-      const isFinal = finalizedGroups.includes(g);
-      nextGroupRankings[g] = isFinal
-        ? [...(committedGroupRankings[g] ?? BRACKET_GROUPS[g])]
-        : [...(groupRankings[g] ?? BRACKET_GROUPS[g])];
-    }
-
-    const persisted: PersistedBracketPicks = {
-      groupRankings: nextGroupRankings,
-      finalizedGroups: [...GROUP_IDS],
-      picks: committedPicks
-    };
-
-    try {
-      const saved = await submitCurrentBracket(persisted, groupId);
-      setCommittedGroupRankings(saved.picks.groupRankings);
-      setCommittedPicks(saved.picks.picks);
-      setFinalizedGroups(normalizeFinalizedGroups(saved.picks.finalizedGroups ?? [...GROUP_IDS]));
-      setLastSavedAt(saved.updatedAt);
-      setGroupRankings(saved.picks.groupRankings);
-      return true;
-    } catch (err) {
-      setSaveError(err instanceof Error ? err : new Error(String(err)));
-      return false;
-    } finally {
-      setIsSaving(false);
-    }
-  }, [
-    committedGroupRankings,
-    committedPicks,
-    finalizedGroups,
-    groupId,
-    groupRankings,
     user
   ]);
 
@@ -418,7 +368,6 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
       resetAll,
       saveBracket,
       saveGroup,
-      saveAllGroups,
       moveTeamUp,
       moveTeamDown,
       resetGroup,
@@ -438,7 +387,7 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
     }),
     [
       isCreated, isLoadingSavedBracket, isSaving, lastSavedAt, saveError,
-      groupRankings, finalizedGroups, picks, start, resetAll, saveBracket, saveGroup, saveAllGroups,
+      groupRankings, finalizedGroups, picks, start, resetAll, saveBracket, saveGroup,
       moveTeamUp, moveTeamDown, resetGroup, setPick, setFinal, setThird,
       areAllGroupsFinalized, isGroupFinalized, lockState, stageState
     ]

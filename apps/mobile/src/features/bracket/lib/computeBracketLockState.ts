@@ -38,6 +38,14 @@ function roundLabel(round: KnockoutRoundId): string {
   }
 }
 
+/**
+ * Group-stage editing window: 7 days from the earliest group kickoff.
+ * After this deadline, ALL group rankings are locked regardless of which
+ * specific group games are still upcoming — this is intentional so that
+ * late joiners can't game the system by waiting for groups to play out.
+ */
+const GROUP_STAGE_EDIT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
 /** Pure: derive BracketLockState from (now, fixtures). */
 export function computeBracketLockState(
   now: Date,
@@ -51,32 +59,41 @@ export function computeBracketLockState(
     if (d) groupKickoffMs.set(g, d.getTime());
   }
 
+  // Tournament-wide group-stage deadline: earliest group kickoff + 7 days.
+  // If no group fixtures are loaded yet, fall back to never-locked.
+  const earliestGroupKickoff = Math.min(...Array.from(groupKickoffMs.values()));
+  const groupStageDeadlineMs =
+    Number.isFinite(earliestGroupKickoff)
+      ? earliestGroupKickoff + GROUP_STAGE_EDIT_WINDOW_MS
+      : Infinity;
+
   const knockoutKickoffMs = new Map<string, number>();
   for (const k of fixtures.knockouts) {
     knockoutKickoffMs.set(`${k.round}:${k.index}`, k.kickoff.getTime());
   }
 
-  const isGroupLocked = (group: GroupId): boolean => {
-    const k = groupKickoffMs.get(group);
-    return k !== undefined && nowMs >= k;
+  /**
+   * Tournament-wide group lock. All 12 groups lock at the same moment —
+   * once `now` passes the (earliest-kickoff + 7d) deadline.
+   * Per-group kickoff times no longer gate individual groups.
+   */
+  const isGroupLocked = (_group: GroupId): boolean => {
+    return nowMs >= groupStageDeadlineMs;
   };
 
+  /**
+   * Per-match lock for knockouts. Once a knockout match has kicked off,
+   * its pick can no longer be changed. (Spec: "no edit after a game has
+   * already been played" — kickoff is the closest authoritative signal
+   * we have without a live results feed.)
+   */
   const isMatchLocked = (round: KnockoutRoundId, index: number): boolean => {
     const k = knockoutKickoffMs.get(`${round}:${index}`);
     return k !== undefined && nowMs >= k;
   };
 
-  // Find the next lockable unit (soonest future kickoff, group or knockout)
-  let soonestGroupKickoff = Infinity;
-  let soonestGroupId: GroupId | null = null;
-  for (const g of GROUP_IDS) {
-    const k = groupKickoffMs.get(g);
-    if (k !== undefined && nowMs < k && k < soonestGroupKickoff) {
-      soonestGroupKickoff = k;
-      soonestGroupId = g;
-    }
-  }
-
+  // Next lock to display: group-stage deadline (if still in the future),
+  // otherwise the soonest upcoming knockout kickoff.
   let soonestKnockoutKickoff = Infinity;
   let soonestKnockoutLabel: string | null = null;
   for (const k of fixtures.knockouts) {
@@ -89,16 +106,20 @@ export function computeBracketLockState(
 
   let nextLockAt: Date | null = null;
   let nextLockLabel: string | null = null;
-  if (soonestGroupKickoff < Infinity && soonestGroupKickoff < soonestKnockoutKickoff) {
-    nextLockAt = new Date(soonestGroupKickoff);
-    nextLockLabel = `Group ${soonestGroupId}`;
+  if (
+    Number.isFinite(groupStageDeadlineMs) &&
+    nowMs < groupStageDeadlineMs &&
+    groupStageDeadlineMs < soonestKnockoutKickoff
+  ) {
+    nextLockAt = new Date(groupStageDeadlineMs);
+    nextLockLabel = "Group Stage";
   } else if (soonestKnockoutKickoff < Infinity) {
     nextLockAt = new Date(soonestKnockoutKickoff);
     nextLockLabel = soonestKnockoutLabel;
   }
 
-  const anyGroupLocked = GROUP_IDS.some(isGroupLocked);
-  const allGroupsLocked = GROUP_IDS.every(isGroupLocked);
+  // Group lock is now all-or-nothing (a single tournament-wide deadline).
+  const groupsLocked = nowMs >= groupStageDeadlineMs;
   const anyKnockoutLocked = fixtures.knockouts.some((k) =>
     isMatchLocked(k.round, k.index)
   );
@@ -106,10 +127,18 @@ export function computeBracketLockState(
     fixtures.knockouts.length > 0 &&
     fixtures.knockouts.every((k) => isMatchLocked(k.round, k.index));
 
+  // Phase derivation under the new model:
+  //   - pre:             tournament hasn't started + groups still editable
+  //   - phase1-closing:  tournament started, groups still editable (within 7d window)
+  //   - between:         group stage locked, no knockouts started yet
+  //   - phase2-closing:  some knockouts locked
+  //   - complete:        all knockouts locked
   let phase: TournamentPhase;
-  if (!anyGroupLocked) {
+  const earliestGroupHasStarted =
+    Number.isFinite(earliestGroupKickoff) && nowMs >= earliestGroupKickoff;
+  if (!earliestGroupHasStarted) {
     phase = "pre";
-  } else if (!allGroupsLocked) {
+  } else if (!groupsLocked) {
     phase = "phase1-closing";
   } else if (!anyKnockoutLocked) {
     phase = "between";
