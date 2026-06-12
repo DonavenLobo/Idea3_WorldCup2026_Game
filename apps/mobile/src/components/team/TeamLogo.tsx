@@ -1,8 +1,8 @@
 import { memo } from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import type { StyleProp, ViewStyle } from "react-native";
 import { opacity } from "../../theme/colors";
-import { teamLogoSourceForCode, teamLogoSourceForName } from "./teamLogos";
+import { teamFlagForCode, teamFlagForName } from "./teamFlags";
 
 interface TeamLogoProps {
   code?: string | null;
@@ -12,19 +12,20 @@ interface TeamLogoProps {
 }
 
 function TeamLogoComponent({ code, name, size, style }: TeamLogoProps) {
-  const source = teamLogoSourceForCode(code) ?? teamLogoSourceForName(name);
+  const Flag = teamFlagForCode(code) ?? teamFlagForName(name);
+  const flagHeight = Math.max(1, Math.round(size * 0.75));
 
   return (
     <View
-      accessibilityLabel={name ?? code ?? "Team logo"}
+      accessibilityLabel={`${name ?? code ?? "Team"} flag`}
       accessibilityRole="image"
       style={[styles.wrap, { height: size, width: size }, style]}
     >
-      {source ? (
-        <Image
-          resizeMode="contain"
-          source={source}
-          style={styles.image}
+      {Flag ? (
+        <Flag
+          height={flagHeight}
+          preserveAspectRatio="xMidYMid meet"
+          width={size}
         />
       ) : (
         <Text style={[styles.fallback, { fontSize: Math.max(10, size * 0.38) }]}>
@@ -48,10 +49,6 @@ const styles = StyleSheet.create({
   fallback: {
     color: opacity.ink55,
     fontWeight: "900",
-  },
-  image: {
-    height: "100%",
-    width: "100%",
   },
   wrap: {
     alignItems: "center",

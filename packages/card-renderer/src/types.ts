@@ -1,5 +1,12 @@
 import type { CardTemplateMetadata, PlayerCard } from "@world-cup-game/types";
+import type { ComponentType } from "react";
 import type { ImageSourcePropType } from "react-native";
+
+export type BadgeIconComponent = ComponentType<{
+  height?: number | string;
+  preserveAspectRatio?: string;
+  width?: number | string;
+}>;
 
 export interface PlayerCardRenderTemplate {
   id: string;
@@ -19,8 +26,9 @@ export interface PlayerCardRenderData {
     | "overall"
     | "stats"
     | "avatarGeneratedUrl"
-      | "avatarSourceUrl"
+    | "avatarSourceUrl"
   > & {
+    badgeIcon?: BadgeIconComponent;
     badgeImageSource?: ImageSourcePropType;
   };
   /** When false, stat values are omitted so the host can overlay them on the image. */

@@ -1,6 +1,6 @@
 export { TeamLogo } from "./TeamLogo";
 export {
-  TEAM_LOGO_SOURCES,
-  teamLogoSourceForCode,
-  teamLogoSourceForName,
-} from "./teamLogos";
+  TEAM_FLAG_COMPONENTS,
+  teamFlagForCode,
+  teamFlagForName,
+} from "./teamFlags";
