@@ -1,4 +1,4 @@
-import { TRIVIA_RULES } from "@world-cup-game/config";
+import { getTriviaTierForOrder } from "@world-cup-game/config";
 
 export function dateKey(d: Date = new Date()): string {
   const y = d.getFullYear();
@@ -7,12 +7,21 @@ export function dateKey(d: Date = new Date()): string {
   return `${y}-${m}-${day}`;
 }
 
-export function calculateTriviaAnswerPoints(isCorrect: boolean, responseTimeMs: number): number {
+/**
+ * Live-display per-answer points. Mirrors the edge-function scoring exactly:
+ * each question's tier (easy/medium/hard) is keyed off question_order (1/2/3).
+ */
+export function calculateTriviaAnswerPoints(
+  isCorrect: boolean,
+  responseTimeMs: number,
+  questionOrder: number
+): number {
   if (!isCorrect) return 0;
 
-  const cappedMs = Math.max(0, Math.min(responseTimeMs, 30_000));
-  const remainingRatio = (30_000 - cappedMs) / 30_000;
-  const speedBonus = Math.round(TRIVIA_RULES.maxSpeedBonusPerQuestion * remainingRatio);
+  const tier = getTriviaTierForOrder(questionOrder);
+  const cappedMs = Math.max(0, Math.min(responseTimeMs, tier.timeLimitMs));
+  const remainingRatio = (tier.timeLimitMs - cappedMs) / tier.timeLimitMs;
+  const speedBonus = Math.round(tier.maxSpeedBonus * remainingRatio);
 
-  return TRIVIA_RULES.correctAnswerCompetitivePoints + speedBonus;
+  return tier.basePoints + speedBonus;
 }
