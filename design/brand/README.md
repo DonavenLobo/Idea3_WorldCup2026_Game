@@ -1,6 +1,6 @@
 # GoGaffa Brand
 
-> The World Cup just got personal.
+> Your football summer starts here.
 
 ## Quick Reference
 
@@ -27,7 +27,7 @@ Website: [gogaffa.com](https://gogaffa.com)
 ## Voice
 
 - Personality: playful, competitive, direct, football-native, inclusive banter
-- Avoid official FIFA affiliation language
+- Avoid official tournament affiliation language
 - Prefer terms: tournament card, footballer card, fan card, squad card, group, bounty, Locker Room
 - Use "mates" not "friends" or "users"
 - Sentence case everywhere (except brand name "GoGaffa")

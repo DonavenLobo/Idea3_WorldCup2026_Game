@@ -44,7 +44,7 @@ export const COSMETIC_ITEMS: readonly CosmeticItem[] = [
   { id: "frame-platinum", name: "Platinum Frame", category: "frame", emoji: "P", priceCredits: 500, requiredTier: "platinum", rarity: "platinum" },
   { id: "frame-diamond", name: "Diamond Frame", category: "frame", emoji: "D", priceCredits: 1000, requiredTier: "diamond", rarity: "diamond" },
 
-  { id: "badge-wc26", name: "World Cup '26", category: "badge", emoji: "WC", priceCredits: 75, rarity: "bronze" },
+  { id: "badge-wc26", name: "Tournament '26", category: "badge", emoji: "26", priceCredits: 75, rarity: "bronze" },
   { id: "badge-mvp", name: "MVP", category: "badge", emoji: "MVP", priceCredits: 150, rarity: "bronze" },
   { id: "badge-hattrick", name: "Hat-trick", category: "badge", emoji: "HT", priceCredits: 200, requiredTier: "silver", rarity: "silver" },
   { id: "badge-ironwall", name: "Iron Wall", category: "badge", emoji: "IW", priceCredits: 300, requiredTier: "gold", rarity: "gold" },

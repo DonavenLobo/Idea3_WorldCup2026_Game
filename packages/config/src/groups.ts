@@ -20,7 +20,7 @@ export const PUBLIC_GROUPS: readonly PublicGroup[] = [
   },
   {
     id: "wc-fanatics",
-    name: "World Cup Fanatics",
+    name: "Tournament Fanatics",
     memberCount: 87,
     visibility: "public"
   },

@@ -101,7 +101,7 @@ Recommended final format:
 com.<company-or-organization>.<final-app-name>
 ```
 
-Avoid FIFA, World Cup official, FUT, or other protected/official-affiliation language in identifiers, store listings, screenshots, and metadata.
+Avoid protected tournament, team, league, or official-affiliation language in identifiers, store listings, screenshots, and metadata.
 
 ## Build Profiles
 
@@ -206,7 +206,7 @@ Complete before public launch:
 - [ ] Confirm purchases never affect Competitive Points.
 - [ ] Complete App Store privacy details and Google Play Data safety forms.
 - [ ] Complete store screenshots, descriptions, age rating, content rating, and review notes.
-- [ ] Confirm no public copy implies official FIFA affiliation.
+- [ ] Confirm no public copy implies official tournament affiliation.
 
 ## Apple App Store Checklist
 
@@ -335,7 +335,7 @@ Legal/content assets to prepare:
 - Account/data deletion instructions.
 - App screenshots and preview media.
 - Store descriptions and review notes.
-- Trademark-safe brand copy that does not imply official FIFA affiliation.
+- Trademark-safe brand copy that does not imply official tournament affiliation.
 
 ## Recommended Release Sequence
 
@@ -371,5 +371,5 @@ Not blockers in code, but must be done before/at upload:
 - Complete App Store privacy nutrition labels + Google Play Data safety (email, photos, user content, user ID, push token).
 - Age rating (13+) and content rating questionnaires.
 - App Review notes + a demo path (Sign in with Apple works for reviewers); state the 24-hour report-review commitment and that the app is an unofficial fan game.
-- Optional but recommended: review "World Cup 2026" copy for any implied FIFA affiliation.
+- Optional but recommended: review 2026 tournament copy for any implied third-party affiliation.
 - Confirm full-app access is gated behind a completed base card/session (product-completeness polish).

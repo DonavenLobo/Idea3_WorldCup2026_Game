@@ -35,7 +35,7 @@ function pad(value: number) {
   return value.toString().padStart(2, "0");
 }
 
-/** Pre-tournament only — remove once the World Cup kicks off. */
+/** Pre-tournament only — remove once the 2026 tournament kicks off. */
 function KickoffCountdown({
   days,
   hours,
@@ -49,7 +49,7 @@ function KickoffCountdown({
 }) {
   return (
     <View style={styles.kickoffBanner}>
-      <Text style={styles.kickoffSeries}>World Cup 2026</Text>
+      <Text style={styles.kickoffSeries}>2026 Tournament</Text>
       <Text style={styles.kickoffDate}>Kickoff · 11 June</Text>
 
       <View style={styles.kickoffRow}>

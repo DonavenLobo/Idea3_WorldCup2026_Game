@@ -12,12 +12,12 @@
 | | |
 |---|---|
 | **Brand name** | GoGaffa |
-| **Tagline** | The World Cup just got personal. |
+| **Tagline** | Your football summer starts here. |
 | **Full strapline** | Build your card. Back your picks. Beat your mates. |
 
 ### Mission
 
-GoGaffa turns the FIFA World Cup into a personal, social competition between friends — predictions, trivia, player cards, and bragging rights in a single mobile experience.
+GoGaffa turns the 2026 international football tournament into a personal, social competition between friends — predictions, trivia, player cards, and bragging rights in a single mobile experience.
 
 ### Brand Personality
 
@@ -26,7 +26,7 @@ GoGaffa turns the FIFA World Cup into a personal, social competition between fri
 | **Playful** | Handwritten type, card-deck metaphor, cheeky kickers ("Spoiler: it's probably not Dave.") |
 | **Competitive** | Leaderboards, upgrades, "Beat your mates" framing |
 | **Direct** | Short sentences, second person, no jargon |
-| **Football-native** | Tactical diagrams, pitch metaphors ("Couldn't reach the pitch"), World Cup cadence |
+| **Football-native** | Tactical diagrams, pitch metaphors ("Couldn't reach the pitch"), tournament cadence |
 | **Inclusive banter** | Trash-talk that's fun, never cruel — like mates at the pub |
 
 ---
@@ -261,7 +261,7 @@ The `.ink-shadow` class creates a soft cream-coloured halo behind text, ensuring
 
 ### Card Design Language
 
-Cards follow a collectible trading card metaphor — think football stickers or FIFA cards.
+Cards follow a collectible trading card metaphor — think football stickers or custom football cards.
 
 | Property | Value | CSS |
 |---|---|---|
@@ -645,7 +645,7 @@ Each card in the deck carries a distinct tone mapped to its position in the narr
 |---|---|
 | **Eyebrow** | Kick-off |
 | **Title** | GoGaffa |
-| **Body** | The World Cup just got personal. Build your card. Back your picks. Beat your mates. |
+| **Body** | Your football summer starts here. Build your card. Back your picks. Beat your mates. |
 | **Kicker** | Swipe to see what's next. |
 
 **Tone:** Bold, direct, sets the stakes immediately. Three punchy imperative sentences.

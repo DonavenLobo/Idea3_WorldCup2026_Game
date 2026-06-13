@@ -8,7 +8,7 @@ import { spacing } from "../../src/theme/spacing";
 import { typography } from "../../src/theme/typography";
 
 const FEATURES = [
-  { title: "Predict", body: "Pick your World Cup bracket." },
+  { title: "Predict", body: "Pick your 2026 tournament bracket." },
   { title: "Compete", body: "Climb leaderboards with your friend group." },
   { title: "Follow", body: "Track your nation's matches live." },
 ] as const;

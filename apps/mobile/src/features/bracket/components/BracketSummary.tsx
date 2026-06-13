@@ -61,8 +61,8 @@ export function BracketSummary({
 
     const lines = [
       stageState.currentStage === "groups"
-        ? "My World Cup 2026 Group Winners Prediction:"
-        : "My World Cup 2026 Bracket Prediction:",
+        ? "My 2026 Tournament Group Winners Prediction:"
+        : "My 2026 Tournament Bracket Prediction:",
       "",
       ...(showPodium
         ? [

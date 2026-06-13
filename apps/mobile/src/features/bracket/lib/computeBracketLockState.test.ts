@@ -11,7 +11,7 @@ function assert(cond: unknown, msg: string): asserts cond {
 
 const at = (iso: string) => new Date(iso);
 
-// A reasonable subset of real World Cup kickoffs for testing
+// A reasonable subset of real 2026 tournament kickoffs for testing
 const fixtures: FixtureData = {
   groupFirstKickoffs: {
     A: at("2026-06-11T19:00:00Z"),

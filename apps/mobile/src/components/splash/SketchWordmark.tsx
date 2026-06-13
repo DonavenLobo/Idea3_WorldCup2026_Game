@@ -4,7 +4,7 @@ import { colors, opacity } from "../../theme/colors";
 import { typography } from "../../theme/typography";
 
 const WORDMARK = "GoGaffa";
-const TAGLINE = "The World Cup just got personal.";
+const TAGLINE = "Your football summer starts here.";
 const LETTER_MS = 72;
 const UNDERLINE_MS = 520;
 const TAGLINE_MS = 420;

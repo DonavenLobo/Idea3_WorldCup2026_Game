@@ -7,16 +7,16 @@ daily_questions as (
     values
       (
         1,
-        'Which country has won the most FIFA World Cups?',
+        'Which country has won the most men''s global football titles?',
         '[{"key":"A","label":"Germany"},{"key":"B","label":"Brazil"},{"key":"C","label":"Italy"},{"key":"D","label":"Argentina"}]'::jsonb,
         'B',
-        'Brazil has won the men''s FIFA World Cup five times.',
+        'Brazil has won the top men''s global football tournament five times.',
         'standard',
         null
       ),
       (
         2,
-        'Which three countries are co-hosting the 2026 World Cup?',
+        'Which three countries are co-hosting the 2026 international football tournament?',
         '[{"key":"A","label":"Brazil, Argentina, Uruguay"},{"key":"B","label":"Spain, Portugal, Morocco"},{"key":"C","label":"USA, Mexico, Canada"},{"key":"D","label":"England, Wales, Scotland"}]'::jsonb,
         'C',
         'The 2026 tournament is co-hosted by the United States, Mexico, and Canada.',
@@ -25,28 +25,28 @@ daily_questions as (
       ),
       (
         3,
-        'How many teams will compete at the 2026 World Cup?',
+        'How many teams will compete in the 2026 international football tournament?',
         '[{"key":"A","label":"32"},{"key":"B","label":"40"},{"key":"C","label":"48"},{"key":"D","label":"64"}]'::jsonb,
         'C',
-        'The 2026 World Cup expands the field to 48 teams.',
+        'The 2026 tournament expands the field to 48 teams.',
         'standard',
         null
       ),
       (
         4,
-        'Which African nation reached the semi-finals of the 2022 World Cup?',
+        'Which African nation reached the semi-finals of the 2022 global football tournament?',
         '[{"key":"A","label":"Senegal"},{"key":"B","label":"Morocco"},{"key":"C","label":"Cameroon"},{"key":"D","label":"Ghana"}]'::jsonb,
         'B',
-        'Morocco became the first African team to reach a men''s World Cup semi-final.',
+        'Morocco became the first African team to reach a men''s global football tournament semi-final.',
         'standard',
         null
       ),
       (
         5,
-        'Who is the all-time top scorer in men''s FIFA World Cup history?',
+        'Who is the all-time top scorer in men''s global football tournament history?',
         '[{"key":"A","label":"Pele"},{"key":"B","label":"Ronaldo (Brazil)"},{"key":"C","label":"Miroslav Klose"},{"key":"D","label":"Gerd Muller"}]'::jsonb,
         'C',
-        'Miroslav Klose scored 16 goals across World Cup tournaments.',
+        'Miroslav Klose scored 16 goals across the top men''s global football tournament.',
         'standard',
         null
       )

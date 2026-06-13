@@ -1,6 +1,6 @@
 # GoGaffa
 
-Mobile-first World Cup fan game built around a personalized AI footballer card, daily trivia, groups, and card progression.
+Mobile-first football tournament fan game built around a personalized AI footballer card, daily trivia, groups, and card progression.
 
 ## Product Loop
 
@@ -142,6 +142,6 @@ Support: https://gogaffa.com/support
 - Purchases never affect Competitive Points or competitive leaderboards.
 - Daily trivia uses 5 fixed questions for everyone.
 - Live bounties reward card/status items, not Competitive Points.
-- Public language should avoid implying official FIFA affiliation.
+- Public language should avoid implying official tournament affiliation.
 
 See [docs/product/mvp_decisions.md](docs/product/mvp_decisions.md) for the full MVP decision contract.
