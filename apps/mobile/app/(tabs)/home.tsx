@@ -7,6 +7,7 @@ import { Screen } from "../../src/components/layout";
 import { RenderedPlayerCard } from "../../src/features/card";
 import { useOnboarding } from "../../src/features/onboarding";
 import { useCurrentUserCard } from "../../src/features/card";
+import { LoginStreakBadge } from "../../src/features/login";
 import { useProfile } from "../../src/features/profile";
 import { colors, opacity } from "../../src/theme/colors";
 import { radius } from "../../src/theme/radius";
@@ -122,6 +123,10 @@ export default function HomeScreen() {
         seconds={seconds}
       />
 
+      <View style={styles.streakRow}>
+        <LoginStreakBadge streak={profile?.currentLoginStreak ?? 0} />
+      </View>
+
       <Eyebrow label="Your card" />
       <RenderedPlayerCard
         card={card}
@@ -232,5 +237,9 @@ const styles = StyleSheet.create({
   },
   playerCard: {
     marginTop: -15,
+  },
+  streakRow: {
+    flexDirection: "row",
+    marginBottom: spacing.sm,
   },
 });

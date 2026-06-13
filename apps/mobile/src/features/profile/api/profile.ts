@@ -8,6 +8,7 @@ interface ProfileRow {
   display_name: string | null;
   avatar_url: string | null;
   selected_nation_code: string | null;
+  current_login_streak: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -25,6 +26,7 @@ async function mapProfileRow(row: ProfileRow): Promise<UserProfile> {
     displayName: row.display_name ?? "",
     avatarUrl: await getCardUploadDisplayUrl(row.avatar_url),
     selectedNationCode: row.selected_nation_code ?? undefined,
+    currentLoginStreak: row.current_login_streak ?? 0,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -36,6 +38,7 @@ const PROFILE_COLUMNS = `
   display_name,
   avatar_url,
   selected_nation_code,
+  current_login_streak,
   created_at,
   updated_at
 `;
