@@ -28,7 +28,7 @@ import {
 import { CardStatOverlays } from "./CardStatOverlays";
 import { CardTextOverlays } from "./CardTextOverlays";
 import { CardStatusBadge } from "./CardStatusBadge";
-import { teamLogoSourceForCode } from "../../../components/team";
+import { teamFlagForCode } from "../../../components/team";
 
 interface RenderedPlayerCardProps {
   card?: PlayerCardData | null;
@@ -135,7 +135,7 @@ export function RenderedPlayerCard({
             card={{
               avatarGeneratedUrl: card?.avatarGeneratedUrl,
               avatarSourceUrl: card?.avatarSourceUrl ?? photoSource?.uri,
-              badgeImageSource: teamLogoSourceForCode(resolvedNationCode),
+              badgeIcon: teamFlagForCode(resolvedNationCode),
               displayName: resolvedDisplayName,
               overall: resolvedOverall,
               selectedNationCode: resolvedNationCode,
@@ -196,7 +196,7 @@ function HiddenCardPlaceholder({
         card={{
           avatarGeneratedUrl: undefined,
           avatarSourceUrl: undefined,
-          badgeImageSource: teamLogoSourceForCode(selectedNationCode),
+          badgeIcon: teamFlagForCode(selectedNationCode),
           displayName,
           overall,
           selectedNationCode,

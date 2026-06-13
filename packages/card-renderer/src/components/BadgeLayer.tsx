@@ -1,6 +1,7 @@
 import { Image, StyleSheet, Text, View } from "react-native";
 import type { ImageSourcePropType } from "react-native";
 import type { CardTemplateLayerMetadata } from "@world-cup-game/types";
+import type { BadgeIconComponent } from "../types";
 
 const DEFAULT_BADGE_BACKGROUND = "rgba(245, 240, 232, 0.84)";
 const DEFAULT_BADGE_COLOR = "#1a1a2e";
@@ -9,12 +10,13 @@ const DEFAULT_BADGE_FONT_WEIGHT = "700";
 const DEFAULT_BADGE_RADIUS = 999;
 
 export interface BadgeLayerProps {
+  iconComponent?: BadgeIconComponent;
   imageSource?: ImageSourcePropType;
   label: string;
   layer?: CardTemplateLayerMetadata;
 }
 
-export function BadgeLayer({ imageSource, label, layer }: BadgeLayerProps) {
+export function BadgeLayer({ iconComponent: IconComponent, imageSource, label, layer }: BadgeLayerProps) {
   if (!layer) {
     return null;
   }
@@ -33,7 +35,11 @@ export function BadgeLayer({ imageSource, label, layer }: BadgeLayerProps) {
         }
       ]}
     >
-      {imageSource ? (
+      {IconComponent ? (
+        <View style={styles.iconWrap}>
+          <IconComponent height="100%" preserveAspectRatio="xMidYMid meet" width="100%" />
+        </View>
+      ) : imageSource ? (
         <Image resizeMode="contain" source={imageSource} style={styles.image} />
       ) : (
         <Text
@@ -63,6 +69,13 @@ const styles = StyleSheet.create({
   },
   image: {
     height: "78%",
+    width: "78%"
+  },
+  iconWrap: {
+    alignItems: "center",
+    height: "78%",
+    justifyContent: "center",
+    overflow: "hidden",
     width: "78%"
   },
   label: {
