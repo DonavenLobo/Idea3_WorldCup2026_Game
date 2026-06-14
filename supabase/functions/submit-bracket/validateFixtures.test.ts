@@ -31,7 +31,8 @@ const knockoutKickoffMs = new Map<string, number>([
 ]);
 
 const beforeAnyKickoff = new Date("2026-06-01T00:00:00Z").getTime();
-const afterGroupA = new Date("2026-06-12T00:00:00Z").getTime();
+const insideGroupEditWindow = new Date("2026-06-12T00:00:00Z").getTime();
+const afterGroupEditWindow = new Date("2026-06-19T00:00:00Z").getTime();
 const afterFirstR32 = new Date("2026-06-29T00:00:00Z").getTime();
 const afterFinal = new Date("2026-07-20T00:00:00Z").getTime();
 
@@ -47,27 +48,37 @@ Deno.test("before any kickoff: all changes accepted", () => {
   assertEquals(result.invalidMatches, []);
 });
 
-Deno.test("changing locked group is rejected", () => {
+Deno.test("changing group during one-week edit window is accepted", () => {
   const existing = picks({ groupRankings: { A: ["MEX", "RSA", "X", "Y"] } });
   const next = picks({ groupRankings: { A: ["RSA", "MEX", "X", "Y"] } });
 
   const result = validateBracketAgainstFixtures(
-    afterGroupA, next, existing, groupKickoffMs, knockoutKickoffMs
-  );
-  assertEquals(result.invalidGroups, ["A"]);
-});
-
-Deno.test("identical pick on locked group is accepted (no-op)", () => {
-  const existing = picks({ groupRankings: { A: ["MEX", "RSA", "X", "Y"] } });
-  const next = picks({ groupRankings: { A: ["MEX", "RSA", "X", "Y"] } });
-
-  const result = validateBracketAgainstFixtures(
-    afterGroupA, next, existing, groupKickoffMs, knockoutKickoffMs
+    insideGroupEditWindow, next, existing, groupKickoffMs, knockoutKickoffMs
   );
   assertEquals(result.invalidGroups, []);
 });
 
-Deno.test("changing unlocked group is accepted even after another group locked", () => {
+Deno.test("changing group after one-week edit window is rejected", () => {
+  const existing = picks({ groupRankings: { A: ["MEX", "RSA", "X", "Y"] } });
+  const next = picks({ groupRankings: { A: ["RSA", "MEX", "X", "Y"] } });
+
+  const result = validateBracketAgainstFixtures(
+    afterGroupEditWindow, next, existing, groupKickoffMs, knockoutKickoffMs
+  );
+  assertEquals(result.invalidGroups, ["A"]);
+});
+
+Deno.test("identical pick after group edit window is accepted (no-op)", () => {
+  const existing = picks({ groupRankings: { A: ["MEX", "RSA", "X", "Y"] } });
+  const next = picks({ groupRankings: { A: ["MEX", "RSA", "X", "Y"] } });
+
+  const result = validateBracketAgainstFixtures(
+    afterGroupEditWindow, next, existing, groupKickoffMs, knockoutKickoffMs
+  );
+  assertEquals(result.invalidGroups, []);
+});
+
+Deno.test("changing any group is accepted during the shared edit window", () => {
   const existing = picks({
     groupRankings: { A: ["MEX", "RSA", "X", "Y"], F: ["NED", "JPN", "X", "Y"] }
   });
@@ -76,7 +87,7 @@ Deno.test("changing unlocked group is accepted even after another group locked",
   });
 
   const result = validateBracketAgainstFixtures(
-    afterGroupA, next, existing, groupKickoffMs, knockoutKickoffMs
+    insideGroupEditWindow, next, existing, groupKickoffMs, knockoutKickoffMs
   );
   assertEquals(result.invalidGroups, []);
 });
@@ -95,7 +106,7 @@ Deno.test("first-time save of a locked unit IS rejected (no existing value)", ()
   const next = picks({ groupRankings: { A: ["MEX", "RSA", "X", "Y"] } });
 
   const result = validateBracketAgainstFixtures(
-    afterGroupA, next, null, groupKickoffMs, knockoutKickoffMs
+    afterGroupEditWindow, next, null, groupKickoffMs, knockoutKickoffMs
   );
   assertEquals(result.invalidGroups, ["A"]);
 });
@@ -113,7 +124,7 @@ Deno.test("changing locked final pick is rejected", () => {
 Deno.test("empty maps: nothing is rejected", () => {
   const next = picks({ groupRankings: { A: ["MEX", "RSA", "X", "Y"] } });
   const result = validateBracketAgainstFixtures(
-    afterGroupA, next, null, new Map(), new Map()
+    afterGroupEditWindow, next, null, new Map(), new Map()
   );
   assertEquals(result.invalidGroups, []);
   assertEquals(result.invalidMatches, []);

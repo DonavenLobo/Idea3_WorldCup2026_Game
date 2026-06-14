@@ -6,7 +6,7 @@ export type KnockoutRoundId = "r32" | "r16" | "qf" | "sf" | "final" | "third";
 
 export type TournamentPhase =
   | "pre"             // No group has kicked off yet
-  | "phase1-closing"  // Some groups locked, some open
+  | "phase1-closing"  // Group stage started, shared edit window still open
   | "between"         // All groups locked, no knockout match kicked off
   | "phase2-closing"  // Some knockouts locked, some open
   | "complete";       // Everything locked

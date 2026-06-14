@@ -17,10 +17,23 @@ interface CompletedViewProps {
 
 export function CompletedView({ attempt, questions }: CompletedViewProps) {
   const router = useRouter();
-  const questionsById = Object.fromEntries(questions.map((question) => [question.id, question]));
+  const questionsById = Object.fromEntries(
+    questions.map((question) => [question.id, question])
+  ) as Record<string, DailyTriviaQuestion>;
+  const questionPositionById = Object.fromEntries(
+    questions.map((question, index) => [question.id, index])
+  ) as Record<string, number>;
+  const orderedAnswers = attempt.answers
+    .map((answer, originalIndex) => ({ answer, originalIndex }))
+    .sort((a, b) => {
+      const aPosition = questionPositionById[a.answer.questionId] ?? Number.MAX_SAFE_INTEGER;
+      const bPosition = questionPositionById[b.answer.questionId] ?? Number.MAX_SAFE_INTEGER;
+      return aPosition - bPosition || a.originalIndex - b.originalIndex;
+    })
+    .map(({ answer }) => answer);
 
   const handleShare = async () => {
-    const grid = attempt.answers.map((a) => (a.isCorrect ? "🟩" : "⬛")).join("");
+    const grid = orderedAnswers.map((a) => (a.isCorrect ? "🟩" : "⬛")).join("");
     const message = [
       "GoGaffa Daily Trivia",
       `${grid} ${attempt.correctAnswers}/${attempt.totalQuestions}`,
@@ -43,7 +56,7 @@ export function CompletedView({ attempt, questions }: CompletedViewProps) {
         <Eyebrow label="Done for today" accent="purple" />
 
         <View style={styles.resultGrid}>
-          {attempt.answers.map((answer, index) => {
+          {orderedAnswers.map((answer, index) => {
             const correct = answer.isCorrect ?? false;
             return (
               <View
@@ -94,9 +107,15 @@ export function CompletedView({ attempt, questions }: CompletedViewProps) {
         showsVerticalScrollIndicator={false}
       >
         <Eyebrow label="Breakdown" />
-        {attempt.answers.map((answer, index) => {
+        {orderedAnswers.map((answer, index) => {
           const question = questionsById[answer.questionId];
           const correct = answer.isCorrect ?? false;
+          const selectedOption = question?.answerOptions.find(
+            (option) => option.key === answer.selectedAnswerKey
+          );
+          const selectedLabel = selectedOption
+            ? `${answer.selectedAnswerKey}. ${selectedOption.label}`
+            : answer.selectedAnswerKey;
 
           return (
             <View key={`${answer.questionId}-${index}`} style={styles.breakdownRow}>
@@ -114,7 +133,7 @@ export function CompletedView({ attempt, questions }: CompletedViewProps) {
                   {question ? ` · ${question.question}` : ""}
                 </Text>
                 <Text style={styles.breakdownMeta}>
-                  {answer.selectedAnswerKey} · +{answer.points ?? 0} pts ·{" "}
+                  {correct ? "Correct" : "Selected"} · {selectedLabel} · +{answer.points ?? 0} pts ·{" "}
                   {formatResponseTime(answer.responseTimeMs)}
                 </Text>
               </View>
@@ -212,6 +231,7 @@ const styles = StyleSheet.create({
   },
   root: {
     flex: 1,
+    paddingHorizontal: spacing.lg,
   },
   shareCta: {
     alignSelf: "stretch",

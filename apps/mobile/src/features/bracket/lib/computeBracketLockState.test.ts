@@ -46,19 +46,19 @@ const fixtures: FixtureData = {
   assert(s.phase === "pre", `expected pre, got ${s.phase}`);
   assert(!s.isGroupLocked("A"), "Group A should be unlocked");
   assert(!s.isMatchLocked("r32", 0), "R32 #0 should be unlocked");
-  assert(s.nextLockLabel === "Group A", `nextLockLabel was ${s.nextLockLabel}`);
+  assert(s.nextLockLabel === "Group Stage", `nextLockLabel was ${s.nextLockLabel}`);
 }
 
-// --- Phase: "phase1-closing" (some groups locked, some not) ---
+// --- Phase: "phase1-closing" (group stage started, shared edit window open) ---
 {
-  // June 14 18:00 UTC: A, B, D, C, E locked; F and later not.
+  // June 14 18:00 UTC: group stage has started, but the shared edit window remains open.
   const s = computeBracketLockState(at("2026-06-14T18:00:00Z"), fixtures);
   assert(s.phase === "phase1-closing", `expected phase1-closing, got ${s.phase}`);
-  assert(s.isGroupLocked("A"), "Group A should be locked");
-  assert(s.isGroupLocked("E"), "Group E should be locked");
-  assert(!s.isGroupLocked("F"), "Group F should NOT be locked");
+  assert(!s.isGroupLocked("A"), "Group A should NOT be locked inside the edit window");
+  assert(!s.isGroupLocked("E"), "Group E should NOT be locked inside the edit window");
+  assert(!s.isGroupLocked("F"), "Group F should NOT be locked inside the edit window");
   assert(!s.isMatchLocked("r32", 0), "R32 #0 should still be unlocked");
-  assert(s.nextLockLabel === "Group F", `nextLockLabel was ${s.nextLockLabel}`);
+  assert(s.nextLockLabel === "Group Stage", `nextLockLabel was ${s.nextLockLabel}`);
 }
 
 // --- Phase: "between" (all groups locked, no knockout kickoff yet) ---
@@ -92,16 +92,23 @@ const fixtures: FixtureData = {
   assert(s.nextLockAt === null, "nextLockAt should be null when everything locked");
 }
 
-// --- Boundary: exactly at kickoff ---
+// --- Boundary: exactly at first group kickoff ---
 {
   const s = computeBracketLockState(at("2026-06-11T19:00:00Z"), fixtures);
-  assert(s.isGroupLocked("A"), "Group A should be locked at exact kickoff moment");
+  assert(!s.isGroupLocked("A"), "Group A should stay open at exact kickoff moment");
 }
 
-// --- Boundary: 1ms before kickoff ---
+// --- Boundary: exactly at shared group deadline ---
 {
-  const s = computeBracketLockState(at("2026-06-11T18:59:59.999Z"), fixtures);
-  assert(!s.isGroupLocked("A"), "Group A should NOT be locked 1ms before kickoff");
+  const s = computeBracketLockState(at("2026-06-18T19:00:00Z"), fixtures);
+  assert(s.isGroupLocked("A"), "Group A should lock at the shared deadline");
+  assert(s.isGroupLocked("L"), "Group L should lock at the shared deadline");
+}
+
+// --- Boundary: 1ms before shared group deadline ---
+{
+  const s = computeBracketLockState(at("2026-06-18T18:59:59.999Z"), fixtures);
+  assert(!s.isGroupLocked("A"), "Group A should NOT be locked 1ms before the shared deadline");
 }
 
 // --- Empty knockouts (still loading): degenerates gracefully ---

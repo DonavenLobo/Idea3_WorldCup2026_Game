@@ -270,7 +270,7 @@ export default function BracketScreen() {
               }
             }}
             canOpenGroups={stageState.isSubTabEnabled("groups")}
-            canEditGroups={stageState.isSubTabEnabled("groups") && !areAllGroupsFinalized}
+            canEditGroups={stageState.isSubTabEnabled("groups") && !allGroupsLocked && !areAllGroupsFinalized}
           />
         )}
       </Screen>

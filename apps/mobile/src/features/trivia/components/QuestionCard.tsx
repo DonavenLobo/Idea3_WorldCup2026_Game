@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     width: 32
   },
   letterBadgeSelected: {
-    backgroundColor: colors.red
+    backgroundColor: colors.ink
   },
   letterText: {
     color: colors.ink,
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     color: colors.cream
   },
   lockedText: {
-    color: colors.red,
+    color: opacity.ink70,
     fontSize: 12,
     fontWeight: "700",
     textTransform: "uppercase"
@@ -119,8 +119,8 @@ const styles = StyleSheet.create({
     opacity: 0.7
   },
   optionSelected: {
-    backgroundColor: opacity.red18,
-    borderColor: colors.red
+    backgroundColor: opacity.ink10,
+    borderColor: opacity.ink55
   },
   optionText: {
     color: colors.ink,

@@ -31,24 +31,6 @@ daily_questions as (
         'The 2026 tournament expands the field to 48 teams.',
         'standard',
         null
-      ),
-      (
-        4,
-        'Which African nation reached the semi-finals of the 2022 global football tournament?',
-        '[{"key":"A","label":"Senegal"},{"key":"B","label":"Morocco"},{"key":"C","label":"Cameroon"},{"key":"D","label":"Ghana"}]'::jsonb,
-        'B',
-        'Morocco became the first African team to reach a men''s global football tournament semi-final.',
-        'standard',
-        null
-      ),
-      (
-        5,
-        'Who is the all-time top scorer in men''s global football tournament history?',
-        '[{"key":"A","label":"Pele"},{"key":"B","label":"Ronaldo (Brazil)"},{"key":"C","label":"Miroslav Klose"},{"key":"D","label":"Gerd Muller"}]'::jsonb,
-        'C',
-        'Miroslav Klose scored 16 goals across the top men''s global football tournament.',
-        'standard',
-        null
       )
   ) as q(question_order, question, answer_options, correct_answer_key, explanation, difficulty, nation_code)
 )

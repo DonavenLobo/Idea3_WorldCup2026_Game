@@ -26,9 +26,8 @@ interface BracketContextValue extends BracketState {
   saveBracket: () => Promise<void>;
   /**
    * Persist the given group's rankings. Adds the group to `finalizedGroups`
-   * (a "saved at least once" indicator) but does NOT prevent re-editing —
-   * the user can still adjust + re-save until the tournament-wide group
-   * stage deadline (earliest kickoff + 7 days) is reached.
+   * and makes that group review-only. The full bracket reset is the only
+   * way to reopen saved group picks.
    */
   saveGroup: (group: GroupId) => Promise<boolean>;
   moveTeamUp: (group: GroupId, index: number) => void;
@@ -157,8 +156,8 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
   }, [isSessionLoading, user?.id]);
 
   const moveTeamUp = useCallback((group: GroupId, index: number) => {
-    if (isGroupFinalized(group)) return;
     if (index <= 0) return;
+    if (finalizedGroups.includes(group)) return;
     setLastSavedAt(null);
     setSaveError(null);
     setGroupRankings((prev) => {
@@ -168,10 +167,10 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
       if (!next) return prev;
       return { ...prev, [group]: next };
     });
-  }, [isGroupFinalized]);
+  }, [finalizedGroups]);
 
   const moveTeamDown = useCallback((group: GroupId, index: number) => {
-    if (isGroupFinalized(group)) return;
+    if (finalizedGroups.includes(group)) return;
     setLastSavedAt(null);
     setSaveError(null);
     setGroupRankings((prev) => {
@@ -181,14 +180,14 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
       if (!next) return prev;
       return { ...prev, [group]: next };
     });
-  }, [isGroupFinalized]);
+  }, [finalizedGroups]);
 
   const resetGroup = useCallback((group: GroupId) => {
-    if (isGroupFinalized(group)) return;
+    if (finalizedGroups.includes(group)) return;
     setLastSavedAt(null);
     setSaveError(null);
     setGroupRankings((prev) => ({ ...prev, [group]: [...BRACKET_GROUPS[group]] }));
-  }, [isGroupFinalized]);
+  }, [finalizedGroups]);
 
   const resetAll = useCallback(() => {
     const rankings = defaultRankings();
@@ -232,10 +231,9 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
       return false;
     }
 
-    // Note: previously this short-circuited when isGroupFinalized(group).
-    // We now allow re-save within the group-stage edit window so a user
-    // can adjust their picks after saving. The tournament-wide deadline
-    // (earliest kickoff + 7 days) is the only thing that prevents writes.
+    if (finalizedGroups.includes(group)) {
+      return true;
+    }
 
     setIsSaving(true);
     setSaveError(null);
@@ -274,7 +272,6 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
     finalizedGroups,
     groupId,
     groupRankings,
-    isGroupFinalized,
     user
   ]);
 

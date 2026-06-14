@@ -76,26 +76,26 @@ interface GroupPickerProps {
  *   - User picks rankings (drag arrows) within each group.
  *   - Tapping "Next" silently saves the CURRENT group and advances.
  *   - On the last group (Group L), the action button reads "Save" — it
- *     saves Group L then calls onComplete() to leave the group stage.
- *   - A saved group shows a "SAVED" chip but stays editable. The user
- *     can navigate back, change rankings, tap Next again to re-save.
+ *     saves Group L, then leaves the group stage if every group is saved.
+ *   - A saved group shows a "SAVED" chip and becomes review-only.
+ *     Group-level reset is only available before that group is saved.
  *   - Once the tournament-wide group-stage deadline passes (earliest
  *     kickoff + 7 days), `isGroupLocked` returns true for all groups —
- *     arrows hide, the action button stops working.
+ *     arrows hide, and the action button only navigates.
  */
 export function GroupPicker({ index, onIndexChange, onComplete }: GroupPickerProps) {
   const {
     groupRankings, moveTeamUp, moveTeamDown, resetGroup,
     areAllGroupsFinalized, isGroupLocked, isGroupFinalized,
-    saveGroup, isSaving, lastSavedAt, saveError
+    saveGroup, isSaving, saveError
   } = useBracket();
 
   const groupId = GROUP_IDS[index];
   if (!groupId) return null;
   const finalized = isGroupFinalized(groupId);
   // Locked = tournament-wide group-stage deadline reached.
-  // Note: finalized (= "saved at least once") no longer prevents editing.
   const locked = isGroupLocked(groupId);
+  const readOnly = finalized || locked;
   const teams = groupRankings[groupId] ?? [];
 
   const isFirst = index === 0;
@@ -103,25 +103,54 @@ export function GroupPicker({ index, onIndexChange, onComplete }: GroupPickerPro
 
   const handlePrev = () => onIndexChange(Math.max(0, index - 1));
 
-  // Tapping the primary action: silently save current group, then either
-  // advance to the next group (Groups A–K) or fire onComplete (Group L).
+  const advanceToNextGroup = () => {
+    onIndexChange(Math.min(GROUP_IDS.length - 1, index + 1));
+  };
+
+  const advanceToNextIncompleteGroup = () => {
+    const nextIncompleteIndex = GROUP_IDS.findIndex((group, groupIndex) => (
+      groupIndex > index && !isGroupFinalized(group)
+    ));
+    if (nextIncompleteIndex >= 0) {
+      onIndexChange(nextIncompleteIndex);
+      return;
+    }
+
+    const firstIncompleteIndex = GROUP_IDS.findIndex((group) => !isGroupFinalized(group));
+    if (firstIncompleteIndex >= 0) {
+      onIndexChange(firstIncompleteIndex);
+      return;
+    }
+
+    advanceToNextGroup();
+  };
+
+  const advanceAfterSave = () => {
+    const allGroupsWillBeFinalized =
+      areAllGroupsFinalized || GROUP_IDS.every((group) => group === groupId || isGroupFinalized(group));
+    if (allGroupsWillBeFinalized) {
+      onComplete?.();
+      return;
+    }
+
+    advanceToNextIncompleteGroup();
+  };
+
+  // Tapping the primary action saves unsaved groups. Saved or locked groups
+  // are review-only, so the action just navigates.
   const handlePrimaryAction = async () => {
-    if (locked) {
-      // Can't save anymore; just navigate.
-      if (isLast) {
+    if (readOnly) {
+      if (isLast && areAllGroupsFinalized) {
         onComplete?.();
       } else {
-        onIndexChange(Math.min(GROUP_IDS.length - 1, index + 1));
+        advanceToNextIncompleteGroup();
       }
       return;
     }
+
     const ok = await saveGroup(groupId);
     if (!ok) return; // saveError will render below; don't advance on failure
-    if (isLast) {
-      onComplete?.();
-    } else {
-      onIndexChange(Math.min(GROUP_IDS.length - 1, index + 1));
-    }
+    advanceAfterSave();
   };
 
   return (
@@ -150,7 +179,7 @@ export function GroupPicker({ index, onIndexChange, onComplete }: GroupPickerPro
               <Text style={styles.nationName} numberOfLines={1}>
                 {formatTeamName(nation?.name ?? team)}
               </Text>
-              {!locked ? (
+              {!readOnly ? (
                 <View style={styles.arrows}>
                   <Pressable
                     accessibilityLabel={`Move ${formatTeamName(nation?.name ?? team)} up`}
@@ -176,23 +205,18 @@ export function GroupPicker({ index, onIndexChange, onComplete }: GroupPickerPro
           );
         })}
 
-        {!locked ? (
+        {!readOnly ? (
           <View style={styles.groupActionRow}>
             <Pressable style={styles.resetButton} onPress={() => resetGroup(groupId)}>
               <Text style={styles.resetText}>Reset group</Text>
             </Pressable>
           </View>
-        ) : (
+        ) : locked ? (
           <Text style={styles.lockedHint}>
             Group stage is locked. New picks aren&apos;t accepted after the first week of the tournament.
           </Text>
-        )}
-
-        {lastSavedAt && finalized ? (
-          <Text style={styles.saveStatus}>
-            Saved {new Date(lastSavedAt).toLocaleTimeString()}
-          </Text>
         ) : null}
+
         {saveError ? <Text style={styles.saveError}>{saveError.message}</Text> : null}
       </View>
 
@@ -215,9 +239,9 @@ export function GroupPicker({ index, onIndexChange, onComplete }: GroupPickerPro
           </Pressable>
         ) : (
           <BrandButton
-            label={isLast ? "Save" : "Next"}
+            label={readOnly ? "Next" : isLast ? "Save" : "Next"}
             onPress={() => void handlePrimaryAction()}
-            disabled={isSaving || locked}
+            disabled={isSaving}
             loading={isSaving}
             style={styles.primaryActionCta}
           />
@@ -308,13 +332,6 @@ const styles = StyleSheet.create({
   },
   saveError: {
     color: colors.red,
-    fontSize: 12,
-    fontWeight: "700",
-    marginTop: spacing.xs,
-    textAlign: "center"
-  },
-  saveStatus: {
-    color: opacity.ink55,
     fontSize: 12,
     fontWeight: "700",
     marginTop: spacing.xs,

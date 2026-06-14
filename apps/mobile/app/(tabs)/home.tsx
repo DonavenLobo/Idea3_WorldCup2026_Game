@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect, useRouter } from "expo-router";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { APP_ROUTES } from "@world-cup-game/config";
+import { APP_ROUTES, WORLD_CUP_FIXTURES } from "@world-cup-game/config";
 import { BrandButton, Eyebrow } from "../../src/components/brand";
 import { Screen } from "../../src/components/layout";
 import { RenderedPlayerCard } from "../../src/features/card";
@@ -13,7 +13,10 @@ import { radius } from "../../src/theme/radius";
 import { spacing } from "../../src/theme/spacing";
 import { typography } from "../../src/theme/typography";
 
-const KICKOFF_DATE = new Date("2026-06-11T18:00:00Z");
+const FINAL_DATE = new Date(
+  WORLD_CUP_FIXTURES.find((fixture) => fixture.stage === "final")?.kickoffUtc ??
+    "2026-07-19T19:00:00.000Z"
+);
 
 function useCountdown(target: Date) {
   const [now, setNow] = useState(() => new Date());
@@ -35,8 +38,7 @@ function pad(value: number) {
   return value.toString().padStart(2, "0");
 }
 
-/** Pre-tournament only — remove once the 2026 tournament kicks off. */
-function KickoffCountdown({
+function FinalCountdown({
   days,
   hours,
   minutes,
@@ -50,7 +52,7 @@ function KickoffCountdown({
   return (
     <View style={styles.kickoffBanner}>
       <Text style={styles.kickoffSeries}>2026 Tournament</Text>
-      <Text style={styles.kickoffDate}>Kickoff · 11 June</Text>
+      <Text style={styles.kickoffDate}>Final · 19 July</Text>
 
       <View style={styles.kickoffRow}>
         <KickoffUnit label="days" value={days} />
@@ -91,7 +93,7 @@ export default function HomeScreen() {
   const { nation, displayName, photoSource } = useOnboarding();
   const { card } = useCurrentUserCard();
   const { profile } = useProfile();
-  const { days, hours, minutes, seconds } = useCountdown(KICKOFF_DATE);
+  const { days, hours, minutes, seconds } = useCountdown(FINAL_DATE);
   const selectedNationCode =
     profile?.selectedNationCode ?? card?.selectedNationCode ?? nation?.code;
   const cardDisplayName = profile?.displayName || card?.displayName || displayName;
@@ -115,7 +117,7 @@ export default function HomeScreen() {
       ref={scrollRef}
       contentContainerStyle={styles.content}
     >
-      <KickoffCountdown
+      <FinalCountdown
         days={days}
         hours={hours}
         minutes={minutes}

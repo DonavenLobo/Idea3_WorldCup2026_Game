@@ -1,7 +1,7 @@
 // supabase/functions/submit-bracket/validateFixtures.ts
 //
 // Loads kickoff data on demand from public.matches and validates that
-// every CHANGED pick targets a unit whose kickoff is still in the future.
+// every CHANGED pick targets a unit whose lockout window is still open.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -27,6 +27,8 @@ export interface FixtureValidationResult {
   invalidGroups: string[];
   invalidMatches: Array<{ round: KnockoutRoundId; index: number }>;
 }
+
+const GROUP_STAGE_EDIT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
 interface MatchRow {
   round: string;
@@ -66,8 +68,11 @@ export async function loadKickoffMaps(supabase: SupabaseClient): Promise<{
 }
 
 /**
- * Compare `next` picks against `existing`. Any pick whose value CHANGES and
- * whose corresponding fixture has already kicked off is invalid.
+ * Compare `next` picks against `existing`. Any pick whose value CHANGES after
+ * its lockout window closes is invalid.
+ *
+ * Group rankings share one tournament-wide lockout: earliest group kickoff + 7
+ * days. Knockout picks still lock per match at kickoff.
  * Untouched picks pass even on locked units.
  */
 export function validateBracketAgainstFixtures(
@@ -79,11 +84,10 @@ export function validateBracketAgainstFixtures(
 ): FixtureValidationResult {
   const invalidGroups: string[] = [];
   const invalidMatches: Array<{ round: KnockoutRoundId; index: number }> = [];
+  const groupStageDeadlineMs = getGroupStageDeadlineMs(groupKickoffMs);
 
   for (const [g, ranking] of Object.entries(next.groupRankings)) {
-    const kickoff = groupKickoffMs.get(g);
-    if (kickoff === undefined) continue;
-    if (nowMs < kickoff) continue;
+    if (nowMs < groupStageDeadlineMs) continue;
     const prev = existing?.groupRankings?.[g];
     if (!arraysEqual(prev, ranking)) {
       invalidGroups.push(g);
@@ -115,6 +119,13 @@ export function validateBracketAgainstFixtures(
   }
 
   return { invalidGroups, invalidMatches };
+}
+
+function getGroupStageDeadlineMs(groupKickoffMs: Map<string, number>): number {
+  const earliestGroupKickoff = Math.min(...Array.from(groupKickoffMs.values()));
+  return Number.isFinite(earliestGroupKickoff)
+    ? earliestGroupKickoff + GROUP_STAGE_EDIT_WINDOW_MS
+    : Infinity;
 }
 
 function arraysEqual(a: string[] | undefined, b: string[] | undefined): boolean {
