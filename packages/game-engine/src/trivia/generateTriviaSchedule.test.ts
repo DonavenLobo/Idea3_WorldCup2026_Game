@@ -50,5 +50,24 @@ check("sql has insert", sql.includes("insert into public.trivia_questions"));
 check("sql has on conflict upsert", sql.includes("on conflict (active_date, question_order) do update"));
 check("sql row count = days*3", (sql.match(/::jsonb/g) || []).length === 9);
 
+// Apostrophe escaping (Côte d'Ivoire) — JSON label + explanation
+const apos = [{
+  activeDate: "2026-06-13",
+  questions: [{
+    id: "c1", nationCode: "CIV", question: "Who plays for Côte d'Ivoire?",
+    answerOptions: [
+      { key: "A", label: "Côte d'Ivoire" }, { key: "B", label: "b" },
+      { key: "C", label: "c" }, { key: "D", label: "d" },
+    ],
+    correctAnswerKey: "A", explanation: "it's them", difficulty: "standard",
+  }],
+}];
+const aposSql = renderScheduleSql(apos as never);
+check("escapes apostrophes to ''", aposSql.includes("Côte d''Ivoire") && aposSql.includes("it''s them"));
+
+// Empty schedule must not emit a bare VALUES clause
+const emptySql = renderScheduleSql([]);
+check("empty schedule emits no VALUES", !emptySql.toLowerCase().includes("values"));
+
 console.log(failed === 0 ? "ALL PASS" : `${failed} FAILED`);
 process.exit(failed === 0 ? 0 : 1);
