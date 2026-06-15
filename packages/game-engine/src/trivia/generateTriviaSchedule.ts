@@ -1,5 +1,6 @@
-import type { PooledTriviaQuestion } from "@world-cup-game/types";
+import type { AnswerKey, PooledTriviaQuestion } from "@world-cup-game/types";
 import { InsufficientPoolError, selectDailyQuestions } from "./selectDailyQuestions";
+import { seededRandom, seededShuffle } from "./seededRandom";
 
 export interface DayPlan {
   activeDate: string;
@@ -16,6 +17,41 @@ export interface ScheduleGap {
 export interface ScheduleResult {
   schedule: DayPlan[];
   gaps: ScheduleGap[];
+}
+
+const OPTION_KEYS: readonly AnswerKey[] = ["A", "B", "C", "D"];
+
+/**
+ * Deterministically reorder a question's four option labels across the fixed
+ * A–D slots (seeded by `seedKey`) and recompute `correctAnswerKey`. Index-based
+ * so it is robust to duplicate labels. Same seedKey → same arrangement.
+ */
+export function withShuffledOptions(
+  question: PooledTriviaQuestion,
+  seedKey: string,
+): PooledTriviaQuestion {
+  const correctOldIndex = question.answerOptions.findIndex(
+    (o) => o.key === question.correctAnswerKey,
+  );
+  if (correctOldIndex < 0) {
+    throw new Error(
+      `Question ${question.id} has no option for correctAnswerKey ${question.correctAnswerKey}`,
+    );
+  }
+  const order = seededShuffle(
+    question.answerOptions.map((_, i) => i),
+    seededRandom(seedKey),
+  );
+  const answerOptions = order.map((oldIndex, newIndex) => ({
+    key: OPTION_KEYS[newIndex] as AnswerKey,
+    label: question.answerOptions[oldIndex]!.label,
+  }));
+  const correctNewIndex = order.indexOf(correctOldIndex);
+  return {
+    ...question,
+    answerOptions,
+    correctAnswerKey: OPTION_KEYS[correctNewIndex] as AnswerKey,
+  };
 }
 
 /** Add `n` whole UTC days to an ISO `YYYY-MM-DD` date. */
@@ -51,7 +87,7 @@ export function generateTriviaSchedule(params: {
       const questions = selectDailyQuestions(params.pool, activeDate, count, {
         wcNationCodes: params.wcNationCodes,
         excludeQuestionIds: reuse ? undefined : used,
-      });
+      }).map((question) => withShuffledOptions(question, `${activeDate}:${question.id}`));
       schedule.push({ activeDate, questions });
       if (!reuse) for (const q of questions) used.add(q.id);
     } catch (err) {

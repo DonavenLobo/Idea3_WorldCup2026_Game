@@ -1,7 +1,7 @@
 /** Run: pnpm dlx tsx packages/game-engine/src/trivia/generateTriviaSchedule.test.ts */
 import type { PooledTriviaQuestion } from "@world-cup-game/types";
 import {
-  addDays, generateTriviaSchedule, renderScheduleSql,
+  addDays, generateTriviaSchedule, renderScheduleSql, withShuffledOptions,
 } from "./generateTriviaSchedule";
 
 declare const process: { exit(code?: number): never };
@@ -68,6 +68,27 @@ check("escapes apostrophes to ''", aposSql.includes("Côte d''Ivoire") && aposSq
 // Empty schedule must not emit a bare VALUES clause
 const emptySql = renderScheduleSql([]);
 check("empty schedule emits no VALUES", !emptySql.toLowerCase().includes("values"));
+
+// Deterministic per-seed option shuffle that preserves the correct answer
+const baseQ = q("z1", "BRA"); // correctAnswerKey "A", labels a/b/c/d
+const sh1 = withShuffledOptions(baseQ, "2026-06-13:z1");
+const sh2 = withShuffledOptions(baseQ, "2026-06-13:z1");
+check("shuffle deterministic per seed", JSON.stringify(sh1) === JSON.stringify(sh2));
+check("shuffle keeps 4 options + nation", sh1.answerOptions.length === 4 && sh1.nationCode === "BRA");
+const baseCorrect = baseQ.answerOptions.find((o) => o.key === baseQ.correctAnswerKey)!.label;
+const sh1Correct = sh1.answerOptions.find((o) => o.key === sh1.correctAnswerKey)!.label;
+check("shuffle preserves correct label", sh1Correct === baseCorrect);
+check("shuffle preserves option set", JSON.stringify(sh1.answerOptions.map((o) => o.label).sort())
+  === JSON.stringify(baseQ.answerOptions.map((o) => o.label).sort()));
+// Correct key is not always "A" across many questions
+const correctKeys = new Set(
+  Array.from({ length: 24 }, (_, i) => withShuffledOptions(q(`k${i}`, "BRA"), `seed:${i}`).correctAnswerKey),
+);
+check("correct key varies (not all A)", correctKeys.size >= 2);
+// Schedule applies shuffling: keys across the generated seed aren't all "A"
+const balanced = generateTriviaSchedule({ pool: rich, wcNationCodes: wc, startDate: "2026-06-13", days: 3 });
+const allKeys = new Set(balanced.schedule.flatMap((d) => d.questions.map((x) => x.correctAnswerKey)));
+check("generated schedule keys vary", allKeys.size >= 2);
 
 console.log(failed === 0 ? "ALL PASS" : `${failed} FAILED`);
 process.exit(failed === 0 ? 0 : 1);
