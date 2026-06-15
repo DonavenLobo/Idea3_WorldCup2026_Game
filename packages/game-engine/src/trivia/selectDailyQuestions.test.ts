@@ -49,5 +49,16 @@ try {
 }
 check("throws InsufficientPoolError when <3 nations", threw);
 
+const rev = selectDailyQuestions([...pool].reverse(), "2026-06-13", 3, { wcNationCodes: wc });
+check("order-independent", JSON.stringify(picks.map((p) => p.id)) === JSON.stringify(rev.map((p) => p.id)));
+
+let rangeThrew = false;
+try {
+  selectDailyQuestions(pool, "2026-06-13", -1, { wcNationCodes: wc });
+} catch (e) {
+  rangeThrew = e instanceof RangeError;
+}
+check("count<0 throws RangeError", rangeThrew);
+
 console.log(failed === 0 ? "ALL PASS" : `${failed} FAILED`);
 process.exit(failed === 0 ? 0 : 1);

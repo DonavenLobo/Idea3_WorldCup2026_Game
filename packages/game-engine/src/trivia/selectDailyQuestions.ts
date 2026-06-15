@@ -32,11 +32,14 @@ export function selectDailyQuestions(
   count: number,
   opts: SelectOptions,
 ): PooledTriviaQuestion[] {
+  if (!Number.isInteger(count) || count < 0) {
+    throw new RangeError(`count must be a non-negative integer, got ${count}`);
+  }
   const exclude = opts.excludeQuestionIds ?? new Set<string>();
   const available = pool
     .filter((q) => opts.wcNationCodes.has(q.nationCode) && !exclude.has(q.id))
     .slice()
-    .sort((a, b) => a.id.localeCompare(b.id));
+    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 
   const byNation = new Map<string, PooledTriviaQuestion[]>();
   for (const q of available) {
