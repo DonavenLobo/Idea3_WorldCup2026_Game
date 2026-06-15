@@ -1,5 +1,5 @@
 export const TRIVIA_RULES = {
-  questionsPerDay: 5,
+  questionsPerDay: 3,
   answerOptionsPerQuestion: 4,
   correctAnswerCompetitivePoints: 100,
   maxSpeedBonusPerQuestion: 20,
