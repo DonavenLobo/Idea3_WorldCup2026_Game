@@ -2,6 +2,15 @@ import { SUPPORTED_NATIONS } from "@world-cup-game/config";
 import type { Fixture } from "@world-cup-game/config";
 import type { ScheduleFilter, ScheduleSection } from "./types";
 
+const CURRENT_MATCH_WINDOW_MS = 4 * 60 * 60 * 1000;
+
+export interface ScheduleScrollTarget {
+  itemIndex: number;
+  matchNum: number;
+  reason: "live" | "current" | "upcoming" | "fallback";
+  sectionIndex: number;
+}
+
 export function deviceTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 }
@@ -87,6 +96,62 @@ export function groupByLocalDay<T extends Fixture>(
   }
 
   return sections;
+}
+
+function findFirstTarget(
+  sections: ScheduleSection[],
+  reason: ScheduleScrollTarget["reason"],
+  predicate: (fixture: ScheduleSection["data"][number]) => boolean
+): ScheduleScrollTarget | null {
+  for (let sectionIndex = 0; sectionIndex < sections.length; sectionIndex += 1) {
+    const section = sections[sectionIndex]!;
+    for (let itemIndex = 0; itemIndex < section.data.length; itemIndex += 1) {
+      const fixture = section.data[itemIndex]!;
+      if (predicate(fixture)) {
+        return { itemIndex, matchNum: fixture.num, reason, sectionIndex };
+      }
+    }
+  }
+
+  return null;
+}
+
+export function findDefaultScheduleScrollTarget(
+  sections: ScheduleSection[],
+  now: Date = new Date()
+): ScheduleScrollTarget | null {
+  const nowMs = now.getTime();
+
+  const liveTarget = findFirstTarget(
+    sections,
+    "live",
+    (fixture) => fixture.status === "live"
+  );
+  if (liveTarget) return liveTarget;
+
+  const currentTarget = findFirstTarget(sections, "current", (fixture) => {
+    if (fixture.status === "completed") return false;
+    const kickoffMs = Date.parse(fixture.kickoffUtc);
+    return kickoffMs <= nowMs && nowMs < kickoffMs + CURRENT_MATCH_WINDOW_MS;
+  });
+  if (currentTarget) return currentTarget;
+
+  const upcomingTarget = findFirstTarget(sections, "upcoming", (fixture) => {
+    if (fixture.status === "completed") return false;
+    return Date.parse(fixture.kickoffUtc) > nowMs;
+  });
+  if (upcomingTarget) return upcomingTarget;
+
+  for (let sectionIndex = sections.length - 1; sectionIndex >= 0; sectionIndex -= 1) {
+    const section = sections[sectionIndex]!;
+    if (section.data.length > 0) {
+      const itemIndex = section.data.length - 1;
+      const fixture = section.data[itemIndex]!;
+      return { itemIndex, matchNum: fixture.num, reason: "fallback", sectionIndex };
+    }
+  }
+
+  return null;
 }
 
 export function mapsUrl(lat: number, lng: number): string {

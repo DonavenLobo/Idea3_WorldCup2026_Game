@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Fixture } from "@world-cup-game/config";
 import {
+  findDefaultScheduleScrollTarget,
   filterMatches,
   formatDayHeader,
   formatKickoffTime,
@@ -10,6 +11,7 @@ import {
   matchesMyTeam,
   myTeamNamesForCode
 } from "./utils";
+import type { ScheduledFixture } from "./types";
 
 function fixture(partial: Partial<Fixture> & Pick<Fixture, "num">): Fixture {
   return {
@@ -21,6 +23,16 @@ function fixture(partial: Partial<Fixture> & Pick<Fixture, "num">): Fixture {
     team1: partial.team1 ?? "Mexico",
     team2: partial.team2 ?? "South Africa",
     venueCity: partial.venueCity ?? "Mexico City"
+  };
+}
+
+function scheduledFixture(
+  partial: Partial<ScheduledFixture> & Pick<ScheduledFixture, "num">
+): ScheduledFixture {
+  return {
+    ...fixture(partial),
+    score: partial.score ?? null,
+    status: partial.status ?? "scheduled"
   };
 }
 
@@ -64,6 +76,100 @@ describe("groupByLocalDay", () => {
     const sections = groupByLocalDay(matches, "UTC");
     expect(sections).toHaveLength(2);
     expect(sections[0]!.data[0]!.num).toBe(1);
+  });
+});
+
+describe("findDefaultScheduleScrollTarget", () => {
+  it("prefers a live match over future matches", () => {
+    const sections = groupByLocalDay(
+      [
+        scheduledFixture({
+          num: 1,
+          kickoffUtc: "2026-06-15T17:00:00.000Z",
+          status: "scheduled"
+        }),
+        scheduledFixture({
+          num: 2,
+          kickoffUtc: "2026-06-15T15:00:00.000Z",
+          status: "live"
+        })
+      ],
+      "UTC"
+    );
+
+    expect(findDefaultScheduleScrollTarget(sections, new Date("2026-06-15T16:00:00.000Z"))).toMatchObject({
+      matchNum: 2,
+      reason: "live"
+    });
+  });
+
+  it("uses the current match window when scores have not marked the match live", () => {
+    const sections = groupByLocalDay(
+      [
+        scheduledFixture({
+          num: 1,
+          kickoffUtc: "2026-06-15T15:00:00.000Z",
+          status: "scheduled"
+        }),
+        scheduledFixture({
+          num: 2,
+          kickoffUtc: "2026-06-15T22:00:00.000Z",
+          status: "scheduled"
+        })
+      ],
+      "UTC"
+    );
+
+    expect(findDefaultScheduleScrollTarget(sections, new Date("2026-06-15T16:00:00.000Z"))).toMatchObject({
+      matchNum: 1,
+      reason: "current"
+    });
+  });
+
+  it("falls forward to the next upcoming match", () => {
+    const sections = groupByLocalDay(
+      [
+        scheduledFixture({
+          num: 1,
+          kickoffUtc: "2026-06-15T15:00:00.000Z",
+          status: "completed"
+        }),
+        scheduledFixture({
+          num: 2,
+          kickoffUtc: "2026-06-15T22:00:00.000Z",
+          status: "scheduled"
+        })
+      ],
+      "UTC"
+    );
+
+    expect(findDefaultScheduleScrollTarget(sections, new Date("2026-06-15T16:00:00.000Z"))).toMatchObject({
+      matchNum: 2,
+      reason: "upcoming"
+    });
+  });
+
+  it("falls back to the last match if everything is complete", () => {
+    const sections = groupByLocalDay(
+      [
+        scheduledFixture({
+          num: 1,
+          kickoffUtc: "2026-06-15T15:00:00.000Z",
+          status: "completed"
+        }),
+        scheduledFixture({
+          num: 2,
+          kickoffUtc: "2026-06-16T15:00:00.000Z",
+          status: "completed"
+        })
+      ],
+      "UTC"
+    );
+
+    expect(findDefaultScheduleScrollTarget(sections, new Date("2026-06-17T16:00:00.000Z"))).toMatchObject({
+      matchNum: 2,
+      reason: "fallback"
+    });
   });
 });
 
