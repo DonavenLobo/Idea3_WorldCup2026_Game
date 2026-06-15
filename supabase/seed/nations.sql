@@ -54,3 +54,14 @@ on conflict (code) do update set
   confederation = excluded.confederation,
   primary_color = excluded.primary_color,
   secondary_color = excluded.secondary_color;
+
+-- Mark the 2026 World Cup field. Verified against the seeded nations (48 teams).
+update public.nations set in_world_cup_2026 = true
+where code in (
+  'USA','MEX','CAN','CRC','PAN','JAM','HON',
+  'BRA','ARG','URU','COL','ECU','PER','PAR',
+  'ENG','FRA','ESP','GER','POR','NED','BEL','ITA','CRO','SUI','DEN','POL','NOR','SWE','AUT','SRB',
+  'JPN','KOR','AUS','IRN','KSA','QAT','UZB','IRQ',
+  'MAR','SEN','EGY','NGA','CMR','GHA','TUN','ALG','CIV',
+  'NZL'
+);
