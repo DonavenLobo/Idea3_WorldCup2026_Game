@@ -4,6 +4,10 @@ The app does not call the third-party score source directly. A Supabase Edge
 Function polls the upstream API, caches score state in `public.matches`, and the
 mobile app reads the cached rows from Supabase.
 
+Reference source: https://github.com/rezarahiminia/worldcup2026. A local clone
+may live under `docs/external/` for inspection, but that directory is ignored and
+should not be committed.
+
 ## Data Flow
 
 1. `sync-match-scores` checks the cached schedule in `public.matches`.

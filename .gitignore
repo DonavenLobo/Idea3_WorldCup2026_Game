@@ -43,6 +43,7 @@ pnpm-debug.log*
 *.claude
 claude_docs/
 docs/plans
+docs/external/
 
 # local signing/submission secrets
 secrets/
