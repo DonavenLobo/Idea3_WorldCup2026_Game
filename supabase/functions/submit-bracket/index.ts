@@ -1,5 +1,11 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import {
+  evaluateCardProgression,
+  type EvaluateCardProgressionInput,
+  type EvaluateCardProgressionResult
+} from "../_shared/evaluateCardProgression.ts";
+import { hasFinalizedAllBracketGroups } from "../_shared/cardProgression.ts";
 import { parseSubmitBracketRequest } from "./schema.ts";
 import {
   loadKickoffMaps,
@@ -53,6 +59,21 @@ function fireScoreBracket(
       console.error("[submit-bracket] score-bracket invocation failed", error);
     })
     .finally(() => clearTimeout(timeout));
+}
+
+// Card progression must never break the core bracket save. If it fails, the
+// bracket is still saved and returned; pending upgrades are picked up later by
+// the client's background pending-upgrades query.
+async function safeEvaluateCardProgression(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  input: EvaluateCardProgressionInput
+): Promise<EvaluateCardProgressionResult | null> {
+  try {
+    return await evaluateCardProgression(supabaseAdmin, input);
+  } catch (error) {
+    console.error("submit-bracket: card progression evaluation failed", error);
+    return null;
+  }
 }
 
 interface BracketRow {
@@ -278,7 +299,17 @@ Deno.serve(async (request) => {
       scorePromise.catch(() => {});
     }
 
-    return jsonResponse({ ok: true, bracket: mapBracket(savedBracket) });
+    // Card progression: only the full personal bracket (no groupId) with all 12
+    // groups finalized advances the milestone. Never blocks the save.
+    let cardProgression = null;
+    if (!input.groupId && hasFinalizedAllBracketGroups(input.picks)) {
+      cardProgression = await safeEvaluateCardProgression(supabaseAdmin, {
+        userId: userData.user.id,
+        markBracketGroupsFinalized: true,
+      });
+    }
+
+    return jsonResponse({ ok: true, bracket: mapBracket(savedBracket), cardProgression });
   } catch (error) {
     return jsonResponse(
       { error: error instanceof Error ? error.message : "Unexpected submit-bracket error." },

@@ -1,20 +1,25 @@
 import { clampText } from "@world-cup-game/card-renderer";
+import type { CardTemplateMetadata } from "@world-cup-game/types";
 import { useState } from "react";
 import type { LayoutChangeEvent } from "react-native";
 import { StyleSheet, Text, View } from "react-native";
 import { colors } from "../../../theme/colors";
-import { LEVEL_00_SKETCH_METADATA } from "../templates/level00SketchTemplate";
-
-const { width: CANVAS_WIDTH, height: CANVAS_HEIGHT, layers } = LEVEL_00_SKETCH_METADATA;
-const overallLayer = layers.overall;
-const displayNameLayer = layers.displayName;
+import { LEVEL_02_BASE_METADATA } from "../templates/handDrawnCardTemplates";
 
 export interface CardTextOverlaysProps {
   displayName: string;
   overall: number;
+  metadata?: CardTemplateMetadata;
 }
 
-export function CardTextOverlays({ displayName, overall }: CardTextOverlaysProps) {
+export function CardTextOverlays({
+  displayName,
+  overall,
+  metadata = LEVEL_02_BASE_METADATA,
+}: CardTextOverlaysProps) {
+  const { width: CANVAS_WIDTH, height: CANVAS_HEIGHT, layers } = metadata;
+  const overallLayer = layers.overall;
+  const displayNameLayer = layers.displayName;
   const [imageWidth, setImageWidth] = useState(0);
 
   const handleLayout = (event: LayoutChangeEvent) => {

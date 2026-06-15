@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { BRACKET_GROUPS, GROUP_IDS } from "@world-cup-game/config";
 import type { GroupId } from "@world-cup-game/config";
 import { useSession } from "../auth/hooks/useSession";
+import { useNotifyCardUpgrades } from "../card/components/CardUpgradeGate";
 import { getCurrentBracket, submitCurrentBracket } from "./api/brackets";
 import type { BracketPicks, BracketState, PersistedBracketPicks, PickRound } from "./types";
 import { useBracketLockState } from "./hooks/useBracketLockState";
@@ -71,6 +72,7 @@ interface BracketProviderProps {
 
 export function BracketProvider({ groupId = null, children }: BracketProviderProps) {
   const { user, isLoading: isSessionLoading } = useSession();
+  const notifyCardUpgrades = useNotifyCardUpgrades();
   const [isCreated, setIsCreated] = useState(false);
   const [isLoadingSavedBracket, setIsLoadingSavedBracket] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -250,7 +252,7 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
     };
 
     try {
-      const saved = await submitCurrentBracket(persisted, groupId);
+      const { bracket: saved, pendingUpgrades } = await submitCurrentBracket(persisted, groupId);
       setCommittedGroupRankings(saved.picks.groupRankings);
       setCommittedPicks(saved.picks.picks);
       setFinalizedGroups(normalizeFinalizedGroups(saved.picks.finalizedGroups ?? nextFinalizedGroups));
@@ -259,6 +261,7 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
         ...prev,
         [group]: saved.picks.groupRankings[group] ?? nextGroupRankings[group]
       }));
+      await notifyCardUpgrades(pendingUpgrades);
       return true;
     } catch (err) {
       setSaveError(err instanceof Error ? err : new Error(String(err)));
@@ -272,6 +275,7 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
     finalizedGroups,
     groupId,
     groupRankings,
+    notifyCardUpgrades,
     user
   ]);
 
@@ -287,11 +291,12 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
     const persisted: PersistedBracketPicks = { groupRankings, finalizedGroups, picks };
 
     try {
-      const saved = await submitCurrentBracket(persisted, groupId);
+      const { bracket: saved, pendingUpgrades } = await submitCurrentBracket(persisted, groupId);
       setCommittedGroupRankings(saved.picks.groupRankings);
       setCommittedPicks(saved.picks.picks);
       setFinalizedGroups(normalizeFinalizedGroups(saved.picks.finalizedGroups ?? finalizedGroups));
       setLastSavedAt(saved.updatedAt);
+      await notifyCardUpgrades(pendingUpgrades);
     } catch (err) {
       if (err instanceof PickPastLockoutError) {
         const fresh = await getCurrentBracket();
@@ -325,7 +330,7 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
         setFinalizedGroups(normalizeFinalizedGroups(fresh?.picks.finalizedGroups ?? finalizedGroups));
 
         try {
-          const retried = await submitCurrentBracket(
+          const { bracket: retried, pendingUpgrades: retryUpgrades } = await submitCurrentBracket(
             {
               groupRankings: revertedRankings,
               finalizedGroups: normalizeFinalizedGroups(fresh?.picks.finalizedGroups ?? finalizedGroups),
@@ -337,6 +342,7 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
           setCommittedPicks(retried.picks.picks);
           setFinalizedGroups(normalizeFinalizedGroups(retried.picks.finalizedGroups ?? finalizedGroups));
           setLastSavedAt(retried.updatedAt);
+          await notifyCardUpgrades(retryUpgrades);
           setSaveError(
             new Error("Some picks were locked while editing — your other picks saved.")
           );
@@ -349,7 +355,7 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
     } finally {
       setIsSaving(false);
     }
-  }, [finalizedGroups, groupRankings, picks, user, groupId]);
+  }, [finalizedGroups, groupRankings, notifyCardUpgrades, picks, user, groupId]);
 
   const value = useMemo<BracketContextValue>(
     () => ({

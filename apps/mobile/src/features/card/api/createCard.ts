@@ -1,7 +1,7 @@
 import { BASE_CARD_STATS } from "@world-cup-game/config";
 import type { CardStats, PlayerCard } from "@world-cup-game/types";
 import { supabase } from "../../../lib/supabase";
-import { LEVEL_00_SKETCH_TEMPLATE_KEY } from "../templates/level00SketchTemplate";
+import { DEFAULT_CARD_TEMPLATE_KEY } from "../templates/handDrawnCardTemplates";
 import { getCurrentUserCard, mapCardRow } from "./getCard";
 
 export interface CreateCardInput {
@@ -67,11 +67,11 @@ async function getCurrentUserId() {
 }
 
 async function getDefaultTemplateId() {
-  const fallbackTemplateKey = "level-01-base-v1";
+  const legacyTemplateKey = "level-00-sketch-v1";
   const { data, error } = await supabase
     .from("card_templates")
     .select("id, template_key")
-    .in("template_key", [LEVEL_00_SKETCH_TEMPLATE_KEY, fallbackTemplateKey])
+    .in("template_key", [DEFAULT_CARD_TEMPLATE_KEY, legacyTemplateKey])
     .eq("is_active", true)
     .returns<TemplateRow[]>();
 
@@ -84,7 +84,7 @@ async function getDefaultTemplateId() {
   }
 
   const template =
-    data.find((candidate) => candidate.template_key === LEVEL_00_SKETCH_TEMPLATE_KEY)
+    data.find((candidate) => candidate.template_key === DEFAULT_CARD_TEMPLATE_KEY)
     ?? data[0]!;
 
   return template.id;

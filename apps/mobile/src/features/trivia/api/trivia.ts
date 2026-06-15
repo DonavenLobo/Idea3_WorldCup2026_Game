@@ -1,8 +1,13 @@
 import type { AnswerKey, TriviaAnswerOption } from "@world-cup-game/types";
+import type { CardUpgradeEvent } from "@world-cup-game/types";
 import { supabase } from "../../../lib/supabase";
 import { isAnswerKey } from "../schemas/triviaSchema";
 import type { DailyAnswer, DailyTriviaQuestion, ScoredTriviaAttempt } from "../types";
 import { calculateTriviaAnswerPoints } from "../utils";
+import {
+  mapCardProgressionResponse,
+  type CardProgressionResponse,
+} from "../../card/api/cardProgression";
 
 interface TriviaQuestionRow {
   id: string;
@@ -66,6 +71,7 @@ interface ScoreTriviaAttemptResponse {
       longestTriviaStreak: number;
     };
   };
+  cardProgression?: CardProgressionResponse | null;
 }
 
 const QUESTION_COLUMNS = `
@@ -257,7 +263,7 @@ export async function submitDailyTriviaAttempt(input: {
     selectedAnswerKey: AnswerKey;
     responseTimeMs: number;
   }>;
-}): Promise<ScoredTriviaAttempt> {
+}): Promise<{ attempt: ScoredTriviaAttempt; pendingUpgrades: CardUpgradeEvent[] }> {
   const { data, error } = await supabase.functions.invoke<ScoreTriviaAttemptResponse>(
     "score-trivia-attempt",
     {
@@ -273,5 +279,8 @@ export async function submitDailyTriviaAttempt(input: {
     throw new Error("Trivia attempt did not return a score.");
   }
 
-  return mapSubmittedAttempt(data.attempt);
+  return {
+    attempt: mapSubmittedAttempt(data.attempt),
+    pendingUpgrades: mapCardProgressionResponse(data.cardProgression),
+  };
 }

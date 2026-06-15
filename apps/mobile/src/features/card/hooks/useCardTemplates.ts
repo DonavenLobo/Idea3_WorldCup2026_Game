@@ -3,10 +3,10 @@ import { loadTemplate } from "@world-cup-game/card-renderer";
 import type { PlayerCardRenderTemplate } from "@world-cup-game/card-renderer";
 import { supabase } from "../../../lib/supabase";
 import {
-  applyBundledSketchMetadata,
+  applyBundledTemplateMetadata,
+  FALLBACK_CARD_TEMPLATES,
   getBundledTemplateSource,
-  LEVEL_00_SKETCH_TEMPLATE
-} from "../templates/level00SketchTemplate";
+} from "../templates/handDrawnCardTemplates";
 
 interface CardTemplateRow {
   id: string;
@@ -25,7 +25,7 @@ const TEMPLATE_COLUMNS = `
 `;
 
 function mapTemplate(row: CardTemplateRow): PlayerCardRenderTemplate {
-  return applyBundledSketchMetadata(
+  return applyBundledTemplateMetadata(
     loadTemplate({
       id: row.id,
       templateKey: row.template_key,
@@ -58,8 +58,8 @@ export function useCardTemplates() {
     queryFn: getActiveCardTemplates,
     queryKey: ["card-templates"]
   });
-  const templates = (query.data?.length ? query.data : [LEVEL_00_SKETCH_TEMPLATE]).map(
-    applyBundledSketchMetadata
+  const templates = (query.data?.length ? query.data : FALLBACK_CARD_TEMPLATES).map(
+    applyBundledTemplateMetadata
   );
 
   return {

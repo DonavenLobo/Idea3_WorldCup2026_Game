@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { PropsWithChildren } from "react";
 import { TRIVIA_QUESTIONS_PER_DAY } from "@world-cup-game/config";
 import { useSession } from "../auth/hooks/useSession";
+import { useNotifyCardUpgrades } from "../card/components/CardUpgradeGate";
 import {
   getCompletedTriviaAttempt,
   getDailyTriviaQuestions,
@@ -31,6 +32,7 @@ const TriviaContext = createContext<TriviaContextValue | null>(null);
 
 export function TriviaProvider({ children }: PropsWithChildren) {
   const { user, isLoading: isSessionLoading } = useSession();
+  const notifyCardUpgrades = useNotifyCardUpgrades();
   const [activeDate] = useState(() => dateKey());
   const [answers, setAnswers] = useState<DailyAnswer[]>([]);
   const [completedAttempt, setCompletedAttempt] = useState<ScoredTriviaAttempt | null>(null);
@@ -142,7 +144,7 @@ export function TriviaProvider({ children }: PropsWithChildren) {
     setError(null);
 
     try {
-      const scoredAttempt = await submitDailyTriviaAttempt({
+      const { attempt: scoredAttempt, pendingUpgrades } = await submitDailyTriviaAttempt({
         activeDate,
         answers: answers.map((answer) => ({
           questionId: answer.questionId,
@@ -155,6 +157,7 @@ export function TriviaProvider({ children }: PropsWithChildren) {
       setAnswers(scoredAttempt.answers);
       setCurrentIndex(questions.length);
       setIsStarted(true);
+      await notifyCardUpgrades(pendingUpgrades);
     } catch (submitError) {
       const normalizedError =
         submitError instanceof Error ? submitError : new Error("Failed to submit trivia attempt.");
@@ -163,7 +166,7 @@ export function TriviaProvider({ children }: PropsWithChildren) {
     } finally {
       setIsSubmitting(false);
     }
-  }, [activeDate, answers, completedAttempt, currentIndex, questions.length]);
+  }, [activeDate, answers, completedAttempt, currentIndex, notifyCardUpgrades, questions.length]);
 
   const value = useMemo<TriviaContextValue>(
     () => ({

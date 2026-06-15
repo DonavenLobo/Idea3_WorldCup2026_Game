@@ -1,7 +1,12 @@
 import { GROUP_IDS } from "@world-cup-game/config";
 import type { GroupId } from "@world-cup-game/config";
+import type { CardUpgradeEvent } from "@world-cup-game/types";
 import { supabase } from "../../../lib/supabase";
 import { getValidatedSupabaseUser } from "../../auth/api/sessionRecovery";
+import {
+  mapCardProgressionResponse,
+  type CardProgressionResponse,
+} from "../../card/api/cardProgression";
 import type { BracketPicks, PersistedBracketPicks } from "../types";
 import {
   PickPastLockoutError,
@@ -144,6 +149,7 @@ export async function getCurrentBracket(): Promise<SavedBracket | null> {
 interface SubmitBracketResponse {
   ok?: boolean;
   bracket?: SavedBracket;
+  cardProgression?: CardProgressionResponse | null;
   code?: "PICK_PAST_LOCKOUT" | "NOT_GROUP_MEMBER";
   invalidGroups?: string[];
   invalidMatches?: Array<{ round: string; index: number }>;
@@ -191,7 +197,10 @@ async function readFunctionErrorResponse(error: unknown): Promise<SubmitBracketR
   return null;
 }
 
-function parseSubmitBracketResponse(data: SubmitBracketResponse | null): SavedBracket {
+function parseSubmitBracketResponse(data: SubmitBracketResponse | null): {
+  bracket: SavedBracket;
+  pendingUpgrades: CardUpgradeEvent[];
+} {
   if (!data) {
     throw new Error("Bracket save returned no data.");
   }
@@ -215,13 +224,16 @@ function parseSubmitBracketResponse(data: SubmitBracketResponse | null): SavedBr
     throw new Error("Bracket save did not return a saved bracket.");
   }
 
-  return data.bracket;
+  return {
+    bracket: data.bracket,
+    pendingUpgrades: mapCardProgressionResponse(data.cardProgression),
+  };
 }
 
 export async function submitCurrentBracket(
   picks: PersistedBracketPicks,
   groupId: string | null = null
-): Promise<SavedBracket> {
+): Promise<{ bracket: SavedBracket; pendingUpgrades: CardUpgradeEvent[] }> {
   const user = await getValidatedSupabaseUser();
   if (!user) {
     throw new Error("Sign in to save your bracket.");

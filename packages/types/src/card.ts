@@ -1,3 +1,26 @@
+export type CardProgressionLevel = 2 | 3 | 4;
+
+export interface CardProgressionMilestones {
+  hasCompletedFirstTrivia: boolean;
+  hasFinalizedAllBracketGroups: boolean;
+}
+
+export interface CardUpgradeStep {
+  from: CardProgressionLevel;
+  to: CardProgressionLevel;
+}
+
+export interface CardUpgradeEvent {
+  id: string;
+  userId: string;
+  cardId: string;
+  fromLevel: CardProgressionLevel;
+  toLevel: CardProgressionLevel;
+  sequence: number;
+  createdAt: string;
+  animationSeenAt: string | null;
+}
+
 export type CardTier = "bronze" | "silver" | "gold" | "elite" | "legend";
 
 export type CardStatus =
