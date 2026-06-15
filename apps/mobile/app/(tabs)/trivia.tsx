@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { TRIVIA_QUESTION_TIERS, TRIVIA_QUESTIONS_PER_DAY } from "@world-cup-game/config";
+import { TRIVIA_QUESTION_TIER_DETAILS, TRIVIA_QUESTIONS_PER_DAY } from "@world-cup-game/config";
 import { BrandButton } from "../../src/components/brand";
 import { Eyebrow } from "../../src/components/brand/Eyebrow";
 import { CompletedView, QuestionCard, useTrivia } from "../../src/features/trivia";
@@ -117,7 +117,7 @@ export default function TriviaScreen() {
         </Text>
 
         <View style={styles.tierRow}>
-          {TRIVIA_QUESTION_TIERS.map((tier) => (
+          {TRIVIA_QUESTION_TIER_DETAILS.map((tier) => (
             <TierChip
               key={tier.difficulty}
               label={tier.difficulty.toUpperCase()}

@@ -2,7 +2,6 @@
 import type { PooledTriviaQuestion } from "@world-cup-game/types";
 import { selectDailyQuestions, InsufficientPoolError } from "./selectDailyQuestions";
 
-declare const process: { exit(code?: number): never };
 let failed = 0;
 function check(name: string, cond: boolean) {
   if (cond) console.log("ok -", name);
@@ -61,4 +60,6 @@ try {
 check("count<0 throws RangeError", rangeThrew);
 
 console.log(failed === 0 ? "ALL PASS" : `${failed} FAILED`);
-process.exit(failed === 0 ? 0 : 1);
+if (failed > 0) {
+  throw new Error(`${failed} test(s) failed`);
+}

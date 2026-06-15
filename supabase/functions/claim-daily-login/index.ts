@@ -6,6 +6,8 @@ import {
   type ComputeLoginRewardMilestone,
 } from "./computeLoginReward.ts";
 
+type SupabaseClient = ReturnType<typeof createClient<any>>;
+
 interface ProfileLoginRow {
   current_login_streak: number;
   longest_login_streak: number;
@@ -29,7 +31,7 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 async function loadProfileLogin(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: SupabaseClient,
   userId: string
 ): Promise<ProfileLoginRow> {
   const { data, error } = await supabaseAdmin

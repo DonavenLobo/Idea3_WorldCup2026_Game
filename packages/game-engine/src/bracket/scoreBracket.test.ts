@@ -1,7 +1,7 @@
 /**
  * Hand-rolled tests for scoreBracket. No framework — run with:
  *   pnpm dlx tsx packages/game-engine/src/bracket/scoreBracket.test.ts
- * Exits 0 only if every case passes.
+ * Throws only if a case fails.
  */
 
 import { BRACKET_SCORING } from "@world-cup-game/config";
@@ -12,10 +12,6 @@ import type {
   BracketScoreInput,
   KnockoutRoundId,
 } from "./scoreBracket";
-
-// `process` is provided by tsx/node at runtime. Declare it locally so the
-// game-engine package doesn't need to depend on @types/node.
-declare const process: { exit(code?: number): never };
 
 // ---------- Tiny test harness ----------
 let failed = 0;
@@ -306,7 +302,6 @@ console.log("");
 console.log(`Results: ${passed}/${total} passed`);
 if (failed > 0) {
   console.error(`${failed} test(s) FAILED`);
-  process.exit(1);
+  throw new Error(`${failed} test(s) failed`);
 }
 console.log("All tests PASS");
-process.exit(0);

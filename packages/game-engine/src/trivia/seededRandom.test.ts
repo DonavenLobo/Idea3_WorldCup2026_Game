@@ -1,7 +1,6 @@
 /** Run: pnpm dlx tsx packages/game-engine/src/trivia/seededRandom.test.ts */
 import { seededRandom, seededShuffle } from "./seededRandom";
 
-declare const process: { exit(code?: number): never };
 let failed = 0;
 function check(name: string, cond: boolean) {
   if (cond) console.log("ok -", name);
@@ -29,4 +28,6 @@ check("shuffle is permutation", JSON.stringify([...s1].sort()) === JSON.stringif
 check("shuffle does not mutate input", JSON.stringify(items) === JSON.stringify([1,2,3,4,5]));
 
 console.log(failed === 0 ? "ALL PASS" : `${failed} FAILED`);
-process.exit(failed === 0 ? 0 : 1);
+if (failed > 0) {
+  throw new Error(`${failed} test(s) failed`);
+}

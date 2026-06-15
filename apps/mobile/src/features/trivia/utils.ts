@@ -20,8 +20,8 @@ export function calculateTriviaAnswerPoints(
 
   const tier = getTriviaTierForOrder(questionOrder);
   const cappedMs = Math.max(0, Math.min(responseTimeMs, tier.timeLimitMs));
-  const remainingRatio = (tier.timeLimitMs - cappedMs) / tier.timeLimitMs;
-  const speedBonus = Math.round(tier.maxSpeedBonus * remainingRatio);
+  const remainingRatio = Math.max(0, 1 - cappedMs / (2 * tier.timeLimitMs));
+  const speedBonusRaw = tier.basePoints * remainingRatio;
 
-  return tier.basePoints + speedBonus;
+  return Math.round(tier.basePoints + speedBonusRaw);
 }

@@ -12,6 +12,8 @@ import {
   type TriviaQuestionResult
 } from "./scoreTriviaDay.ts";
 
+type SupabaseClient = ReturnType<typeof createClient<any>>;
+
 interface TriviaQuestionRow {
   id: string;
   correct_answer_key: AnswerKey;
@@ -112,7 +114,7 @@ function mapAttempt(
 }
 
 async function loadProfileStreak(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: SupabaseClient,
   userId: string
 ): Promise<ProfileStreakRow> {
   const { data, error } = await supabaseAdmin
@@ -132,7 +134,7 @@ async function loadProfileStreak(
 }
 
 async function loadExistingAttempt(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: SupabaseClient,
   userId: string,
   activeDate: string,
   streak: ProfileStreakRow

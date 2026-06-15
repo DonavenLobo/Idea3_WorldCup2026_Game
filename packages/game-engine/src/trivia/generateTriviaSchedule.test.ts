@@ -4,7 +4,6 @@ import {
   addDays, generateTriviaSchedule, renderScheduleSql, withShuffledOptions,
 } from "./generateTriviaSchedule";
 
-declare const process: { exit(code?: number): never };
 let failed = 0;
 function check(name: string, cond: boolean) {
   if (cond) console.log("ok -", name);
@@ -91,4 +90,6 @@ const allKeys = new Set(balanced.schedule.flatMap((d) => d.questions.map((x) => 
 check("generated schedule keys vary", allKeys.size >= 2);
 
 console.log(failed === 0 ? "ALL PASS" : `${failed} FAILED`);
-process.exit(failed === 0 ? 0 : 1);
+if (failed > 0) {
+  throw new Error(`${failed} test(s) failed`);
+}

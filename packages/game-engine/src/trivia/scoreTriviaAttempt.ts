@@ -16,9 +16,9 @@ export interface TriviaQuestionScoreInput {
 function calculateSpeedBonus(responseTimeMs: number, questionOrder: number): number {
   const tier = getTriviaTierForOrder(questionOrder);
   const cappedMs = Math.max(0, Math.min(responseTimeMs, tier.timeLimitMs));
-  const remainingRatio = (tier.timeLimitMs - cappedMs) / tier.timeLimitMs;
+  const remainingRatio = Math.max(0, 1 - cappedMs / (2 * tier.timeLimitMs));
 
-  return Math.round(tier.maxSpeedBonus * remainingRatio);
+  return Math.round(tier.basePoints * remainingRatio);
 }
 
 function calculateAnswerPoints(answer: TriviaQuestionScoreInput): number {
