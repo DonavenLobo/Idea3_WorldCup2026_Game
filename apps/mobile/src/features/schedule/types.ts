@@ -1,6 +1,6 @@
 import type { Fixture } from "@world-cup-game/config";
 
-export type ScheduleFilter = "all" | "group" | "knockouts" | "myTeam";
+export type ScheduleFilter = "today" | "all" | "group" | "knockouts" | "myTeam";
 export type MatchStatus = "scheduled" | "live" | "completed";
 
 export interface CachedMatchScore {

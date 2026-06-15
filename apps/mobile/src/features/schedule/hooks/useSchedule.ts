@@ -7,6 +7,7 @@ import {
   deviceTimeZone,
   filterMatches,
   groupByLocalDay,
+  hasMatchesToday,
   matchesMyTeam,
   myTeamNamesForCode
 } from "../utils";
@@ -16,6 +17,7 @@ interface UseScheduleResult {
   refreshScores: () => Promise<void>;
   sections: ScheduleSection[];
   showMyTeam: boolean;
+  showToday: boolean;
   timeZone: string;
 }
 
@@ -48,10 +50,19 @@ export function useSchedule(filter: ScheduleFilter): UseScheduleResult {
     [scoresByMatchNum]
   );
 
+  const showToday = useMemo(
+    () => hasMatchesToday(fixturesWithScores, timeZone),
+    [fixturesWithScores, timeZone]
+  );
+
   const sections = useMemo(
-    () => groupByLocalDay(filterMatches(fixturesWithScores, filter, myTeamNames), timeZone),
+    () =>
+      groupByLocalDay(
+        filterMatches(fixturesWithScores, filter, myTeamNames, { timeZone }),
+        timeZone
+      ),
     [filter, fixturesWithScores, myTeamNames, timeZone]
   );
 
-  return { isLoadingScores, refreshScores, sections, showMyTeam, timeZone };
+  return { isLoadingScores, refreshScores, sections, showMyTeam, showToday, timeZone };
 }

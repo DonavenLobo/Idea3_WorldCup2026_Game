@@ -13,12 +13,15 @@ interface FilterChipsProps {
   value: ScheduleFilter;
   onChange: (filter: ScheduleFilter) => void;
   showMyTeam: boolean;
+  showToday: boolean;
 }
 
-export function FilterChips({ value, onChange, showMyTeam }: FilterChipsProps) {
-  const chips = showMyTeam
-    ? [...BASE_CHIPS, { key: "myTeam" as ScheduleFilter, label: "My team" }]
-    : BASE_CHIPS;
+export function FilterChips({ value, onChange, showMyTeam, showToday }: FilterChipsProps) {
+  const chips = [
+    ...(showToday ? [{ key: "today" as ScheduleFilter, label: "Today" }] : []),
+    ...BASE_CHIPS,
+    ...(showMyTeam ? [{ key: "myTeam" as ScheduleFilter, label: "My team" }] : [])
+  ];
 
   return (
     <ScrollView
