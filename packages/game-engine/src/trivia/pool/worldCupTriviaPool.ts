@@ -1,7 +1,7 @@
 import type { AnswerKey, PooledTriviaQuestion } from "@world-cup-game/types";
 
 /**
- * Starter pool of factual, nation-tagged trivia for the 2026 World Cup field.
+ * Starter pool of factual, nation-tagged trivia for the 2026 global tournament field.
  *
  * Content rules (App Store Guideline 5.2.1 / IP safety):
  *  - No FIFA marks, official competition logos, emblems, mascots, or trophy imagery.
@@ -114,7 +114,7 @@ export const WORLD_CUP_TRIVIA_POOL: PooledTriviaQuestion[] = [
   mk("GER-003", "GER", "What is the capital of Germany?",
     ["Munich", "Frankfurt", "Berlin", "Hamburg"], 2,
     "Berlin is the capital of Germany."),
-  mk("GER-004", "GER", "Which German striker, surname Klose, is among the top international scorers of all time?",
+  mk("GER-004", "GER", "Which German striker holds the all-time record for most goals at the global tournament?",
     ["Miroslav Klose", "Gerd Müller", "Thomas Müller", "Lukas Podolski"], 0,
     "Miroslav Klose is one of the highest scorers in the global tournament's history."),
 
@@ -156,7 +156,7 @@ export const WORLD_CUP_TRIVIA_POOL: PooledTriviaQuestion[] = [
   mk("ITA-003", "ITA", "What is the capital of Italy?",
     ["Milan", "Rome", "Naples", "Turin"], 1,
     "Rome is the capital of Italy."),
-  mk("ITA-004", "ITA", "Which long-serving goalkeeper captained Italy for many years, surname Buffon?",
+  mk("ITA-004", "ITA", "Which long-serving goalkeeper captained Italy through the 2000s and 2010s?",
     ["Gianluigi Buffon", "Paolo Maldini", "Fabio Cannavaro", "Andrea Pirlo"], 0,
     "Gianluigi Buffon is one of Italy's most-capped captains."),
 
@@ -170,7 +170,7 @@ export const WORLD_CUP_TRIVIA_POOL: PooledTriviaQuestion[] = [
   mk("BEL-003", "BEL", "What is the primary color of Belgium's home shirt?",
     ["Red", "Blue", "White", "Black"], 0,
     "Belgium play in red home shirts."),
-  mk("BEL-004", "BEL", "Which Belgian playmaker starred for years at Manchester City, surname De Bruyne?",
+  mk("BEL-004", "BEL", "Which Belgian playmaker spent years as Manchester City's creative midfield star?",
     ["Kevin De Bruyne", "Eden Hazard", "Romelu Lukaku", "Vincent Kompany"], 0,
     "Kevin De Bruyne is a creative midfield star for Belgium."),
 
@@ -181,7 +181,7 @@ export const WORLD_CUP_TRIVIA_POOL: PooledTriviaQuestion[] = [
   mk("CRO-002", "CRO", "What is the capital of Croatia?",
     ["Split", "Zagreb", "Rijeka", "Dubrovnik"], 1,
     "Zagreb is the capital of Croatia."),
-  mk("CRO-003", "CRO", "Which Croatian midfielder won the 2018 Ballon d'Or, surname Modrić?",
+  mk("CRO-003", "CRO", "Which Croatian midfielder won the 2018 Ballon d'Or?",
     ["Luka Modrić", "Ivan Rakitić", "Mario Mandžukić", "Ivan Perišić"], 0,
     "Luka Modrić won the 2018 Ballon d'Or."),
   mk("CRO-004", "CRO", "What is Croatia's national team nickname?",
@@ -226,7 +226,7 @@ export const WORLD_CUP_TRIVIA_POOL: PooledTriviaQuestion[] = [
   mk("JPN-003", "JPN", "What is the primary color of Japan's home shirt?",
     ["Red", "Blue", "White", "Green"], 1,
     "Japan play in blue home shirts."),
-  mk("JPN-004", "JPN", "Which Japanese midfielder was a 1990s–2000s pioneer in Italy's Serie A, surname Nakata?",
+  mk("JPN-004", "JPN", "Which Japanese midfielder was a 1990s–2000s pioneer in Italy's Serie A?",
     ["Keisuke Honda", "Shinji Kagawa", "Hidetoshi Nakata", "Takumi Minamino"], 2,
     "Hidetoshi Nakata was a trailblazing Japanese star in Serie A."),
 
@@ -240,7 +240,7 @@ export const WORLD_CUP_TRIVIA_POOL: PooledTriviaQuestion[] = [
   mk("KOR-003", "KOR", "What is the primary color of South Korea's home shirt?",
     ["Blue", "Red", "White", "Black"], 1,
     "South Korea play in red home shirts."),
-  mk("KOR-004", "KOR", "Which forward was Tottenham's long-time captain, surname Son?",
+  mk("KOR-004", "KOR", "Which forward became Tottenham's long-time captain?",
     ["Son Heung-min", "Park Ji-sung", "Ki Sung-yueng", "Lee Kang-in"], 0,
     "Son Heung-min captained Tottenham and South Korea."),
 
