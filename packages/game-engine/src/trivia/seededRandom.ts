@@ -19,7 +19,9 @@ export function seededShuffle<T>(items: readonly T[], rand: () => number): T[] {
   const out = items.slice();
   for (let i = out.length - 1; i > 0; i--) {
     const j = Math.floor(rand() * (i + 1));
-    [out[i], out[j]] = [out[j], out[i]];
+    const tmp = out[i] as T;
+    out[i] = out[j] as T;
+    out[j] = tmp;
   }
   return out;
 }

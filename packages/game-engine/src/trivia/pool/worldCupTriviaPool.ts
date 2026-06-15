@@ -26,8 +26,8 @@ function mk(
     id,
     nationCode,
     question,
-    answerOptions: options.map((label, i) => ({ key: KEYS[i], label })),
-    correctAnswerKey: KEYS[correctIndex],
+    answerOptions: options.map((label, i) => ({ key: KEYS[i] as AnswerKey, label })),
+    correctAnswerKey: KEYS[correctIndex] as AnswerKey,
     explanation,
     difficulty,
   };

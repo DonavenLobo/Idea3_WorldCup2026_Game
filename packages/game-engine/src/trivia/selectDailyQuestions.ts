@@ -60,5 +60,11 @@ export function selectDailyQuestions(
 
   const rand = seededRandom(isoDate);
   const chosenNations = seededShuffle(nations, rand).slice(0, count);
-  return chosenNations.map((nation) => seededShuffle(byNation.get(nation)!, rand)[0]);
+  return chosenNations.map((nation) => {
+    const [pick] = seededShuffle(byNation.get(nation)!, rand);
+    if (!pick) {
+      throw new Error(`Internal: empty question list for nation ${nation}`);
+    }
+    return pick;
+  });
 }
