@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: "row",
     gap: spacing.md,
-    marginTop: spacing.xxl + spacing.sm,
+    marginTop: spacing.md,
     padding: spacing.md,
   },
   tierProgress: {

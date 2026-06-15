@@ -90,14 +90,14 @@ export function RenderedPlayerCard({
   const template = applyBundledTemplateMetadata(resolvedTemplate);
   const aspectRatio = template.metadata.width / template.metadata.height;
   const maxCardHeight = windowHeight * (maxHeightRatio ?? 0.55);
+  const maxCardWidth = Math.min(420, maxCardHeight * aspectRatio);
   const cardSizing = fillParent
-    ? { width: "100%" as const, height: "100%" as const }
-    : maxHeightRatio !== undefined
-      ? {
-        maxHeight: maxCardHeight,
-        maxWidth: Math.min(420, maxCardHeight * aspectRatio)
-      }
-      : { maxHeight: maxCardHeight };
+    ? { alignSelf: "stretch" as const, flex: 1, width: "100%" as const }
+    : {
+        alignSelf: "center" as const,
+        maxWidth: maxCardWidth,
+        width: "100%" as const,
+      };
   const canRetry = card?.status === "failed" && Boolean(card.id);
   const status = card?.status;
   const shouldConceal =
@@ -144,30 +144,32 @@ export function RenderedPlayerCard({
         />
       ) : (
         <View style={[styles.cardSurface, fillParent && styles.cardSurfaceFill]}>
-          <PlayerCard
-            renderDisplayName={!useSketchTextOverlays}
-            renderOverall={!useSketchTextOverlays}
-            renderStatValues={false}
-            template={template}
-            card={{
-              avatarGeneratedUrl: card?.avatarGeneratedUrl,
-              avatarSourceUrl: card?.avatarSourceUrl ?? photoSource?.uri,
-              badgeIcon: teamFlagForCode(resolvedNationCode),
-              displayName: resolvedDisplayName,
-              overall: resolvedOverall,
-              selectedNationCode: resolvedNationCode,
-              stats: resolvedStats,
-              tier: tier ?? card?.tier ?? "bronze"
-            }}
-          />
-          {renderOverlays && useSketchTextOverlays && overlayMetadata ? (
-            <CardTextOverlays
-              displayName={resolvedDisplayName}
-              metadata={overlayMetadata}
-              overall={resolvedOverall}
+          <View style={[styles.cardCanvas, { aspectRatio }, fillParent && styles.cardCanvasFill]}>
+            <PlayerCard
+              renderDisplayName={!useSketchTextOverlays}
+              renderOverall={!useSketchTextOverlays}
+              renderStatValues={false}
+              template={template}
+              card={{
+                avatarGeneratedUrl: card?.avatarGeneratedUrl,
+                avatarSourceUrl: card?.avatarSourceUrl ?? photoSource?.uri,
+                badgeIcon: teamFlagForCode(resolvedNationCode),
+                displayName: resolvedDisplayName,
+                overall: resolvedOverall,
+                selectedNationCode: resolvedNationCode,
+                stats: resolvedStats,
+                tier: tier ?? card?.tier ?? "bronze"
+              }}
             />
-          ) : null}
-          {renderOverlays ? <CardStatOverlays stats={resolvedStats} /> : null}
+            {renderOverlays && useSketchTextOverlays && overlayMetadata ? (
+              <CardTextOverlays
+                displayName={resolvedDisplayName}
+                metadata={overlayMetadata}
+                overall={resolvedOverall}
+              />
+            ) : null}
+            {renderOverlays ? <CardStatOverlays metadata={overlayMetadata} stats={resolvedStats} /> : null}
+          </View>
         </View>
       )}
       {hideStatusBadge ? null : (
@@ -215,7 +217,8 @@ function HiddenCardPlaceholder({
 
   return (
     <View style={[styles.hiddenCard, { aspectRatio }]}>
-      <PlayerCard
+      <View style={styles.cardCanvas}>
+        <PlayerCard
         renderDisplayName={!useSketchTextOverlays}
         renderOverall={!useSketchTextOverlays}
         renderStatValues={false}
@@ -230,7 +233,7 @@ function HiddenCardPlaceholder({
           stats,
           tier
         }}
-      />
+        />
       {useSketchTextOverlays && overlayMetadata ? (
         <CardTextOverlays
           displayName={displayName}
@@ -238,7 +241,8 @@ function HiddenCardPlaceholder({
           overall={overall}
         />
       ) : null}
-      <CardStatOverlays stats={stats} />
+      <CardStatOverlays metadata={overlayMetadata} stats={stats} />
+      </View>
       <View pointerEvents="none" style={styles.hiddenMask}>
         <View style={styles.hiddenTint} />
         <View style={[styles.hiddenBand, styles.hiddenBandTop]} />
@@ -285,10 +289,20 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   cardSurfaceFill: {
-    height: "100%",
+    flex: 1,
+    justifyContent: "center",
+    width: "100%",
+  },
+  cardCanvas: {
+    position: "relative",
+    width: "100%",
+  },
+  cardCanvasFill: {
+    maxHeight: "100%",
   },
   cardWrap: {
     alignSelf: "center",
+    flexGrow: 0,
     maxWidth: 420,
     width: "100%"
   },

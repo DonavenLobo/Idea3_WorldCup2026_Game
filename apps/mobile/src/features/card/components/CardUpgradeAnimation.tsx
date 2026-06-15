@@ -14,6 +14,8 @@ import Animated, {
 import { colors } from "../../../theme/colors";
 import {
   getHandDrawnTemplateMetadata,
+  HAND_DRAWN_CANVAS_HEIGHT,
+  HAND_DRAWN_CANVAS_WIDTH,
   LEVEL_02_BASE_METADATA,
 } from "../templates/handDrawnCardTemplates";
 import { CardStatOverlays } from "./CardStatOverlays";
@@ -161,7 +163,7 @@ export function CardUpgradeAnimation({
           metadata={overlayMetadata}
           overall={card.overall}
         />
-        <CardStatOverlays stats={card.stats} />
+        <CardStatOverlays metadata={overlayMetadata} stats={card.stats} />
       </View>
     </View>
   );
@@ -172,7 +174,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   root: {
-    aspectRatio: 1024 / 1536,
+    aspectRatio: HAND_DRAWN_CANVAS_WIDTH / HAND_DRAWN_CANVAS_HEIGHT,
     width: "100%",
   },
   stack: {

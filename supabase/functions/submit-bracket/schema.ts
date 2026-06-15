@@ -11,7 +11,6 @@ export interface BracketPicksPayload {
     final: string | null;
     third: string | null;
   };
-  finalizedGroups?: string[];
 }
 
 export interface SubmitBracketRequest {
@@ -77,18 +76,6 @@ function parseNullableTeamCode(value: unknown, label: string): string | null {
   return value;
 }
 
-function parseFinalizedGroups(value: unknown): string[] | undefined {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  if (!Array.isArray(value) || !value.every((entry) => typeof entry === "string")) {
-    throw new Error("finalizedGroups must be an array of strings.");
-  }
-
-  return value;
-}
-
 function parsePicksPayload(value: unknown): BracketPicksPayload {
   if (!isRecord(value) || !isRecord(value.picks)) {
     throw new Error("Bracket picks payload is invalid.");
@@ -105,7 +92,6 @@ function parsePicksPayload(value: unknown): BracketPicksPayload {
       final: parseNullableTeamCode(value.picks.final, "picks.final"),
       third: parseNullableTeamCode(value.picks.third, "picks.third")
     },
-    finalizedGroups: parseFinalizedGroups(value.finalizedGroups),
   };
 }
 

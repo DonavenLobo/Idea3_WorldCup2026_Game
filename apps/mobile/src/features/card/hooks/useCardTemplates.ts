@@ -58,9 +58,7 @@ export function useCardTemplates() {
     queryFn: getActiveCardTemplates,
     queryKey: ["card-templates"]
   });
-  const templates = (query.data?.length ? query.data : FALLBACK_CARD_TEMPLATES).map(
-    applyBundledTemplateMetadata
-  );
+  const templates = query.data?.length ? query.data : FALLBACK_CARD_TEMPLATES;
 
   return {
     error: query.error,

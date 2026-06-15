@@ -20,6 +20,7 @@ export function CardTextOverlays({
   const { width: CANVAS_WIDTH, height: CANVAS_HEIGHT, layers } = metadata;
   const overallLayer = layers.overall;
   const displayNameLayer = layers.displayName;
+  const showOverall = metadata.showOverallOverlay !== false && Boolean(overallLayer.label);
   const [imageWidth, setImageWidth] = useState(0);
 
   const handleLayout = (event: LayoutChangeEvent) => {
@@ -50,7 +51,7 @@ export function CardTextOverlays({
 
   return (
     <View pointerEvents="none" style={styles.overlay} onLayout={handleLayout}>
-      {overallLayer.label ? (
+      {showOverall && overallLayer.label ? (
         <View
           style={[
             styles.slot,
@@ -76,30 +77,32 @@ export function CardTextOverlays({
           </Text>
         </View>
       ) : null}
-      <View
-        style={[
-          styles.slot,
-          {
-            left: `${overallLeftPct}%`,
-            top: `${overallTopPct}%`,
-            width: `${overallWidthPct}%`,
-          },
-        ]}
-      >
-        <Text
+      {showOverall ? (
+        <View
           style={[
-            styles.text,
+            styles.slot,
             {
-              color: overallLayer.color ?? colors.ink,
-              fontFamily,
-              fontSize: overallFontSize,
-              lineHeight: overallFontSize * 1.1,
+              left: `${overallLeftPct}%`,
+              top: `${overallTopPct}%`,
+              width: `${overallWidthPct}%`,
             },
           ]}
         >
-          {overall}
-        </Text>
-      </View>
+          <Text
+            style={[
+              styles.text,
+              {
+                color: overallLayer.color ?? colors.ink,
+                fontFamily,
+                fontSize: overallFontSize,
+                lineHeight: overallFontSize * 1.1,
+              },
+            ]}
+          >
+            {overall}
+          </Text>
+        </View>
+      ) : null}
       <View
         style={[
           styles.slot,

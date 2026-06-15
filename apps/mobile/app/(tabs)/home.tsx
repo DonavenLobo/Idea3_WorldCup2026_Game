@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
   },
   navActions: {
     gap: spacing.sm,
-    marginTop: spacing.xxl,
+    marginTop: spacing.sm,
   },
   kickoffUnit: {
     alignItems: "center",
