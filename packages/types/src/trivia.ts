@@ -46,3 +46,16 @@ export interface SpoilerSafeTriviaShare {
   nationCode: string;
   cardTier: string;
 }
+
+export interface PooledTriviaQuestion {
+  /** Stable unique id within the pool. */
+  id: string;
+  /** Subject nation (FK code into public.nations). */
+  nationCode: string;
+  question: string;
+  /** Exactly four options, keys A–D. */
+  answerOptions: TriviaAnswerOption[];
+  correctAnswerKey: AnswerKey;
+  explanation: string;
+  difficulty: string;
+}
