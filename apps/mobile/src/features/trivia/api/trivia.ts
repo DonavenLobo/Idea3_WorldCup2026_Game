@@ -52,6 +52,19 @@ interface ScoreTriviaAttemptResponse {
       isCorrect: boolean;
       points: number;
     }>;
+    /** Score breakdown — present on freshly scored attempts; null on replays. */
+    score: {
+      baseSum: number;
+      comboBonusApplied: number;
+      streakMultiplier: number;
+      newStreak: number;
+      competitivePoints: number;
+    } | null;
+    /** Streak rollup — present on both fresh + replayed attempts. */
+    streak?: {
+      currentTriviaStreak: number;
+      longestTriviaStreak: number;
+    };
   };
 }
 
@@ -157,6 +170,12 @@ function mapSubmittedAttempt(input: ScoreTriviaAttemptResponse["attempt"]): Scor
     competitivePoints: input.competitivePoints,
     earnedCardXp: input.earnedCardXp,
     completedAt: input.completedAt,
+    // The day-scoped score breakdown (streak multiplier, combo bonus) is only
+    // produced when the edge function runs a fresh scoring; existing-attempt
+    // replays come back with score = null, so leave the optional fields undef.
+    streakMultiplier: input.score?.streakMultiplier,
+    newStreak: input.score?.newStreak ?? input.streak?.currentTriviaStreak,
+    comboBonusApplied: input.score?.comboBonusApplied,
     answers: input.answers.map((answer) => ({
       questionId: answer.questionId,
       selectedAnswerKey: answer.selectedAnswerKey,

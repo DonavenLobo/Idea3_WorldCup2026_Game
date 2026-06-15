@@ -2,9 +2,15 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import {
   parseScoreTriviaAttemptRequest,
+  TRIVIA_DAILY_QUESTION_COUNT,
   type AnswerKey,
   type TriviaAnswerSubmission
 } from "./schema.ts";
+import {
+  computeDayScore,
+  type ScoreTriviaDayResult,
+  type TriviaQuestionResult
+} from "./scoreTriviaDay.ts";
 
 interface TriviaQuestionRow {
   id: string;
@@ -31,29 +37,21 @@ interface TriviaAttemptAnswerRow {
   response_time_ms: number;
 }
 
+interface ProfileStreakRow {
+  current_trivia_streak: number;
+  longest_trivia_streak: number;
+}
+
 interface ScoredAnswer extends TriviaAnswerSubmission {
   isCorrect: boolean;
   points: number;
 }
 
-// Per-question tier configuration — MIRRORS packages/config/src/xpRules.ts.
-// Edge functions run in Deno and can't import workspace packages, so this
-// is an inline copy. Keep in sync manually when scoring rules change.
-const TRIVIA_QUESTION_TIERS = [
-  { difficulty: "easy",   basePoints: 100, maxSpeedBonus: 20, timeLimitMs: 20_000 },
-  { difficulty: "medium", basePoints: 150, maxSpeedBonus: 30, timeLimitMs: 30_000 },
-  { difficulty: "hard",   basePoints: 200, maxSpeedBonus: 40, timeLimitMs: 45_000 }
-] as const;
-
-function getTriviaTierForOrder(questionOrder: number) {
-  const idx = Math.max(0, Math.min(TRIVIA_QUESTION_TIERS.length - 1, questionOrder - 1));
-  return TRIVIA_QUESTION_TIERS[idx]!;
-}
-
-const TRIVIA_RULES = {
-  questionsPerDay: 3,
-  correctAnswerCardXp: 25,
-  completedDailyTriviaCardXp: 50
+// Card XP rules are unchanged from the legacy scorer — only the competitive
+// points pipeline moved to scoreTriviaDay (PR-A).
+const CARD_XP_RULES = {
+  perCorrectAnswer: 25,
+  completedDailyBonus: 50
 } as const;
 
 const corsHeaders = {
@@ -75,22 +73,12 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
-function calculateAnswerPoints(
-  isCorrect: boolean,
-  responseTimeMs: number,
-  questionOrder: number
-): number {
-  if (!isCorrect) return 0;
-
-  const tier = getTriviaTierForOrder(questionOrder);
-  const cappedMs = Math.max(0, Math.min(responseTimeMs, tier.timeLimitMs));
-  const remainingRatio = (tier.timeLimitMs - cappedMs) / tier.timeLimitMs;
-  const speedBonus = Math.round(tier.maxSpeedBonus * remainingRatio);
-
-  return tier.basePoints + speedBonus;
-}
-
-function mapAttempt(row: TriviaAttemptRow, answers: ScoredAnswer[]) {
+function mapAttempt(
+  row: TriviaAttemptRow,
+  answers: ScoredAnswer[],
+  scoreBreakdown: ScoreTriviaDayResult | null,
+  streak: { current: number; longest: number }
+) {
   return {
     id: row.id,
     activeDate: row.active_date,
@@ -106,33 +94,48 @@ function mapAttempt(row: TriviaAttemptRow, answers: ScoredAnswer[]) {
       responseTimeMs: answer.responseTimeMs,
       isCorrect: answer.isCorrect,
       points: answer.points
-    }))
+    })),
+    score: scoreBreakdown
+      ? {
+          baseSum: scoreBreakdown.baseSum,
+          comboBonusApplied: scoreBreakdown.comboBonusApplied,
+          streakMultiplier: scoreBreakdown.streakMultiplier,
+          newStreak: scoreBreakdown.newStreak,
+          competitivePoints: scoreBreakdown.competitivePoints
+        }
+      : null,
+    streak: {
+      currentTriviaStreak: streak.current,
+      longestTriviaStreak: streak.longest
+    }
   };
 }
 
-function scoreAnswers(
-  submissions: TriviaAnswerSubmission[],
-  questions: TriviaQuestionRow[]
-): ScoredAnswer[] {
-  const byId = Object.fromEntries(questions.map((q) => [q.id, q]));
+async function loadProfileStreak(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  userId: string
+): Promise<ProfileStreakRow> {
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .select("current_trivia_streak, longest_trivia_streak")
+    .eq("id", userId)
+    .maybeSingle<ProfileStreakRow>();
 
-  return submissions.map((submission) => {
-    const question = byId[submission.questionId];
-    const isCorrect = question?.correct_answer_key === submission.selectedAnswerKey;
-    const questionOrder = question?.question_order ?? 1;
+  if (error) {
+    throw error;
+  }
 
-    return {
-      ...submission,
-      isCorrect,
-      points: calculateAnswerPoints(isCorrect, submission.responseTimeMs, questionOrder)
-    };
-  });
+  return {
+    current_trivia_streak: data?.current_trivia_streak ?? 0,
+    longest_trivia_streak: data?.longest_trivia_streak ?? 0
+  };
 }
 
 async function loadExistingAttempt(
   supabaseAdmin: ReturnType<typeof createClient>,
   userId: string,
-  activeDate: string
+  activeDate: string,
+  streak: ProfileStreakRow
 ) {
   const { data: existingAttempt, error: attemptError } = await supabaseAdmin
     .from("trivia_attempts")
@@ -151,29 +154,29 @@ async function loadExistingAttempt(
 
   const { data: answerRows, error: answersError } = await supabaseAdmin
     .from("trivia_attempt_answers")
-    .select(
-      "question_id, selected_answer_key, is_correct, response_time_ms, trivia_questions(question_order)"
-    )
+    .select("question_id, selected_answer_key, is_correct, response_time_ms")
     .eq("attempt_id", existingAttempt.id)
     .order("created_at", { ascending: true })
-    .returns<Array<TriviaAttemptAnswerRow & { trivia_questions: { question_order: number } | null }>>();
+    .returns<TriviaAttemptAnswerRow[]>();
 
   if (answersError) {
     throw answersError;
   }
 
-  const scoredAnswers = answerRows.map((answer) => {
-    const questionOrder = answer.trivia_questions?.question_order ?? 1;
-    return {
-      questionId: answer.question_id,
-      selectedAnswerKey: answer.selected_answer_key,
-      responseTimeMs: answer.response_time_ms,
-      isCorrect: answer.is_correct,
-      points: calculateAnswerPoints(answer.is_correct, answer.response_time_ms, questionOrder)
-    };
-  });
+  const scoredAnswers: ScoredAnswer[] = answerRows.map((answer) => ({
+    questionId: answer.question_id,
+    selectedAnswerKey: answer.selected_answer_key,
+    responseTimeMs: answer.response_time_ms,
+    isCorrect: answer.is_correct,
+    // No per-answer breakdown is persisted; surface 0 here. The authoritative
+    // total lives on the attempt row.
+    points: 0
+  }));
 
-  return mapAttempt(existingAttempt, scoredAnswers);
+  return mapAttempt(existingAttempt, scoredAnswers, null, {
+    current: streak.current_trivia_streak,
+    longest: streak.longest_trivia_streak
+  });
 }
 
 Deno.serve(async (request) => {
@@ -217,75 +220,118 @@ Deno.serve(async (request) => {
       return jsonResponse({ error: "Unauthorized." }, 401);
     }
 
+    const userId = userData.user.id;
+
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
       auth: {
         persistSession: false
       }
     });
 
+    const priorStreak = await loadProfileStreak(supabaseAdmin, userId);
+
     const existingAttempt = await loadExistingAttempt(
       supabaseAdmin,
-      userData.user.id,
-      input.activeDate
+      userId,
+      input.activeDate,
+      priorStreak
     );
 
     if (existingAttempt) {
       return jsonResponse({ attempt: existingAttempt });
     }
 
-    if (input.answers.length !== TRIVIA_RULES.questionsPerDay) {
-      return jsonResponse(
-        { error: `Daily trivia requires exactly ${TRIVIA_RULES.questionsPerDay} answers.` },
-        400
-      );
-    }
-
     const { data: questions, error: questionsError } = await supabaseAdmin
       .from("trivia_questions")
       .select("id, correct_answer_key, question_order")
       .eq("active_date", input.activeDate)
+      .order("question_order", { ascending: true })
       .returns<TriviaQuestionRow[]>();
 
     if (questionsError) {
       throw questionsError;
     }
 
-    if (questions.length !== TRIVIA_RULES.questionsPerDay) {
+    if (questions.length !== TRIVIA_DAILY_QUESTION_COUNT) {
       return jsonResponse(
         { error: `Daily trivia for ${input.activeDate} is not configured.` },
         400
       );
     }
 
-    const validQuestionIds = new Set(questions.map((question) => question.id));
-    const answersMatchDailyQuestions = input.answers.every((answer) =>
-      validQuestionIds.has(answer.questionId)
+    const questionById = new Map<string, TriviaQuestionRow>(
+      questions.map((q) => [q.id, q])
     );
 
-    if (!answersMatchDailyQuestions) {
+    const allMatch = input.answers.every((answer) =>
+      questionById.has(answer.questionId)
+    );
+
+    if (!allMatch) {
       return jsonResponse({ error: "Attempt answers do not match today's questions." }, 400);
     }
 
-    const scoredAnswers = scoreAnswers(input.answers, questions);
-    const correctAnswers = scoredAnswers.filter((answer) => answer.isCorrect).length;
-    const totalResponseTimeMs = scoredAnswers.reduce(
-      (total, answer) => total + answer.responseTimeMs,
+    // Build per-question results sorted by question_order so Q1/Q2/Q3 line up
+    // with the daily trivia scorer.
+    const sortedAnswers: Array<{
+      submission: TriviaAnswerSubmission;
+      question: TriviaQuestionRow;
+      isCorrect: boolean;
+    }> = input.answers
+      .map((submission) => {
+        const question = questionById.get(submission.questionId)!;
+        return {
+          submission,
+          question,
+          isCorrect: question.correct_answer_key === submission.selectedAnswerKey
+        };
+      })
+      .sort((a, b) => a.question.question_order - b.question.question_order);
+
+    const scoreInput: [
+      TriviaQuestionResult,
+      TriviaQuestionResult,
+      TriviaQuestionResult
+    ] = [
+      {
+        questionId: sortedAnswers[0].question.id,
+        isCorrect: sortedAnswers[0].isCorrect,
+        responseTimeMs: sortedAnswers[0].submission.responseTimeMs
+      },
+      {
+        questionId: sortedAnswers[1].question.id,
+        isCorrect: sortedAnswers[1].isCorrect,
+        responseTimeMs: sortedAnswers[1].submission.responseTimeMs
+      },
+      {
+        questionId: sortedAnswers[2].question.id,
+        isCorrect: sortedAnswers[2].isCorrect,
+        responseTimeMs: sortedAnswers[2].submission.responseTimeMs
+      }
+    ];
+
+    const score = computeDayScore(scoreInput, priorStreak.current_trivia_streak);
+
+    const correctAnswers = sortedAnswers.filter((a) => a.isCorrect).length;
+    const totalResponseTimeMs = sortedAnswers.reduce(
+      (sum, a) => sum + a.submission.responseTimeMs,
       0
     );
-    const competitivePoints = scoredAnswers.reduce((total, answer) => total + answer.points, 0);
     const earnedCardXp =
-      correctAnswers * TRIVIA_RULES.correctAnswerCardXp +
-      TRIVIA_RULES.completedDailyTriviaCardXp;
+      correctAnswers * CARD_XP_RULES.perCorrectAnswer +
+      (correctAnswers === TRIVIA_DAILY_QUESTION_COUNT
+        ? CARD_XP_RULES.completedDailyBonus
+        : 0);
 
     const { data: attempt, error: attemptInsertError } = await supabaseAdmin
       .from("trivia_attempts")
       .insert({
-        user_id: userData.user.id,
+        user_id: userId,
         active_date: input.activeDate,
-        total_questions: TRIVIA_RULES.questionsPerDay,
+        total_questions: TRIVIA_DAILY_QUESTION_COUNT,
         correct_answers: correctAnswers,
         total_response_time_ms: totalResponseTimeMs,
-        competitive_points: competitivePoints,
+        competitive_points: score.competitivePoints,
         earned_card_xp: earnedCardXp
       })
       .select(ATTEMPT_COLUMNS)
@@ -298,12 +344,12 @@ Deno.serve(async (request) => {
     const { error: answersInsertError } = await supabaseAdmin
       .from("trivia_attempt_answers")
       .insert(
-        scoredAnswers.map((answer) => ({
+        sortedAnswers.map((a) => ({
           attempt_id: attempt.id,
-          question_id: answer.questionId,
-          selected_answer_key: answer.selectedAnswerKey,
-          is_correct: answer.isCorrect,
-          response_time_ms: answer.responseTimeMs
+          question_id: a.submission.questionId,
+          selected_answer_key: a.submission.selectedAnswerKey,
+          is_correct: a.isCorrect,
+          response_time_ms: a.submission.responseTimeMs
         }))
       );
 
@@ -311,18 +357,35 @@ Deno.serve(async (request) => {
       throw answersInsertError;
     }
 
+    // Persist the trivia streak on the profile.
+    const newLongestStreak = Math.max(
+      priorStreak.longest_trivia_streak,
+      score.newStreak
+    );
+    const { error: streakError } = await supabaseAdmin
+      .from("profiles")
+      .update({
+        current_trivia_streak: score.newStreak,
+        longest_trivia_streak: newLongestStreak
+      })
+      .eq("id", userId);
+
+    if (streakError) {
+      throw streakError;
+    }
+
     const xpEvents = [
       {
-        user_id: userData.user.id,
+        user_id: userId,
         source_type: "daily_trivia",
         source_id: attempt.id,
         currency_type: "competitive_points",
-        amount: competitivePoints,
+        amount: score.competitivePoints,
         reason: `Daily trivia ${input.activeDate}`,
         counts_toward_leaderboard: true
       },
       {
-        user_id: userData.user.id,
+        user_id: userId,
         source_type: "daily_trivia",
         source_id: attempt.id,
         currency_type: "earned_xp",
@@ -338,7 +401,20 @@ Deno.serve(async (request) => {
       throw xpEventError;
     }
 
-    return jsonResponse({ attempt: mapAttempt(attempt, scoredAnswers) });
+    const scoredAnswers: ScoredAnswer[] = sortedAnswers.map((a, i) => ({
+      questionId: a.submission.questionId,
+      selectedAnswerKey: a.submission.selectedAnswerKey,
+      responseTimeMs: a.submission.responseTimeMs,
+      isCorrect: a.isCorrect,
+      points: score.perQuestion[i].total
+    }));
+
+    return jsonResponse({
+      attempt: mapAttempt(attempt, scoredAnswers, score, {
+        current: score.newStreak,
+        longest: newLongestStreak
+      })
+    });
   } catch (error) {
     return jsonResponse(
       { error: error instanceof Error ? error.message : "Unexpected score-trivia-attempt error." },

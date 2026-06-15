@@ -3,6 +3,7 @@ import { ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import { BrandButton } from "../../../components/brand";
 import { Eyebrow } from "../../../components/brand/Eyebrow";
 import { ScoreDisplay } from "./TriviaScore";
+import { TierChip } from "./TierChip";
 import type { DailyTriviaQuestion, ScoredTriviaAttempt } from "../types";
 import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
@@ -32,6 +33,20 @@ export function CompletedView({ attempt, questions }: CompletedViewProps) {
     })
     .map(({ answer }) => answer);
 
+  // Day-scoped scoring breakdown — these fields are only populated on fresh
+  // attempts that flowed through the new scorer. Default to safe values so
+  // legacy / replayed attempts still render cleanly.
+  const streakMultiplier = attempt.streakMultiplier ?? 1;
+  const newStreak = attempt.newStreak ?? 0;
+  const comboBonusApplied = attempt.comboBonusApplied ?? 0;
+
+  // Only surface the streak row once the player is at (or has crossed into)
+  // the first multiplier tier — below that, there's no benefit to call out.
+  const showStreakRow = streakMultiplier > 1 || newStreak >= 3;
+  // Always render as e.g. "1.20" — fixed-2 matches the design + reads as the
+  // multiplier rather than a stray decimal.
+  const multiplierLabel = streakMultiplier.toFixed(2);
+
   const handleShare = async () => {
     const grid = orderedAnswers.map((a) => (a.isCorrect ? "🟩" : "⬛")).join("");
     const message = [
@@ -54,6 +69,12 @@ export function CompletedView({ attempt, questions }: CompletedViewProps) {
     <View style={styles.root}>
       <View style={styles.fold}>
         <Eyebrow label="Done for today" accent="purple" />
+
+        <View style={styles.tierChipRow}>
+          <TierChip questionIndex={0} />
+          <TierChip questionIndex={1} />
+          <TierChip questionIndex={2} />
+        </View>
 
         <View style={styles.resultGrid}>
           {orderedAnswers.map((answer, index) => {
@@ -78,6 +99,24 @@ export function CompletedView({ attempt, questions }: CompletedViewProps) {
           {"  ·  "}
           {formatResponseTime(attempt.totalResponseTimeMs)}
         </Text>
+
+        {showStreakRow ? (
+          <View style={styles.streakRow}>
+            <Text style={styles.streakLabel}>
+              Streak  <Text style={styles.streakValue}>{newStreak} days</Text>
+            </Text>
+            <Text style={styles.streakDivider}>·</Text>
+            <Text style={styles.streakLabel}>
+              Multiplier  <Text style={styles.streakValue}>×{multiplierLabel}</Text>
+            </Text>
+          </View>
+        ) : null}
+
+        {comboBonusApplied > 0 ? (
+          <View style={styles.comboPill}>
+            <Text style={styles.comboPillText}>+{comboBonusApplied} all three bonus</Text>
+          </View>
+        ) : null}
 
         {attempt.earnedCardXp > 0 ? (
           <View style={styles.xpPill}>
@@ -185,6 +224,20 @@ const styles = StyleSheet.create({
     color: colors.ink,
     fontSize: 14,
   },
+  comboPill: {
+    backgroundColor: opacity.red18,
+    borderRadius: radius.pill,
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  comboPillText: {
+    ...typography.caption,
+    color: colors.red,
+    fontFamily: typography.label.fontFamily,
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
+  },
   comeBack: {
     ...typography.caption,
     color: opacity.ink55,
@@ -238,6 +291,27 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     width: "100%",
   },
+  streakDivider: {
+    ...typography.caption,
+    color: opacity.ink35,
+  },
+  streakLabel: {
+    ...typography.caption,
+    color: opacity.ink60,
+    fontFamily: typography.label.fontFamily,
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
+  },
+  streakRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.sm,
+    justifyContent: "center",
+    marginTop: spacing.sm,
+  },
+  streakValue: {
+    color: colors.red,
+  },
   summaryLine: {
     ...typography.caption,
     color: opacity.ink60,
@@ -245,6 +319,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
     marginTop: spacing.xs,
     textAlign: "center",
+  },
+  tierChipRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.sm,
   },
   xpPill: {
     backgroundColor: opacity.red18,

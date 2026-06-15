@@ -1,12 +1,36 @@
-import { BRACKET_SCORING } from "@world-cup-game/config";
-import type { GroupId } from "@world-cup-game/config";
+// MIRROR of packages/game-engine/src/bracket/scoreBracket.ts (commit dcf5c83).
+// Edge functions run in Deno and cannot import from workspace packages.
+// Keep this file in sync manually when scoring rules change. The canonical
+// source of truth for the constants below is:
+//   packages/config/src/xpRules.ts
+//     - BRACKET_SCORING
+//     - PERFECT_KNOCKOUT_RUN_BONUS (intentionally NOT applied in this pure fn —
+//       awarded by the edge function caller, if at all)
 
-/**
- * Knockout round identifier. Mirrored here (rather than imported from
- * apps/mobile) so the game-engine package stays free of any app-side
- * dependencies. Keep in sync with the app-side `KnockoutRoundId` in
- * apps/mobile/src/features/bracket/lib/computeBracketLockState.ts.
- */
+/** Bracket scoring constants. Mirrors BRACKET_SCORING from xpRules.ts. */
+export const BRACKET_SCORING = {
+  group: {
+    correctQualifier: 30,        // top-2 nation correct, wrong rank
+    exactRank: 120,              // top-2 nation correct AND correct position (1st/2nd)
+    correctNonQualifier: 25,     // 3rd/4th place correct nation (any rank)
+  },
+  knockout: {
+    r32: 40,
+    r16: 80,
+    qf: 160,
+    sf: 320,
+    final: 640,
+    champion: 800,
+    /** Multiplier applied on top of the base round points when the predicted nation
+     *  was a lower FIFA seed than the loser (an "upset" pick that came true). */
+    upsetBonusMultiplier: 0.5,
+  },
+} as const;
+
+export type GroupId =
+  | "A" | "B" | "C" | "D" | "E" | "F"
+  | "G" | "H" | "I" | "J" | "K" | "L";
+
 export type KnockoutRoundId = "r32" | "r16" | "qf" | "sf" | "third" | "final";
 
 export interface BracketKnockoutPrediction {
@@ -69,8 +93,6 @@ function knockoutBasePoints(round: KnockoutRoundId): number {
     case "sf":    return BRACKET_SCORING.knockout.sf;
     case "final": return BRACKET_SCORING.knockout.final;
     // Third-place is intentionally scored at the same tier as the final.
-    // The PRD doesn't assign an explicit value; this keeps it a meaningful
-    // pick without inventing a brand-new constant.
     case "third": return BRACKET_SCORING.knockout.final;
   }
 }
@@ -81,8 +103,8 @@ function knockoutBasePoints(round: KnockoutRoundId): number {
  * Pure function — no I/O, no Date.now(). Deterministic for a given input.
  *
  * Note: the perfect-knockout-bracket bonus (PERFECT_KNOCKOUT_RUN_BONUS) is
- * NOT applied here.
- * // Perfect-bracket bonus is awarded by the edge function, not here.
+ * NOT applied here. The edge function caller is responsible for adding it
+ * once the entire knockout round resolves.
  */
 export function scoreBracket(input: BracketScoreInput): BracketScoreResult {
   const breakdown: BracketScoreBreakdownItem[] = [];
@@ -90,9 +112,6 @@ export function scoreBracket(input: BracketScoreInput): BracketScoreResult {
   let knockoutPoints = 0;
 
   // ---------- Group stage ----------
-  // Iterate groups present in predictions (predictions drive scoring; a missing
-  // prediction = 0 for that group). We don't iterate GROUP_IDS to keep this
-  // function fully driven by the input.
   const predictedGroupIds = Object.keys(input.predictions.groups) as GroupId[];
   for (const g of predictedGroupIds) {
     const predicted = input.predictions.groups[g];
@@ -113,8 +132,6 @@ export function scoreBracket(input: BracketScoreInput): BracketScoreResult {
       const actualAtRank = actual[rank];
 
       if (rank === 0 || rank === 1) {
-        // Top-2 slot: full exactRank if exact match, partial correctQualifier
-        // if the nation is still a top-2 qualifier in the OTHER position.
         if (pick === actualAtRank) {
           groupPoints += BRACKET_SCORING.group.exactRank;
           breakdown.push({
@@ -133,8 +150,6 @@ export function scoreBracket(input: BracketScoreInput): BracketScoreResult {
           });
         }
       } else {
-        // 3rd/4th slot: position-agnostic credit for picking either
-        // bottom-2 nation in either bottom-2 slot.
         if (actualBottom2.has(pick)) {
           groupPoints += BRACKET_SCORING.group.correctNonQualifier;
           breakdown.push({
@@ -149,7 +164,6 @@ export function scoreBracket(input: BracketScoreInput): BracketScoreResult {
   }
 
   // ---------- Knockout stage ----------
-  // Build a result lookup keyed by `${round}:${index}` for O(1) joins.
   const resultByKey = new Map<string, BracketKnockoutResult>();
   for (const r of input.results.knockouts) {
     resultByKey.set(`${r.round}:${r.index}`, r);
@@ -172,7 +186,6 @@ export function scoreBracket(input: BracketScoreInput): BracketScoreResult {
       typeof loserSeed === "number" &&
       predSeed > loserSeed
     ) {
-      // Upset: the predicted winner was a worse seed than the loser.
       const bonus = base * BRACKET_SCORING.knockout.upsetBonusMultiplier;
       points = base + bonus;
       reason = `Correct ${pred.round} winner + upset bonus (seed ${predSeed} beat seed ${loserSeed})`;

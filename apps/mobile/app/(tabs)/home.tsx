@@ -7,6 +7,7 @@ import { Screen } from "../../src/components/layout";
 import { RenderedPlayerCard } from "../../src/features/card";
 import { useOnboarding } from "../../src/features/onboarding";
 import { useCurrentUserCard } from "../../src/features/card";
+import { LoginStreakBadge } from "../../src/features/login";
 import { useProfile } from "../../src/features/profile";
 import { useCachedMatchScores } from "../../src/features/schedule/hooks/useCachedMatchScores";
 import type { CachedMatchScore } from "../../src/features/schedule/types";
@@ -179,6 +180,10 @@ export default function HomeScreen() {
 
       <LiveMatchCard matches={liveMatches} />
 
+      <View style={styles.streakRow}>
+        <LoginStreakBadge streak={profile?.currentLoginStreak ?? 0} />
+      </View>
+
       <Eyebrow label="Your card" />
       <RenderedPlayerCard
         card={card}
@@ -336,5 +341,9 @@ const styles = StyleSheet.create({
   },
   playerCard: {
     marginTop: -15,
+  },
+  streakRow: {
+    flexDirection: "row",
+    marginBottom: spacing.sm,
   },
 });

@@ -21,6 +21,7 @@ import { useAuthRedirectHandler } from "../src/features/auth";
 import { BracketProvider } from "../src/features/bracket";
 import { GroupsProvider } from "../src/features/groups";
 import { LockerRoomProvider } from "../src/features/locker-room";
+import { LoginGate } from "../src/features/login";
 import { OnboardingProvider } from "../src/features/onboarding";
 import { TriviaProvider } from "../src/features/trivia";
 import { queryClient } from "../src/lib/queryClient";
@@ -72,6 +73,7 @@ export default function RootLayout() {
                 <LockerRoomProvider>
                   <TriviaProvider>
                     <RootStack />
+                    <LoginGate />
                   </TriviaProvider>
                 </LockerRoomProvider>
               </GroupsProvider>

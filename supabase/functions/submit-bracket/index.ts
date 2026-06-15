@@ -7,6 +7,54 @@ import {
   type BracketPicksPayload
 } from "./validateFixtures.ts";
 
+// EdgeRuntime is provided by Supabase's deno runtime. Declared inline so the
+// type-checker on a vanilla `deno check` is happy — mirrors the pattern used
+// by generate-card-avatar/index.ts.
+declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void } | undefined;
+
+const SCORE_BRACKET_TIMEOUT_MS = 3000;
+
+/**
+ * Fire-and-forget call into the sibling `score-bracket` edge function so the
+ * caller's competitive points stay in sync with the latest picks. Errors are
+ * logged but never surface to the user — the bracket save is the priority and
+ * must not regress on a downstream scoring hiccup.
+ */
+function fireScoreBracket(
+  supabaseUrl: string,
+  serviceRoleKey: string,
+  bracketId: string
+): Promise<void> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), SCORE_BRACKET_TIMEOUT_MS);
+
+  return fetch(`${supabaseUrl}/functions/v1/score-bracket`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      // The score-bracket fn re-uses the same auth model as the other edge
+      // fns (anon-key → getUser). The service-role key authorizes the call
+      // and short-circuits user lookup via the Authorization header.
+      Authorization: `Bearer ${serviceRoleKey}`,
+      apikey: serviceRoleKey
+    },
+    body: JSON.stringify({ bracketId }),
+    signal: controller.signal
+  })
+    .then(async (res) => {
+      if (!res.ok) {
+        const text = await res.text().catch(() => "<no body>");
+        console.error(
+          `[submit-bracket] score-bracket returned ${res.status}: ${text}`
+        );
+      }
+    })
+    .catch((error) => {
+      console.error("[submit-bracket] score-bracket invocation failed", error);
+    })
+    .finally(() => clearTimeout(timeout));
+}
+
 interface BracketRow {
   id: string;
   user_id: string;
@@ -212,6 +260,22 @@ Deno.serve(async (request) => {
 
     if (writeError) {
       throw writeError;
+    }
+
+    // Fire-and-forget rescore. Tolerated failure: a score-bracket error must
+    // never cause the bracket save itself to look like it failed to the user.
+    const scorePromise = fireScoreBracket(
+      supabaseUrl,
+      supabaseServiceRoleKey,
+      savedBracket.id
+    );
+    if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) {
+      EdgeRuntime.waitUntil(scorePromise);
+    } else {
+      // Pure local Deno fallback. `.catch` is already attached inside
+      // fireScoreBracket — this is just to prevent UnhandledPromiseRejection
+      // warnings in test environments.
+      scorePromise.catch(() => {});
     }
 
     return jsonResponse({ ok: true, bracket: mapBracket(savedBracket) });

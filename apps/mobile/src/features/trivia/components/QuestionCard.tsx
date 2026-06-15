@@ -2,8 +2,8 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ContentCard } from "../../../components/brand";
 import { triggerLightImpact } from "../../../lib/haptics";
 import { pressableFeedback } from "../../../theme/pressable";
-import { TRIVIA_MAX_POINTS_PER_QUESTION } from "@world-cup-game/config";
 import type { DailyTriviaQuestion } from "../types";
+import { TierChip, type TierChipQuestionIndex } from "./TierChip";
 import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
@@ -26,12 +26,18 @@ export function QuestionCard({
   onSelect
 }: QuestionCardProps) {
   const isLockedIn = selectedIndex !== null;
+  // QuestionCard receives a 1-indexed questionNumber; TierChip wants 0-based.
+  // Guard clamp so a malformed prop can't blow up the tier lookup.
+  const tierIndex = Math.max(0, Math.min(2, questionNumber - 1)) as TierChipQuestionIndex;
 
   return (
     <ContentCard style={styles.card}>
-      <Text style={styles.eyebrow}>
-        Q{questionNumber} of {totalQuestions}  •  UP TO {TRIVIA_MAX_POINTS_PER_QUESTION} PTS
-      </Text>
+      <View style={styles.headerRow}>
+        <Text style={styles.eyebrow}>
+          Q{questionNumber} of {totalQuestions}
+        </Text>
+        <TierChip questionIndex={tierIndex} emphasized />
+      </View>
       <Text style={styles.question}>{question.question}</Text>
 
       <View style={styles.options}>
@@ -76,7 +82,13 @@ const styles = StyleSheet.create({
     color: colors.red,
     fontSize: 12,
     fontWeight: "700",
-    letterSpacing: 1.1,
+    letterSpacing: 1.1
+  },
+  headerRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.sm,
+    justifyContent: "space-between",
     marginBottom: spacing.sm
   },
   letterBadge: {

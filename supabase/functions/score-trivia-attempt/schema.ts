@@ -51,6 +51,9 @@ function parseAnswer(value: unknown): TriviaAnswerSubmission {
   };
 }
 
+/** PR-A: daily trivia is now exactly 3 questions (Q1/Q2/Q3). */
+export const TRIVIA_DAILY_QUESTION_COUNT = 3;
+
 export function parseScoreTriviaAttemptRequest(value: unknown): ScoreTriviaAttemptRequest {
   if (!isRecord(value) || !Array.isArray(value.answers)) {
     throw new Error("Invalid score-trivia-attempt request.");
@@ -61,6 +64,12 @@ export function parseScoreTriviaAttemptRequest(value: unknown): ScoreTriviaAttem
 
   if (uniqueQuestionIds.size !== answers.length) {
     throw new Error("Trivia attempt contains duplicate question answers.");
+  }
+
+  if (answers.length !== TRIVIA_DAILY_QUESTION_COUNT) {
+    throw new Error(
+      `Daily trivia requires exactly ${TRIVIA_DAILY_QUESTION_COUNT} answers.`
+    );
   }
 
   return {
