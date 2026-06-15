@@ -46,11 +46,11 @@ export function matchesMyTeam(fixture: Fixture, names: Set<string>): boolean {
   return names.has(fixture.team1.toLowerCase()) || names.has(fixture.team2.toLowerCase());
 }
 
-export function filterMatches(
-  fixtures: Fixture[],
+export function filterMatches<T extends Fixture>(
+  fixtures: T[],
   filter: ScheduleFilter,
   myTeamNames: Set<string>
-): Fixture[] {
+): T[] {
   switch (filter) {
     case "group":
       return fixtures.filter((f) => f.stage === "group");
@@ -64,12 +64,15 @@ export function filterMatches(
   }
 }
 
-export function groupByLocalDay(fixtures: Fixture[], timeZone: string): ScheduleSection[] {
+export function groupByLocalDay<T extends Fixture>(
+  fixtures: T[],
+  timeZone: string
+): Array<Omit<ScheduleSection, "data"> & { data: T[] }> {
   const sorted = [...fixtures].sort((a, b) =>
     a.kickoffUtc < b.kickoffUtc ? -1 : a.kickoffUtc > b.kickoffUtc ? 1 : a.num - b.num
   );
 
-  const sections: ScheduleSection[] = [];
+  const sections: Array<Omit<ScheduleSection, "data"> & { data: T[] }> = [];
   const indexByKey = new Map<string, number>();
 
   for (const fixture of sorted) {

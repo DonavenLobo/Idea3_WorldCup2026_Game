@@ -12,7 +12,8 @@ import { StadiumDetailSheet } from "../components/StadiumDetailSheet";
 export function ScheduleScreen() {
   const [filter, setFilter] = useState<ScheduleFilter>("all");
   const [venueCity, setVenueCity] = useState<string | null>(null);
-  const { sections, showMyTeam, timeZone } = useSchedule(filter);
+  const { isLoadingScores, refreshScores, sections, showMyTeam, timeZone } =
+    useSchedule(filter);
 
   useEffect(() => {
     if (!showMyTeam && filter === "myTeam") {
@@ -41,6 +42,10 @@ export function ScheduleScreen() {
         stickySectionHeadersEnabled={false}
         contentContainerStyle={styles.content}
         ListEmptyComponent={<Text style={styles.empty}>No matches for this filter.</Text>}
+        onRefresh={() => {
+          void refreshScores();
+        }}
+        refreshing={isLoadingScores}
       />
       <StadiumDetailSheet city={venueCity} onClose={() => setVenueCity(null)} />
     </View>

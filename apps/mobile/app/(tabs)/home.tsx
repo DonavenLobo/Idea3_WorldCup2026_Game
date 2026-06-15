@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFocusEffect, useRouter } from "expo-router";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { APP_ROUTES, WORLD_CUP_FIXTURES } from "@world-cup-game/config";
-import { BrandButton, Eyebrow } from "../../src/components/brand";
+import { APP_ROUTES, formatTeamName, WORLD_CUP_FIXTURES } from "@world-cup-game/config";
+import { BrandButton, ContentCard, Eyebrow } from "../../src/components/brand";
 import { Screen } from "../../src/components/layout";
 import { RenderedPlayerCard } from "../../src/features/card";
 import { useOnboarding } from "../../src/features/onboarding";
 import { useCurrentUserCard } from "../../src/features/card";
 import { useProfile } from "../../src/features/profile";
+import { useCachedMatchScores } from "../../src/features/schedule/hooks/useCachedMatchScores";
+import type { CachedMatchScore } from "../../src/features/schedule/types";
 import { colors, opacity } from "../../src/theme/colors";
 import { radius } from "../../src/theme/radius";
 import { spacing } from "../../src/theme/spacing";
@@ -88,11 +90,47 @@ function KickoffUnit({
   );
 }
 
+function LiveMatchCard({
+  matches,
+}: {
+  matches: Array<{
+    awayTeam: string;
+    homeTeam: string;
+    score: CachedMatchScore;
+  }>;
+}) {
+  if (matches.length === 0) return null;
+
+  return (
+    <ContentCard style={styles.liveCard}>
+      <View style={styles.liveHeader}>
+        <View style={styles.liveDot} />
+        <Text style={styles.liveTitle}>Live now</Text>
+      </View>
+
+      {matches.slice(0, 2).map((match) => (
+        <View key={match.score.matchNum} style={styles.liveMatchRow}>
+          <Text style={styles.liveTeam} numberOfLines={1}>
+            {formatTeamName(match.homeTeam)}
+          </Text>
+          <Text style={styles.liveScore}>
+            {match.score.homeScore ?? 0} - {match.score.awayScore ?? 0}
+          </Text>
+          <Text style={[styles.liveTeam, styles.liveTeamAway]} numberOfLines={1}>
+            {formatTeamName(match.awayTeam)}
+          </Text>
+        </View>
+      ))}
+    </ContentCard>
+  );
+}
+
 export default function HomeScreen() {
   const router = useRouter();
   const { nation, displayName, photoSource } = useOnboarding();
   const { card } = useCurrentUserCard();
   const { profile } = useProfile();
+  const { scoresByMatchNum } = useCachedMatchScores();
   const { days, hours, minutes, seconds } = useCountdown(FINAL_DATE);
   const selectedNationCode =
     profile?.selectedNationCode ?? card?.selectedNationCode ?? nation?.code;
@@ -109,6 +147,21 @@ export default function HomeScreen() {
     }, [])
   );
 
+  const liveMatches = useMemo(
+    () =>
+      WORLD_CUP_FIXTURES.flatMap((fixture) => {
+        const score = scoresByMatchNum.get(fixture.num);
+        if (!score || score.status !== "live") return [];
+
+        return [{
+          awayTeam: fixture.team2,
+          homeTeam: fixture.team1,
+          score
+        }];
+      }),
+    [scoresByMatchNum]
+  );
+
   return (
     <Screen
       scroll
@@ -123,6 +176,8 @@ export default function HomeScreen() {
         minutes={minutes}
         seconds={seconds}
       />
+
+      <LiveMatchCard matches={liveMatches} />
 
       <Eyebrow label="Your card" />
       <RenderedPlayerCard
@@ -231,6 +286,53 @@ const styles = StyleSheet.create({
   },
   kickoffValueLive: {
     color: colors.red,
+  },
+  liveCard: {
+    borderColor: opacity.red50,
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  liveDot: {
+    backgroundColor: colors.red,
+    borderRadius: 999,
+    height: 8,
+    width: 8,
+  },
+  liveHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.xs,
+  },
+  liveMatchRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+  liveScore: {
+    ...typography.dataValue,
+    color: colors.red,
+    fontSize: 22,
+    fontVariant: ["tabular-nums"],
+    lineHeight: 26,
+    minWidth: 64,
+    textAlign: "center",
+  },
+  liveTeam: {
+    color: colors.ink,
+    flex: 1,
+    fontSize: 15,
+    fontWeight: "800",
+    minWidth: 0,
+  },
+  liveTeamAway: {
+    textAlign: "right",
+  },
+  liveTitle: {
+    ...typography.caption,
+    color: colors.red,
+    fontFamily: typography.label.fontFamily,
+    fontWeight: "800",
+    textTransform: "uppercase",
   },
   playerCard: {
     marginTop: -15,

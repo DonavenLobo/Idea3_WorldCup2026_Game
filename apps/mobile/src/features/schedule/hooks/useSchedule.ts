@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { WORLD_CUP_FIXTURES } from "@world-cup-game/config";
 import { useProfile } from "../../profile/hooks/useProfile";
 import type { ScheduleFilter, ScheduleSection } from "../types";
+import { useCachedMatchScores } from "./useCachedMatchScores";
 import {
   deviceTimeZone,
   filterMatches,
@@ -11,16 +12,17 @@ import {
 } from "../utils";
 
 interface UseScheduleResult {
+  isLoadingScores: boolean;
+  refreshScores: () => Promise<void>;
   sections: ScheduleSection[];
   showMyTeam: boolean;
   timeZone: string;
 }
 
 export function useSchedule(filter: ScheduleFilter): UseScheduleResult {
-  // Phase 1 is static: fixtures come straight from @world-cup-game/config.
-  // TODO(Phase 2): fetch the live results overlay here (see deferred Task 8)
-  // and merge resolved teams / scores before grouping.
   const { profile } = useProfile();
+  const { isLoading: isLoadingScores, refresh: refreshScores, scoresByMatchNum } =
+    useCachedMatchScores();
   const timeZone = deviceTimeZone();
 
   const myTeamNames = useMemo(
@@ -33,10 +35,23 @@ export function useSchedule(filter: ScheduleFilter): UseScheduleResult {
     [myTeamNames]
   );
 
-  const sections = useMemo(
-    () => groupByLocalDay(filterMatches(WORLD_CUP_FIXTURES, filter, myTeamNames), timeZone),
-    [filter, myTeamNames, timeZone]
+  const fixturesWithScores = useMemo(
+    () =>
+      WORLD_CUP_FIXTURES.map((fixture) => {
+        const score = scoresByMatchNum.get(fixture.num) ?? null;
+        return {
+          ...fixture,
+          score,
+          status: score?.status ?? "scheduled"
+        };
+      }),
+    [scoresByMatchNum]
   );
 
-  return { sections, showMyTeam, timeZone };
+  const sections = useMemo(
+    () => groupByLocalDay(filterMatches(fixturesWithScores, filter, myTeamNames), timeZone),
+    [filter, fixturesWithScores, myTeamNames, timeZone]
+  );
+
+  return { isLoadingScores, refreshScores, sections, showMyTeam, timeZone };
 }
