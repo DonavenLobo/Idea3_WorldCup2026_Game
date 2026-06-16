@@ -1,8 +1,15 @@
 type RoundPicks = Record<string, string>;
 
+type KnockoutRoundId = "r32" | "r16" | "qf" | "sf" | "final" | "third";
+
+const KNOCKOUT_ROUNDS: readonly KnockoutRoundId[] = [
+  "r32", "r16", "qf", "sf", "final", "third"
+];
+
 export interface BracketPicksPayload {
   groupRankings: Record<string, string[]>;
   finalizedGroups: string[];
+  knockoutFinalized: Partial<Record<KnockoutRoundId, boolean>>;
   picks: {
     r32: RoundPicks;
     r16: RoundPicks;
@@ -68,6 +75,25 @@ function parseStringArray(value: unknown, label: string): string[] {
   return value;
 }
 
+function parseKnockoutFinalized(
+  value: unknown
+): Partial<Record<KnockoutRoundId, boolean>> {
+  if (value === undefined || value === null) return {};
+  if (!isRecord(value)) {
+    throw new Error("knockoutFinalized must be an object.");
+  }
+  const parsed: Partial<Record<KnockoutRoundId, boolean>> = {};
+  for (const round of KNOCKOUT_ROUNDS) {
+    const entry = value[round];
+    if (entry === undefined) continue;
+    if (typeof entry !== "boolean") {
+      throw new Error(`knockoutFinalized.${round} must be a boolean.`);
+    }
+    parsed[round] = entry;
+  }
+  return parsed;
+}
+
 function parseNullableTeamCode(value: unknown, label: string): string | null {
   if (value === null || value === undefined) return null;
   if (typeof value !== "string") {
@@ -84,6 +110,7 @@ function parsePicksPayload(value: unknown): BracketPicksPayload {
   return {
     groupRankings: parseStringArrayRecord(value.groupRankings, "groupRankings"),
     finalizedGroups: parseStringArray(value.finalizedGroups, "finalizedGroups"),
+    knockoutFinalized: parseKnockoutFinalized(value.knockoutFinalized),
     picks: {
       r32: parseRoundPicks(value.picks.r32, "picks.r32"),
       r16: parseRoundPicks(value.picks.r16, "picks.r16"),
