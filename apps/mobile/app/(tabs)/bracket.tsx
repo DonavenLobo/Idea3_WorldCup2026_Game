@@ -28,8 +28,6 @@ export default function BracketScreen() {
     isLoadingSavedBracket,
     lastSavedAt,
     phase,
-    nextLockAt,
-    nextLockLabel,
     stageState,
     areAllGroupsFinalized,
     finalizedGroups,
@@ -215,8 +213,6 @@ export default function BracketScreen() {
     <View style={styles.root}>
       <PhaseHeroCard
         phase={phase}
-        nextLockAt={nextLockAt}
-        nextLockLabel={nextLockLabel}
         now={now}
         currentStage={stageState.currentStage}
         currentStageLabel={stageState.currentStageLabel}

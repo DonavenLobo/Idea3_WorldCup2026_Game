@@ -66,8 +66,6 @@ interface BracketContextValue extends BracketState {
   isClockFallback: boolean;
   phase: TournamentPhase;
   stageState: BracketStageState;
-  nextLockAt: Date | null;
-  nextLockLabel: string | null;
   fixturesLoading: boolean;
 }
 
@@ -494,8 +492,6 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
       isClockFallback: false,
       phase: lockState.phase,
       stageState,
-      nextLockAt: lockState.nextLockAt,
-      nextLockLabel: lockState.nextLockLabel,
       fixturesLoading: fixturesState.isLoading
     }),
     [
