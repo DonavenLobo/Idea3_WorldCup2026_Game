@@ -37,7 +37,6 @@ function defaultKnockoutFinalized(): KnockoutFinalizedMap {
 
 interface BracketContextValue extends BracketState {
   start: () => void;
-  resetAll: () => void;
   saveBracket: () => Promise<void>;
   /**
    * Persist the given group's rankings. Adds the group to `finalizedGroups`
@@ -236,20 +235,6 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
     setSaveError(null);
     setGroupRankings((prev) => ({ ...prev, [group]: [...BRACKET_GROUPS[group]] }));
   }, [finalizedGroups]);
-
-  const resetAll = useCallback(() => {
-    const rankings = defaultRankings();
-    const nextPicks = defaultPicks();
-    setGroupRankings(rankings);
-    setCommittedGroupRankings(rankings);
-    setFinalizedGroups([]);
-    setKnockoutFinalized(defaultKnockoutFinalized());
-    setPicks(nextPicks);
-    setCommittedPicks(nextPicks);
-    setIsCreated(false);
-    setLastSavedAt(null);
-    setSaveError(null);
-  }, []);
 
   const setPick = useCallback((round: PickRound, matchIndex: number, code: string) => {
     if (knockoutFinalized[round]) return; // round is finalized — ignore edits
@@ -474,7 +459,6 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
       knockoutFinalized,
       picks,
       start,
-      resetAll,
       saveBracket,
       saveGroup,
       saveKnockoutRound,
@@ -501,7 +485,7 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
     [
       isCreated, isLoadingSavedBracket, isSaving, lastSavedAt, saveError,
       groupRankings, finalizedGroups, knockoutFinalized, picks,
-      start, resetAll, saveBracket, saveGroup, saveKnockoutRound,
+      start, saveBracket, saveGroup, saveKnockoutRound,
       moveTeamUp, moveTeamDown, resetGroup, setPick, setFinal, setThird,
       areAllGroupsFinalized, areAllKnockoutRoundsFinalized,
       isGroupFinalized, isKnockoutRoundFinalized,
