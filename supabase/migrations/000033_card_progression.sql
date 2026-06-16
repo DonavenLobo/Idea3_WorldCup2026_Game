@@ -74,16 +74,22 @@ create index if not exists card_progression_milestones_bracket_idx
 alter table public.card_progression_milestones enable row level security;
 alter table public.card_upgrade_events enable row level security;
 
+drop policy if exists "Users can read their own card progression milestones"
+  on public.card_progression_milestones;
 create policy "Users can read their own card progression milestones"
   on public.card_progression_milestones for select
   to authenticated
   using (auth.uid() = user_id);
 
+drop policy if exists "Users can read their own card upgrade events"
+  on public.card_upgrade_events;
 create policy "Users can read their own card upgrade events"
   on public.card_upgrade_events for select
   to authenticated
   using (auth.uid() = user_id);
 
+drop policy if exists "Users can mark their own card upgrade animations seen"
+  on public.card_upgrade_events;
 create policy "Users can mark their own card upgrade animations seen"
   on public.card_upgrade_events for update
   to authenticated

@@ -172,7 +172,10 @@ export async function evaluateCardProgression(
   input: EvaluateCardProgressionInput
 ): Promise<EvaluateCardProgressionResult> {
   const milestonesRow = await markMilestones(supabaseAdmin, input.userId, input);
-  const milestones = milestonesFromTimestamps(milestonesRow);
+  const milestones = milestonesFromTimestamps({
+    firstTriviaCompletedAt: milestonesRow.first_trivia_completed_at,
+    bracketGroupsFinalizedAt: milestonesRow.bracket_groups_finalized_at,
+  });
   const newLevel = calculateCardProgressionLevel(milestones);
 
   const card = await loadUserCard(supabaseAdmin, input.userId);

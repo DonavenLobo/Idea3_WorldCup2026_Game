@@ -23,7 +23,7 @@ type SupabaseClient = ReturnType<typeof createClient<any>>;
 // attempt is still recorded and returned; pending upgrades are picked up later
 // by the client's background pending-upgrades query.
 async function safeEvaluateCardProgression(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: SupabaseClient,
   input: EvaluateCardProgressionInput
 ): Promise<EvaluateCardProgressionResult | null> {
   try {
