@@ -1,6 +1,6 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import type { ImageSourcePropType } from "react-native";
-import { SUPPORTED_NATIONS } from "@world-cup-game/config";
+import { SUPPORTED_NATIONS } from "@gogaffa/config";
 import { BrandButton, Eyebrow } from "../../../components/brand";
 import { accountMenuIconSources } from "../../../components/icons/accountMenuIconSources";
 import { TeamLogo } from "../../../components/team";

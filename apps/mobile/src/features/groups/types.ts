@@ -1,4 +1,4 @@
-import type { GroupVisibility, PublicGroup } from "@world-cup-game/config";
+import type { GroupVisibility, PublicGroup } from "@gogaffa/config";
 
 export type { PublicGroup };
 

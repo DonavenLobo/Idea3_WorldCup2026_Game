@@ -4,7 +4,7 @@
 
 **Goal:** Make GoGaffa's daily trivia serve 3 randomized questions per day, each about a different 2026-World-Cup nation, regenerating every day after today, and report any day that can't be filled plus draft questions to fill it.
 
-**Architecture:** A tested, pure TypeScript selector + generator in `@world-cup-game/game-engine` deterministically picks 3 distinct-nation, WC-2026-only questions per date from a reviewable question pool, and materializes them into `supabase/seed/trivia_questions.sql`. The mobile app and the `score-trivia-attempt` edge function (already 3-based) are unchanged. A DB migration adds the WC flag and fixes the attempts default.
+**Architecture:** A tested, pure TypeScript selector + generator in `@gogaffa/game-engine` deterministically picks 3 distinct-nation, WC-2026-only questions per date from a reviewable question pool, and materializes them into `supabase/seed/trivia_questions.sql`. The mobile app and the `score-trivia-attempt` edge function (already 3-based) are unchanged. A DB migration adds the WC flag and fixes the attempts default.
 
 **Tech Stack:** TypeScript (ESM, pnpm workspaces, turbo), Supabase Postgres (SQL migrations + seed). Game-engine tests are hand-rolled and run with `pnpm dlx tsx <file>` (matching the existing `scoreTriviaDay.test.ts`).
 
@@ -112,7 +112,7 @@ Expected: exits 0 (the 3-based tiers/combo were already correct).
 
 - [ ] **Step 3: Typecheck the affected packages**
 
-Run: `pnpm --filter @world-cup-game/config --filter @world-cup-game/game-engine typecheck 2>&1 | tail -5`
+Run: `pnpm --filter @gogaffa/config --filter @gogaffa/game-engine typecheck 2>&1 | tail -5`
 Expected: no type errors.
 
 - [ ] **Step 4: Commit**
@@ -170,7 +170,7 @@ export const WORLD_CUP_2026_NATION_SET: ReadonlySet<string> = new Set(
 
 - [ ] **Step 3: Typecheck**
 
-Run: `pnpm --filter @world-cup-game/types --filter @world-cup-game/game-engine typecheck 2>&1 | tail -5`
+Run: `pnpm --filter @gogaffa/types --filter @gogaffa/game-engine typecheck 2>&1 | tail -5`
 Expected: no errors.
 
 - [ ] **Step 4: Commit**
@@ -291,7 +291,7 @@ git commit -m "feat(trivia): deterministic seeded PRNG + shuffle"
 Create `packages/game-engine/src/trivia/selectDailyQuestions.test.ts`:
 ```ts
 /** Run: pnpm dlx tsx packages/game-engine/src/trivia/selectDailyQuestions.test.ts */
-import type { PooledTriviaQuestion } from "@world-cup-game/types";
+import type { PooledTriviaQuestion } from "@gogaffa/types";
 import { selectDailyQuestions, InsufficientPoolError } from "./selectDailyQuestions";
 
 declare const process: { exit(code?: number): never };
@@ -357,7 +357,7 @@ Expected: FAIL — cannot find module `./selectDailyQuestions`.
 
 Create `packages/game-engine/src/trivia/selectDailyQuestions.ts`:
 ```ts
-import type { PooledTriviaQuestion } from "@world-cup-game/types";
+import type { PooledTriviaQuestion } from "@gogaffa/types";
 import { seededRandom, seededShuffle } from "./seededRandom";
 
 export class InsufficientPoolError extends Error {
@@ -445,7 +445,7 @@ git commit -m "feat(trivia): deterministic distinct-nation WC daily selector"
 Create `packages/game-engine/src/trivia/generateTriviaSchedule.test.ts`:
 ```ts
 /** Run: pnpm dlx tsx packages/game-engine/src/trivia/generateTriviaSchedule.test.ts */
-import type { PooledTriviaQuestion } from "@world-cup-game/types";
+import type { PooledTriviaQuestion } from "@gogaffa/types";
 import {
   addDays, generateTriviaSchedule, renderScheduleSql,
 } from "./generateTriviaSchedule";
@@ -511,7 +511,7 @@ Expected: FAIL — cannot find module `./generateTriviaSchedule`.
 
 Create `packages/game-engine/src/trivia/generateTriviaSchedule.ts`:
 ```ts
-import type { PooledTriviaQuestion } from "@world-cup-game/types";
+import type { PooledTriviaQuestion } from "@gogaffa/types";
 import { InsufficientPoolError, selectDailyQuestions } from "./selectDailyQuestions";
 
 export interface DayPlan {
@@ -646,7 +646,7 @@ This is content authored by the controller (factual, nation-tagged, WC-2026 only
 
 Create `packages/game-engine/src/trivia/pool/worldCupTriviaPool.ts` exporting `export const WORLD_CUP_TRIVIA_POOL: PooledTriviaQuestion[] = [ ... ]`. Each entry:
 ```ts
-import type { PooledTriviaQuestion } from "@world-cup-game/types";
+import type { PooledTriviaQuestion } from "@gogaffa/types";
 
 export const WORLD_CUP_TRIVIA_POOL: PooledTriviaQuestion[] = [
   {
@@ -670,7 +670,7 @@ Author at least several questions each for a broad set of WC-2026 nations. Keep 
 
 - [ ] **Step 2: Typecheck the pool**
 
-Run: `pnpm --filter @world-cup-game/game-engine typecheck 2>&1 | tail -5`
+Run: `pnpm --filter @gogaffa/game-engine typecheck 2>&1 | tail -5`
 Expected: no type errors (validates every entry matches `PooledTriviaQuestion`, 4 options, valid key).
 
 - [ ] **Step 3: Commit**
@@ -840,7 +840,7 @@ cd ~/Desktop/Football\ Project/Idea3_WorldCup2026_Game
 for f in seededRandom selectDailyQuestions generateTriviaSchedule scoreTriviaDay; do
   pnpm dlx tsx packages/game-engine/src/trivia/$f.test.ts || exit 1
 done
-pnpm --filter @world-cup-game/game-engine --filter @world-cup-game/config --filter @world-cup-game/types typecheck 2>&1 | tail -5
+pnpm --filter @gogaffa/game-engine --filter @gogaffa/config --filter @gogaffa/types typecheck 2>&1 | tail -5
 echo "ALL TRIVIA TESTS + TYPECHECK PASS"
 ```
 Expected: each test prints `ALL PASS`, typecheck clean, final line prints.

@@ -12,8 +12,8 @@
 // backwards-compatible shim — it always returns "everything unlocked" so
 // callers (BracketContext) keep typechecking until Task 17 swaps them
 // over to the finalized-aware function.
-import { GROUP_IDS } from "@world-cup-game/config";
-import type { GroupId } from "@world-cup-game/config";
+import { GROUP_IDS } from "@gogaffa/config";
+import type { GroupId } from "@gogaffa/config";
 
 export type KnockoutRoundId = "r32" | "r16" | "qf" | "sf" | "final" | "third";
 

@@ -11,19 +11,19 @@
       "@/*": [
         "src/*"
       ],
-      "@world-cup-game/card-renderer": [
+      "@gogaffa/card-renderer": [
         "../../packages/card-renderer/src"
       ],
-      "@world-cup-game/config": [
+      "@gogaffa/config": [
         "../../packages/config/src"
       ],
-      "@world-cup-game/game-engine": [
+      "@gogaffa/game-engine": [
         "../../packages/game-engine/src"
       ],
-      "@world-cup-game/types": [
+      "@gogaffa/types": [
         "../../packages/types/src"
       ],
-      "@world-cup-game/ui": [
+      "@gogaffa/ui": [
         "../../packages/ui/src"
       ]
     }

@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { BRACKET_GROUPS, GROUP_IDS } from "@world-cup-game/config";
-import type { GroupId } from "@world-cup-game/config";
+import { BRACKET_GROUPS, GROUP_IDS } from "@gogaffa/config";
+import type { GroupId } from "@gogaffa/config";
 import { useSession } from "../auth/hooks/useSession";
 import { getCurrentBracket, submitCurrentBracket } from "./api/brackets";
 import type {

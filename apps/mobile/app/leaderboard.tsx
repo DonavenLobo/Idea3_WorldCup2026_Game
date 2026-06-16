@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { LEADERBOARD_STAGES, SUPPORTED_NATIONS } from "@world-cup-game/config";
-import type { LeaderboardStage } from "@world-cup-game/config";
+import { LEADERBOARD_STAGES, SUPPORTED_NATIONS } from "@gogaffa/config";
+import type { LeaderboardStage } from "@gogaffa/config";
 import {
   COUNTRY_ALL,
   FilterDropdown,

@@ -1,7 +1,7 @@
 export type {
   LeaderboardEntry,
   LeaderboardStage
-} from "@world-cup-game/config";
+} from "@gogaffa/config";
 
 export interface LeaderboardRowData {
   rank: number;

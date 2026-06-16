@@ -1,5 +1,5 @@
 /** Run: pnpm dlx tsx packages/game-engine/src/trivia/selectDailyQuestions.test.ts */
-import type { PooledTriviaQuestion } from "@world-cup-game/types";
+import type { PooledTriviaQuestion } from "@gogaffa/types";
 import { selectDailyQuestions, InsufficientPoolError } from "./selectDailyQuestions";
 
 let failed = 0;

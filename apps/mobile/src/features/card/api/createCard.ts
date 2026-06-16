@@ -1,5 +1,5 @@
-import { BASE_CARD_STATS } from "@world-cup-game/config";
-import type { CardStats, PlayerCard } from "@world-cup-game/types";
+import { BASE_CARD_STATS } from "@gogaffa/config";
+import type { CardStats, PlayerCard } from "@gogaffa/types";
 import { supabase } from "../../../lib/supabase";
 import { LEVEL_00_SKETCH_TEMPLATE_KEY } from "../templates/level00SketchTemplate";
 import { getCurrentUserCard, mapCardRow } from "./getCard";

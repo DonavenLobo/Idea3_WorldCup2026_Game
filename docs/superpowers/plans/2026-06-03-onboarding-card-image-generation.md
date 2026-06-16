@@ -980,7 +980,7 @@ git commit -m "feat(mobile): trigger avatar generation after onboarding sign-up"
 
 ```tsx
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import type { CardStatus } from "@world-cup-game/types";
+import type { CardStatus } from "@gogaffa/types";
 
 export function CardStatusBadge({ status }: { status?: CardStatus }) {
   if (status === "generating_avatar") {

@@ -1,5 +1,5 @@
-import { BASE_CARD_STATS } from "@world-cup-game/config";
-import type { CardStats, CardStatus, CardTier, PlayerCard } from "@world-cup-game/types";
+import { BASE_CARD_STATS } from "@gogaffa/config";
+import type { CardStats, CardStatus, CardTier, PlayerCard } from "@gogaffa/types";
 import { getCardGeneratedDisplayUrl, getCardUploadDisplayUrl } from "../../../lib/imageUpload";
 import { supabase } from "../../../lib/supabase";
 

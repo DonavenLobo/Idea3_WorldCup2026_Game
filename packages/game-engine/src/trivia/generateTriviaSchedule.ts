@@ -1,4 +1,4 @@
-import type { AnswerKey, PooledTriviaQuestion } from "@world-cup-game/types";
+import type { AnswerKey, PooledTriviaQuestion } from "@gogaffa/types";
 import { InsufficientPoolError, selectDailyQuestions } from "./selectDailyQuestions";
 import { seededRandom, seededShuffle } from "./seededRandom";
 

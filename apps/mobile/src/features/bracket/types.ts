@@ -1,4 +1,4 @@
-import type { GroupId } from "@world-cup-game/config";
+import type { GroupId } from "@gogaffa/config";
 
 export type Round = "r32" | "r16" | "qf" | "sf" | "final" | "third";
 

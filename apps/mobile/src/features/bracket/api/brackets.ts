@@ -1,5 +1,5 @@
-import { GROUP_IDS } from "@world-cup-game/config";
-import type { GroupId } from "@world-cup-game/config";
+import { GROUP_IDS } from "@gogaffa/config";
+import type { GroupId } from "@gogaffa/config";
 import { supabase } from "../../../lib/supabase";
 import { getValidatedSupabaseUser } from "../../auth/api/sessionRecovery";
 import type {

@@ -1,5 +1,5 @@
 import { Image, StyleSheet } from "react-native";
-import type { CardTemplateLayerMetadata } from "@world-cup-game/types";
+import type { CardTemplateLayerMetadata } from "@gogaffa/types";
 
 export interface PlayerAvatarLayerProps {
   imageUrl?: string;

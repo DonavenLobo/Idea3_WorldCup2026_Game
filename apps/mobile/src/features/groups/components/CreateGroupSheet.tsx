@@ -11,7 +11,7 @@ import {
   View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import type { GroupVisibility } from "@world-cup-game/config";
+import type { GroupVisibility } from "@gogaffa/config";
 import { BrandButton } from "../../../components/brand";
 import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";

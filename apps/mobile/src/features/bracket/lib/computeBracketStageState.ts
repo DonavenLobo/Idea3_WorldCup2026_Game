@@ -1,5 +1,5 @@
-import { WORLD_CUP_FIXTURES } from "@world-cup-game/config";
-import type { MatchStage } from "@world-cup-game/config";
+import { WORLD_CUP_FIXTURES } from "@gogaffa/config";
+import type { MatchStage } from "@gogaffa/config";
 import type { SubTab } from "../types";
 
 const MATCH_COMPLETION_MS = 3 * 60 * 60 * 1000;

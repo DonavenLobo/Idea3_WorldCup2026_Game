@@ -313,7 +313,7 @@ git commit -m "feat(config): PRD-locked points constants (trivia 50/100/200, bra
 
 ```ts
 // packages/game-engine/src/bracket/scoreBracket.ts
-import { BRACKET_SCORING } from "@world-cup-game/config";
+import { BRACKET_SCORING } from "@gogaffa/config";
 
 export type GroupId = string; // "A".."L"
 export type KnockoutRoundId = "r32" | "r16" | "qf" | "sf" | "third" | "final";
@@ -732,7 +732,7 @@ import {
   getTriviaTierForOrder,
   TRIVIA_ALL_THREE_COMBO_BONUS,
   getTriviaStreakMultiplier,
-} from "@world-cup-game/config";
+} from "@gogaffa/config";
 
 export interface TriviaAnswerInput {
   /** 1-indexed: 1=easy, 2=medium, 3=hard. */
@@ -936,7 +936,7 @@ git commit -m "feat(game-engine): scoreTriviaDay (50/100/200 base + combo + stre
 
 ```ts
 // packages/game-engine/src/login/computeLoginReward.ts
-import { LOGIN_REWARDS, type MilestoneKind } from "@world-cup-game/config";
+import { LOGIN_REWARDS, type MilestoneKind } from "@gogaffa/config";
 
 export interface LoginRewardInput {
   /** YYYY-MM-DD (UTC) of last login; null for first-ever login. */

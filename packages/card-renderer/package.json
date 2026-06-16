@@ -1,5 +1,5 @@
 {
-  "name": "@world-cup-game/card-renderer",
+  "name": "@gogaffa/card-renderer",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -9,11 +9,11 @@
     "build": "tsc -p tsconfig.json --noEmit",
     "lint": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "echo \"No tests yet for @world-cup-game/card-renderer\""
+    "test": "echo \"No tests yet for @gogaffa/card-renderer\""
   },
   "dependencies": {
-    "@world-cup-game/config": "workspace:*",
-    "@world-cup-game/types": "workspace:*"
+    "@gogaffa/config": "workspace:*",
+    "@gogaffa/types": "workspace:*"
   },
   "peerDependencies": {
     "react": "19.1.0",

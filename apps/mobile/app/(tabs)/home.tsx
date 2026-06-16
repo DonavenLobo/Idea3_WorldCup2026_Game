@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFocusEffect, useRouter } from "expo-router";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { APP_ROUTES, formatTeamName, WORLD_CUP_FIXTURES } from "@world-cup-game/config";
+import { APP_ROUTES, formatTeamName, WORLD_CUP_FIXTURES } from "@gogaffa/config";
 import { BrandButton, ContentCard, Eyebrow } from "../../src/components/brand";
 import { Screen } from "../../src/components/layout";
 import { RenderedPlayerCard } from "../../src/features/card";

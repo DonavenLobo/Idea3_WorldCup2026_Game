@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { Alert } from "react-native";
 import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
-import { APP_ROUTES } from "@world-cup-game/config";
+import { APP_ROUTES } from "@gogaffa/config";
 import {
   createSessionFromOAuthUrl,
   isSupabaseAuthCallbackUrl

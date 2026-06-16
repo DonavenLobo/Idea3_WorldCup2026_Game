@@ -1,4 +1,4 @@
-import { BASE_CARD_STATS } from "@world-cup-game/config";
+import { BASE_CARD_STATS } from "@gogaffa/config";
 import { createCard } from "../../card/api/createCard";
 import { startCardGeneration } from "../../card/api/startCardGeneration";
 import { uploadCardImage } from "../../../lib/imageUpload";

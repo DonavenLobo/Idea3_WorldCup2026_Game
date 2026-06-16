@@ -1,4 +1,4 @@
-import type { CardTemplateMetadata } from "@world-cup-game/types";
+import type { CardTemplateMetadata } from "@gogaffa/types";
 
 export function isCardTemplateMetadata(value: unknown): value is CardTemplateMetadata {
   if (!value || typeof value !== "object") {

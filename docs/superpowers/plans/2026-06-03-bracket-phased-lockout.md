@@ -408,8 +408,8 @@ Pure function. Takes `now` and the fixture data the client already loaded. No as
 
 ```ts
 // apps/mobile/src/features/bracket/lib/computeBracketLockState.ts
-import { GROUP_IDS } from "@world-cup-game/config";
-import type { GroupId } from "@world-cup-game/config";
+import { GROUP_IDS } from "@gogaffa/config";
+import type { GroupId } from "@gogaffa/config";
 
 export type KnockoutRoundId = "r32" | "r16" | "qf" | "sf" | "final" | "third";
 
@@ -804,8 +804,8 @@ Async hook that fetches the matches table once per session, derives the lockout-
 ```ts
 // apps/mobile/src/features/bracket/hooks/useFixtures.ts
 import { useEffect, useState } from "react";
-import { GROUP_IDS } from "@world-cup-game/config";
-import type { GroupId } from "@world-cup-game/config";
+import { GROUP_IDS } from "@gogaffa/config";
+import type { GroupId } from "@gogaffa/config";
 import { supabase } from "../../../lib/supabase";
 import type {
   FixtureData,
@@ -2336,7 +2336,7 @@ import { PhaseHeroCard } from "../../src/features/bracket/components/PhaseHeroCa
 import { LateJoinerBanner } from "../../src/features/bracket/components/LateJoinerBanner";
 import { useTournamentClock } from "../../src/features/bracket/hooks/useTournamentClock";
 import { useFixtures } from "../../src/features/bracket/hooks/useFixtures";
-import { GROUP_IDS } from "@world-cup-game/config";
+import { GROUP_IDS } from "@gogaffa/config";
 ```
 
 - [ ] **Step 2: Render hero + banner above existing content**
@@ -2413,7 +2413,7 @@ git commit -m "feat(bracket): mount PhaseHeroCard + LateJoinerBanner; wire SubTa
 import { useMemo } from "react";
 import { ScrollView, StyleSheet, Text, View, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { SUPPORTED_NATIONS } from "@world-cup-game/config";
+import { SUPPORTED_NATIONS } from "@gogaffa/config";
 import { useFixtures } from "../../src/features/bracket/hooks/useFixtures";
 import { colors } from "../../src/theme/colors";
 import { radius } from "../../src/theme/radius";

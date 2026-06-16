@@ -15,7 +15,7 @@
  *   - longestStreak updates to max(longestStreak, newStreak).
  */
 
-import { LOGIN_REWARDS } from "@world-cup-game/config";
+import { LOGIN_REWARDS } from "@gogaffa/config";
 
 export interface ComputeLoginRewardInput {
   /** Today's date key in user's tz, format YYYY-MM-DD. */

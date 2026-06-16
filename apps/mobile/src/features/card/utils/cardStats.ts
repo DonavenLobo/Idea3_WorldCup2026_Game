@@ -1,4 +1,4 @@
-import { BASE_CARD_STATS } from "@world-cup-game/config";
+import { BASE_CARD_STATS } from "@gogaffa/config";
 
 export function getBaseCardStats() {
   return BASE_CARD_STATS;

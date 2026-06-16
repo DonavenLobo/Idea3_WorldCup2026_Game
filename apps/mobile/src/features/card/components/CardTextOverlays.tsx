@@ -1,4 +1,4 @@
-import { clampText } from "@world-cup-game/card-renderer";
+import { clampText } from "@gogaffa/card-renderer";
 import { useState } from "react";
 import type { LayoutChangeEvent } from "react-native";
 import { StyleSheet, Text, View } from "react-native";

@@ -15,8 +15,8 @@ import {
   type FixtureData,
   type KnockoutRoundId
 } from "./computeBracketLockState";
-import { GROUP_IDS } from "@world-cup-game/config";
-import type { GroupId } from "@world-cup-game/config";
+import { GROUP_IDS } from "@gogaffa/config";
+import type { GroupId } from "@gogaffa/config";
 
 function assert(cond: unknown, msg: string): asserts cond {
   if (!cond) throw new Error(`FAIL: ${msg}`);

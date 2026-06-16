@@ -1,4 +1,4 @@
-import type { CardTemplateMetadata, PlayerCard } from "@world-cup-game/types";
+import type { CardTemplateMetadata, PlayerCard } from "@gogaffa/types";
 import type { ComponentType } from "react";
 import type { ImageSourcePropType } from "react-native";
 

@@ -1,4 +1,4 @@
-import { MAX_CARD_OVERALL_BY_TOURNAMENT_DAY } from "@world-cup-game/config";
+import { MAX_CARD_OVERALL_BY_TOURNAMENT_DAY } from "@gogaffa/config";
 
 export function calculateStatCap(tournamentDay: number): number {
   const progressiveCap = 60 + tournamentDay;

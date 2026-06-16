@@ -4,7 +4,7 @@
  * Throws only if a case fails.
  */
 
-import { BRACKET_SCORING } from "@world-cup-game/config";
+import { BRACKET_SCORING } from "@gogaffa/config";
 import { scoreBracket } from "./scoreBracket";
 import type {
   BracketKnockoutPrediction,

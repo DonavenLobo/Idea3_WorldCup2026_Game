@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { formatTeamName, SUPPORTED_NATIONS } from "@world-cup-game/config";
+import { formatTeamName, SUPPORTED_NATIONS } from "@gogaffa/config";
 import { BrandButton } from "../../../components/brand";
 import { TeamLogo } from "../../../components/team";
 import { useBracket } from "../BracketContext";

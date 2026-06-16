@@ -2,7 +2,7 @@ import { makeRedirectUri } from "expo-auth-session";
 import * as QueryParams from "expo-auth-session/build/QueryParams";
 import * as WebBrowser from "expo-web-browser";
 import type { Provider, Session } from "@supabase/supabase-js";
-import type { AuthProvider } from "@world-cup-game/types";
+import type { AuthProvider } from "@gogaffa/types";
 import { APP_SCHEME, AUTH_CALLBACK_PATH } from "../../../lib/constants";
 import { supabase } from "../../../lib/supabase";
 

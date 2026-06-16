@@ -1,1 +1,1 @@
-export { calculateCardTier, calculateOverall } from "@world-cup-game/game-engine";
+export { calculateCardTier, calculateOverall } from "@gogaffa/game-engine";

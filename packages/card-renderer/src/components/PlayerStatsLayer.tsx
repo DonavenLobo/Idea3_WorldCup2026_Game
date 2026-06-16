@@ -1,5 +1,5 @@
-import { CARD_STATS } from "@world-cup-game/config";
-import type { CardStats, CardTemplateMetadata } from "@world-cup-game/types";
+import { CARD_STATS } from "@gogaffa/config";
+import type { CardStats, CardTemplateMetadata } from "@gogaffa/types";
 import { StyleSheet, Text, View } from "react-native";
 import { resolveLayerFontStyle } from "../utils/layerTextStyle";
 

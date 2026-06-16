@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { loadTemplate } from "@world-cup-game/card-renderer";
-import type { PlayerCardRenderTemplate } from "@world-cup-game/card-renderer";
+import { loadTemplate } from "@gogaffa/card-renderer";
+import type { PlayerCardRenderTemplate } from "@gogaffa/card-renderer";
 import { supabase } from "../../../lib/supabase";
 import {
   applyBundledSketchMetadata,

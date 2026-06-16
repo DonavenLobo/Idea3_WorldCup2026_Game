@@ -1,5 +1,5 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
-import type { CardStatus } from "@world-cup-game/types";
+import type { CardStatus } from "@gogaffa/types";
 import { colors, opacity } from "../../../theme/colors";
 
 interface CardStatusBadgeProps {

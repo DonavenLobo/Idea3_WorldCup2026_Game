@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { PropsWithChildren } from "react";
-import { TRIVIA_QUESTIONS_PER_DAY } from "@world-cup-game/config";
+import { TRIVIA_QUESTIONS_PER_DAY } from "@gogaffa/config";
 import { useSession } from "../auth/hooks/useSession";
 import {
   getCompletedTriviaAttempt,

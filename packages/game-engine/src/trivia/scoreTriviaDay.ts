@@ -15,7 +15,7 @@ import {
   TRIVIA_TIMER_SECONDS,
   TRIVIA_ALL_THREE_COMBO_BONUS,
   getTriviaStreakMultiplier,
-} from "@world-cup-game/config";
+} from "@gogaffa/config";
 
 export interface TriviaQuestionResult {
   questionId: string;

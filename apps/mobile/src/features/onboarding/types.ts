@@ -1,4 +1,4 @@
-import type { NationConfig } from "@world-cup-game/config";
+import type { NationConfig } from "@gogaffa/config";
 
 export type PhotoSourceType = "selfie" | "upload" | "random";
 

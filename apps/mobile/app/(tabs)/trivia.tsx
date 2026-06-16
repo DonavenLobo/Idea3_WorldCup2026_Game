@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { TRIVIA_QUESTION_TIER_DETAILS, TRIVIA_QUESTIONS_PER_DAY } from "@world-cup-game/config";
+import { TRIVIA_QUESTION_TIER_DETAILS, TRIVIA_QUESTIONS_PER_DAY } from "@gogaffa/config";
 import { BrandButton } from "../../src/components/brand";
 import { Eyebrow } from "../../src/components/brand/Eyebrow";
 import { CompletedView, QuestionCard, useTrivia } from "../../src/features/trivia";

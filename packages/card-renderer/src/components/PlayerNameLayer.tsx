@@ -1,5 +1,5 @@
 import { StyleSheet, Text } from "react-native";
-import type { CardTemplateLayerMetadata } from "@world-cup-game/types";
+import type { CardTemplateLayerMetadata } from "@gogaffa/types";
 import { clampText } from "../utils/fitText";
 import { resolveLayerFontStyle } from "../utils/layerTextStyle";
 

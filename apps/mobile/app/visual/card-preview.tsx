@@ -1,5 +1,5 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { PlayerCard } from "@world-cup-game/card-renderer";
+import { PlayerCard } from "@gogaffa/card-renderer";
 import { LEVEL_00_SKETCH_TEMPLATE } from "../../src/features/card/templates/level00SketchTemplate";
 import { colors, opacity } from "../../src/theme/colors";
 import { spacing } from "../../src/theme/spacing";

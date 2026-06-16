@@ -1,8 +1,8 @@
 import { useCallback, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { LOCKER_TIERS } from "@world-cup-game/config";
-import type { PlayerCard as PlayerCardData } from "@world-cup-game/types";
+import { LOCKER_TIERS } from "@gogaffa/config";
+import type { PlayerCard as PlayerCardData } from "@gogaffa/types";
 import { BrandButton, Eyebrow } from "../../../components/brand";
 import { Screen } from "../../../components/layout";
 import { RenderedPlayerCard } from "../components/RenderedPlayerCard";
