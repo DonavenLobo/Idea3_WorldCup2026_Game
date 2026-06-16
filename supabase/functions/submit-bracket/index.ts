@@ -231,10 +231,21 @@ Deno.serve(async (request) => {
     // remains nullable on the table but is no longer consulted.)
 
     const now = new Date().toISOString();
+    // Mirror per-round finalized flags from the JSONB payload onto the
+    // queryable boolean columns added in migration 000033. The JSONB stays the
+    // source of truth for detail-level state (picks within a round); these
+    // columns are the canonical rollups ("is user X's R32 finalized?").
+    const kf = input.picks.knockoutFinalized ?? {};
     const writePayload = {
       group_id: input.groupId,
       picks: input.picks,
-      updated_at: now
+      updated_at: now,
+      r32_finalized: kf.r32 ?? false,
+      r16_finalized: kf.r16 ?? false,
+      qf_finalized: kf.qf ?? false,
+      sf_finalized: kf.sf ?? false,
+      final_finalized: kf.final ?? false,
+      third_finalized: kf.third ?? false
     };
 
     const writeQuery = existingBracket
