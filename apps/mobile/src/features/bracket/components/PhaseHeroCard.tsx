@@ -62,6 +62,42 @@ export function PhaseHeroCard({
     tone = "neutral";
   } else {
     switch (phase) {
+      // --- Lock-on-save phases (Task 17) ---
+      case "groups-open":
+        // TODO copy: tighten this with a real product/marketing pass.
+        eyebrow = "PHASE 1";
+        title = "Group Stage";
+        body = "Predict the group standings.";
+        tone = "green";
+        break;
+      case "groups-partial":
+        // TODO copy: tighten this with a real product/marketing pass.
+        eyebrow = "PHASE 1";
+        title = "Group Stage";
+        body = "Keep ranking the remaining groups.";
+        tone = "green";
+        break;
+      case "groups-done":
+        // TODO copy: tighten this with a real product/marketing pass.
+        eyebrow = "PHASE 2";
+        title = "Knockouts unlocked";
+        body = "Group stage is in the books. Time to pick the bracket.";
+        tone = "green";
+        break;
+      case "knockouts-active":
+        // TODO copy: tighten this with a real product/marketing pass.
+        eyebrow = "PHASE 2";
+        title = "Knockouts in progress";
+        body = "Save each round as you finish it. Once saved, picks are locked.";
+        tone = "amber";
+        break;
+      case "complete":
+        eyebrow = "TOURNAMENT COMPLETE";
+        title = "Final whistle";
+        body = "See your final score on the leaderboard.";
+        tone = "neutral";
+        break;
+      // --- Deprecated time-based phases (kept until cleanup task) ---
       case "pre":
         eyebrow = "PHASE 1";
         title = "Group Stage";
@@ -91,12 +127,6 @@ export function PhaseHeroCard({
           ? `Next match locks in ${formatRelative(nextLockAt, now)}.`
           : "Some matches already locked.";
         tone = "amber";
-        break;
-      case "complete":
-        eyebrow = "TOURNAMENT COMPLETE";
-        title = "Final whistle";
-        body = "See your final score on the leaderboard.";
-        tone = "neutral";
         break;
     }
   }

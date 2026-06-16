@@ -15,10 +15,19 @@ export interface BracketPicks {
   third: string | null;
 }
 
+export type KnockoutFinalizedMap = Record<Round, boolean>;
+
 export interface PersistedBracketPicks {
   groupRankings: Record<GroupId, string[]>;
   picks: BracketPicks;
   finalizedGroups?: GroupId[];
+  /**
+   * Per-round knockout finalized flags. Mirrors `finalizedGroups` for the
+   * group stage. Persisted inside the `picks` JSONB on `brackets` so the
+   * existing edge-function payload contract is preserved (the per-round
+   * boolean columns in 000033 are kept in lockstep for future query needs).
+   */
+  knockoutFinalized?: KnockoutFinalizedMap;
 }
 
 export interface BracketState {
@@ -29,6 +38,7 @@ export interface BracketState {
   saveError: Error | null;
   groupRankings: Record<GroupId, string[]>;
   finalizedGroups: GroupId[];
+  knockoutFinalized: KnockoutFinalizedMap;
   picks: BracketPicks;
 }
 
