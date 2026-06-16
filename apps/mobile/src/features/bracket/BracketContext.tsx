@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { Alert } from "react-native";
 import { BRACKET_GROUPS, GROUP_IDS } from "@gogaffa/config";
 import type { GroupId } from "@gogaffa/config";
 import { useSession } from "../auth/hooks/useSession";
@@ -84,6 +85,35 @@ function swap(arr: string[], i: number, j: number): string[] | null {
 
 function normalizeFinalizedGroups(groups: readonly GroupId[] | undefined): GroupId[] {
   return GROUP_IDS.filter((group) => groups?.includes(group));
+}
+
+const KNOCKOUT_ROUND_LABELS: Record<KnockoutRoundId, string> = {
+  r32: "R32",
+  r16: "R16",
+  qf: "QF",
+  sf: "SF",
+  final: "Final",
+  third: "3rd-place"
+};
+
+function buildLockedMessage(
+  invalidGroups: readonly string[],
+  invalidRounds: readonly KnockoutRoundId[]
+): string {
+  const hasGroups = invalidGroups.length > 0;
+  const hasRounds = invalidRounds.length > 0;
+  if (hasGroups && hasRounds) {
+    return "Some of your picks couldn't be saved because they were already locked. Your changes were discarded.";
+  }
+  if (hasGroups) {
+    const list = invalidGroups.join(", ");
+    const subject = invalidGroups.length === 1 ? "Group" : "Groups";
+    const verb = invalidGroups.length === 1 ? "is" : "are";
+    return `${subject} {${list}} ${verb} already locked. Your changes were discarded.`;
+  }
+  const list = invalidRounds.map((r) => KNOCKOUT_ROUND_LABELS[r]).join(", ");
+  const verb = invalidRounds.length === 1 ? "is" : "are";
+  return `{${list}} ${verb} already locked. Your changes were discarded.`;
 }
 
 interface BracketProviderProps {
@@ -388,56 +418,42 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
       setLastSavedAt(saved.updatedAt);
     } catch (err) {
       if (err instanceof PickPastLockoutError) {
-        const fresh = await getCurrentBracket();
-        const revertedRankings = { ...groupRankings };
-        for (const g of err.invalidGroups as GroupId[]) {
-          if (fresh?.picks.groupRankings[g]) {
-            revertedRankings[g] = fresh.picks.groupRankings[g];
-          }
-        }
-        const revertedPicks: BracketPicks = { ...picks };
-        for (const m of err.invalidMatches) {
-          if (m.round === "final") {
-            revertedPicks.final = fresh?.picks.picks.final ?? null;
-          } else if (m.round === "third") {
-            revertedPicks.third = fresh?.picks.picks.third ?? null;
-          } else {
-            const round = m.round as PickRound;
-            const prev = fresh?.picks.picks[round]?.[m.index];
-            if (prev !== undefined) {
-              revertedPicks[round] = { ...revertedPicks[round], [m.index]: prev };
-            } else {
-              const next = { ...revertedPicks[round] };
-              delete next[m.index];
-              revertedPicks[round] = next;
-            }
-          }
-        }
-
-        setGroupRankings(revertedRankings);
-        setPicks(revertedPicks);
-        setFinalizedGroups(normalizeFinalizedGroups(fresh?.picks.finalizedGroups ?? finalizedGroups));
+        // Server rejected the save because at least one group or knockout
+        // round was already locked. Server is the source of truth — discard
+        // local edits and reload the canonical bracket state.
+        Alert.alert(
+          "Pick locked",
+          buildLockedMessage(err.invalidGroups, err.invalidRounds)
+        );
 
         try {
-          const retried = await submitCurrentBracket(
-            {
-              groupRankings: revertedRankings,
-              finalizedGroups: normalizeFinalizedGroups(fresh?.picks.finalizedGroups ?? finalizedGroups),
-              knockoutFinalized: fresh?.picks.knockoutFinalized ?? knockoutFinalized,
-              picks: revertedPicks
-            },
-            groupId
-          );
-          setCommittedGroupRankings(retried.picks.groupRankings);
-          setCommittedPicks(retried.picks.picks);
-          setFinalizedGroups(normalizeFinalizedGroups(retried.picks.finalizedGroups ?? finalizedGroups));
-          setKnockoutFinalized(retried.picks.knockoutFinalized ?? knockoutFinalized);
-          setLastSavedAt(retried.updatedAt);
+          const fresh = await getCurrentBracket();
+          if (fresh) {
+            setGroupRankings(fresh.picks.groupRankings);
+            setCommittedGroupRankings(fresh.picks.groupRankings);
+            setPicks(fresh.picks.picks);
+            setCommittedPicks(fresh.picks.picks);
+            setFinalizedGroups(normalizeFinalizedGroups(fresh.picks.finalizedGroups));
+            setKnockoutFinalized(
+              fresh.picks.knockoutFinalized ?? defaultKnockoutFinalized()
+            );
+            setLastSavedAt(fresh.updatedAt);
+          } else {
+            const rankings = defaultRankings();
+            const nextPicks = defaultPicks();
+            setGroupRankings(rankings);
+            setCommittedGroupRankings(rankings);
+            setPicks(nextPicks);
+            setCommittedPicks(nextPicks);
+            setFinalizedGroups([]);
+            setKnockoutFinalized(defaultKnockoutFinalized());
+            setLastSavedAt(null);
+          }
+          setSaveError(null);
+        } catch (reloadErr) {
           setSaveError(
-            new Error("Some picks were locked while editing — your other picks saved.")
+            reloadErr instanceof Error ? reloadErr : new Error(String(reloadErr))
           );
-        } catch (retryErr) {
-          setSaveError(retryErr instanceof Error ? retryErr : new Error(String(retryErr)));
         }
       } else {
         setSaveError(err instanceof Error ? err : new Error(String(err)));

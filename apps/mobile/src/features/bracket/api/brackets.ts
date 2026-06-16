@@ -10,9 +10,9 @@ import type {
 } from "../types";
 import {
   PickPastLockoutError,
-  NotGroupMemberError,
-  type PickPastLockoutDetails
+  NotGroupMemberError
 } from "../types";
+import type { KnockoutRoundId } from "../lib/computeBracketLockState";
 
 const KNOCKOUT_ROUNDS: readonly Round[] = ["r32", "r16", "qf", "sf", "final", "third"];
 
@@ -174,8 +174,25 @@ interface SubmitBracketResponse {
   bracket?: SavedBracket;
   code?: "PICK_PAST_LOCKOUT" | "NOT_GROUP_MEMBER";
   invalidGroups?: string[];
-  invalidMatches?: Array<{ round: string; index: number }>;
+  invalidRounds?: string[];
   error?: string;
+}
+
+const KNOCKOUT_ROUND_SET: ReadonlySet<KnockoutRoundId> = new Set<KnockoutRoundId>([
+  "r32",
+  "r16",
+  "qf",
+  "sf",
+  "final",
+  "third"
+]);
+
+function parseInvalidRounds(value: unknown): KnockoutRoundId[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter(
+    (entry): entry is KnockoutRoundId =>
+      typeof entry === "string" && KNOCKOUT_ROUND_SET.has(entry as KnockoutRoundId)
+  );
 }
 
 function isResponseLike(value: unknown): value is {
@@ -227,7 +244,7 @@ function parseSubmitBracketResponse(data: SubmitBracketResponse | null): SavedBr
   if (data.code === "PICK_PAST_LOCKOUT") {
     throw new PickPastLockoutError({
       invalidGroups: data.invalidGroups ?? [],
-      invalidMatches: (data.invalidMatches ?? []) as PickPastLockoutDetails["invalidMatches"]
+      invalidRounds: parseInvalidRounds(data.invalidRounds)
     });
   }
 

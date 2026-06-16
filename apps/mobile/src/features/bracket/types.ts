@@ -52,18 +52,18 @@ import type { KnockoutRoundId } from "./lib/computeBracketLockState";
 
 export interface PickPastLockoutDetails {
   invalidGroups: string[];
-  invalidMatches: Array<{ round: KnockoutRoundId; index: number }>;
+  invalidRounds: KnockoutRoundId[];
 }
 
 export class PickPastLockoutError extends Error {
   public readonly invalidGroups: string[];
-  public readonly invalidMatches: Array<{ round: KnockoutRoundId; index: number }>;
+  public readonly invalidRounds: KnockoutRoundId[];
 
   constructor(details: PickPastLockoutDetails) {
     super("Some picks are past lockout");
     this.name = "PickPastLockoutError";
     this.invalidGroups = details.invalidGroups;
-    this.invalidMatches = details.invalidMatches;
+    this.invalidRounds = details.invalidRounds;
   }
 }
 
