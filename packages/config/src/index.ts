@@ -12,3 +12,4 @@ export * from "./stadiums";
 export * from "./teamFlags";
 export * from "./trivia";
 export * from "./xpRules";
+export * from "./cardStatRules";
