@@ -5,6 +5,7 @@ import {
   type EvaluateCardProgressionInput,
   type EvaluateCardProgressionResult
 } from "../_shared/evaluateCardProgression.ts";
+import { safeApplyCardStatBumps } from "../_shared/cardStats.ts";
 import {
   parseScoreTriviaAttemptRequest,
   TRIVIA_DAILY_QUESTION_COUNT,
@@ -441,6 +442,10 @@ Deno.serve(async (request) => {
     const cardProgression = await safeEvaluateCardProgression(supabaseAdmin, {
       userId,
       markFirstTrivia: true,
+    });
+
+    await safeApplyCardStatBumps(supabaseAdmin, userId, {
+      catchUpCount: correctAnswers,   // one +2 bump per correct answer
     });
 
     return jsonResponse({
