@@ -6,9 +6,11 @@ import {
   type BracketKnockoutPrediction,
   type BracketKnockoutResult,
   type BracketScoreInput,
+  type BracketScoreResult,
   type GroupId,
   type KnockoutRoundId,
 } from "./scoreBracket.ts";
+import { safeApplyCardStatBumps } from "../_shared/cardStats.ts";
 
 // ---------- FIFA seeds ----------
 // TODO: PR-B — move to a fifa_seeds DB table.
@@ -65,6 +67,7 @@ interface BracketRow {
   picks: unknown;
   score: number;
   scored_at: string | null;
+  awarded_stat_bumps: Record<string, number> | null;
 }
 
 interface RawBracketPicks {
@@ -103,7 +106,7 @@ async function loadBracket(
   userId: string,
   bracketId: string | null
 ): Promise<BracketRow | null> {
-  const columns = "id,user_id,group_id,picks,score,scored_at";
+  const columns = "id,user_id,group_id,picks,score,scored_at,awarded_stat_bumps";
 
   if (bracketId) {
     const { data, error } = await supabaseAdmin
@@ -297,6 +300,91 @@ function buildPredictionsFromPicks(picks: RawBracketPicks): BracketScoreInput["p
   return { groups, knockouts };
 }
 
+// ---------- Card stat entitlement (PRD #1) ----------
+//
+// Given the latest scoring inputs, compute the FULL set of card-stat bumps the
+// user is currently entitled to:
+//   • +5 hyp  — correctly predicted the eventual CHAMPION (final.winner)
+//   • +3 frm  — correctly predicted AT LEAST ONE of the two actual finalists
+//                (winners of sf:0 and sf:1)
+//   • +4 lck per CORRECT UPSET PICK — knockout pick where the user's nation
+//                had a worse (higher) FIFA seed than the loser AND won.
+//                We re-use scoreBracket's breakdown reason ("upset bonus") to
+//                detect these — matches the same definition the scorer uses.
+//
+// The total is the user's lifetime entitlement for this bracket. The caller
+// diffs against brackets.awarded_stat_bumps and applies only the delta.
+function computeEntitledStatBumps(
+  predictions: BracketScoreInput["predictions"],
+  results: BracketScoreInput["results"],
+  scoreResult: BracketScoreResult
+): Record<string, number> {
+  const entitled: Record<string, number> = {};
+
+  // ----- Champion (+5 hyp) -----
+  const finalResult = results.knockouts.find(
+    (r) => r.round === "final" && r.index === 0
+  );
+  const finalPrediction = predictions.knockouts.find(
+    (p) => p.round === "final" && p.index === 0
+  );
+  if (
+    finalResult &&
+    finalPrediction &&
+    finalPrediction.winnerCode === finalResult.winnerCode
+  ) {
+    entitled.hyp = (entitled.hyp ?? 0) + 5;
+  }
+
+  // ----- Finalist (+3 frm) -----
+  // Actual finalists = winners of sf:0 and sf:1.
+  // User's predicted finalists = winners of THEIR sf:0 and sf:1 picks.
+  const actualFinalists = new Set<string>();
+  for (const r of results.knockouts) {
+    if (r.round === "sf" && (r.index === 0 || r.index === 1)) {
+      actualFinalists.add(r.winnerCode);
+    }
+  }
+  if (actualFinalists.size > 0) {
+    const predictedFinalists: string[] = [];
+    for (const p of predictions.knockouts) {
+      if (p.round === "sf" && (p.index === 0 || p.index === 1)) {
+        predictedFinalists.push(p.winnerCode);
+      }
+    }
+    if (predictedFinalists.some((code) => actualFinalists.has(code))) {
+      entitled.frm = (entitled.frm ?? 0) + 3;
+    }
+  }
+
+  // ----- Upset count (+4 lck each) -----
+  // scoreBracket.ts writes the reason "Correct <round> winner + upset bonus ..."
+  // for any correct knockout pick where the predicted nation's seed was worse
+  // than the loser's. Count those breakdown items.
+  const upsetCount = scoreResult.breakdown.filter(
+    (b) => b.kind === "knockout" && b.points > 0 && b.reason.includes("upset bonus")
+  ).length;
+  if (upsetCount > 0) {
+    entitled.lck = (entitled.lck ?? 0) + 4 * upsetCount;
+  }
+
+  return entitled;
+}
+
+/** Stat keys → integer delta map. Drops any non-positive entries. */
+function diffStatBumps(
+  entitled: Record<string, number>,
+  awarded: Record<string, number>
+): Record<string, number> {
+  const delta: Record<string, number> = {};
+  for (const [key, total] of Object.entries(entitled)) {
+    const already = Number(awarded[key] ?? 0) || 0;
+    const d = total - already;
+    if (d > 0) delta[key] = d;
+  }
+  return delta;
+}
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -375,6 +463,38 @@ Deno.serve(async (request) => {
 
     if (updateError) {
       throw updateError;
+    }
+
+    // ---------- Card stat bumps (PRD #1, idempotent delta-apply) ----------
+    // After score is written, compute the full entitled bumps for this bracket,
+    // diff against awarded_stat_bumps, apply only the delta, and persist the
+    // new TOTAL (not the delta) so the next run's diff is correct. All steps
+    // are failure-tolerant — scoring stays authoritative.
+    try {
+      const awarded =
+        (bracket.awarded_stat_bumps as Record<string, number> | null) ?? {};
+      const entitled =
+        scoreResult.total === 0
+          ? {}
+          : computeEntitledStatBumps(predictions, results, scoreResult);
+      const delta = diffStatBumps(entitled, awarded);
+
+      if (Object.keys(delta).length > 0) {
+        await safeApplyCardStatBumps(supabaseAdmin, userId, { bumps: delta });
+
+        const { error: bumpsUpdateError } = await supabaseAdmin
+          .from("brackets")
+          .update({ awarded_stat_bumps: entitled })
+          .eq("id", bracket.id);
+        if (bumpsUpdateError) {
+          console.error(
+            "score-bracket: awarded_stat_bumps update failed",
+            bumpsUpdateError
+          );
+        }
+      }
+    } catch (statErr) {
+      console.error("score-bracket: stat-bump phase threw", statErr);
     }
 
     return jsonResponse({
