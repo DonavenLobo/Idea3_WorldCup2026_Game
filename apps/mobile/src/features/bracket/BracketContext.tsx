@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { BRACKET_GROUPS, GROUP_IDS } from "@world-cup-game/config";
 import type { GroupId } from "@world-cup-game/config";
 import { useSession } from "../auth/hooks/useSession";
@@ -71,6 +72,7 @@ interface BracketProviderProps {
 
 export function BracketProvider({ groupId = null, children }: BracketProviderProps) {
   const { user, isLoading: isSessionLoading } = useSession();
+  const queryClient = useQueryClient();
   const [isCreated, setIsCreated] = useState(false);
   const [isLoadingSavedBracket, setIsLoadingSavedBracket] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -292,6 +294,15 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
       setCommittedPicks(saved.picks.picks);
       setFinalizedGroups(normalizeFinalizedGroups(saved.picks.finalizedGroups ?? finalizedGroups));
       setLastSavedAt(saved.updatedAt);
+
+      // Proactively refresh competitive-points + leaderboard caches. The
+      // score-bracket edge fn upserts the xp_event asynchronously, so the
+      // realtime sub on xp_events is the source of truth for the final
+      // total — this invalidation just covers any earnings already
+      // accumulated alongside the save.
+      void queryClient.invalidateQueries({ queryKey: ["competitive-points"] });
+      void queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+      void queryClient.invalidateQueries({ queryKey: ["profile"] });
     } catch (err) {
       if (err instanceof PickPastLockoutError) {
         const fresh = await getCurrentBracket();
@@ -340,6 +351,10 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
           setSaveError(
             new Error("Some picks were locked while editing — your other picks saved.")
           );
+
+          void queryClient.invalidateQueries({ queryKey: ["competitive-points"] });
+          void queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+          void queryClient.invalidateQueries({ queryKey: ["profile"] });
         } catch (retryErr) {
           setSaveError(retryErr instanceof Error ? retryErr : new Error(String(retryErr)));
         }
@@ -349,7 +364,7 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
     } finally {
       setIsSaving(false);
     }
-  }, [finalizedGroups, groupRankings, picks, user, groupId]);
+  }, [finalizedGroups, groupRankings, picks, user, groupId, queryClient]);
 
   const value = useMemo<BracketContextValue>(
     () => ({
