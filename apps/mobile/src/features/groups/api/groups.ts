@@ -1,4 +1,4 @@
-import type { GroupVisibility } from "@world-cup-game/config";
+import type { GroupVisibility } from "@gogaffa/config";
 import { supabase } from "../../../lib/supabase";
 import type { JoinedGroup, PublicGroup } from "../types";
 

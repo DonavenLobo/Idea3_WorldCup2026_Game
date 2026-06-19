@@ -1,4 +1,4 @@
-import type { LeaderboardEntry } from "@world-cup-game/types";
+import type { LeaderboardEntry } from "@gogaffa/types";
 import type { LeaderboardScoreInput } from "./leaderboardTypes";
 
 export function calculateLeaderboard(entries: LeaderboardScoreInput[]): LeaderboardEntry[] {

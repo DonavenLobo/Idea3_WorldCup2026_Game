@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo, useState } from "react";
 import type { PropsWithChildren } from "react";
-import type { NationConfig } from "@world-cup-game/config";
+import type { NationConfig } from "@gogaffa/config";
 import type { OnboardingData, PhotoSource } from "./types";
 
 interface OnboardingContextValue extends OnboardingData {

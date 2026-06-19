@@ -1,5 +1,5 @@
-import { clampText } from "@world-cup-game/card-renderer";
-import type { CardTemplateMetadata } from "@world-cup-game/types";
+import { clampText } from "@gogaffa/card-renderer";
+import type { CardTemplateMetadata } from "@gogaffa/types";
 import { useState } from "react";
 import type { LayoutChangeEvent } from "react-native";
 import { StyleSheet, Text, View } from "react-native";

@@ -1,4 +1,4 @@
-import type { LeaderboardStage } from "@world-cup-game/config";
+import type { LeaderboardStage } from "@gogaffa/config";
 import { supabase } from "../../../lib/supabase";
 import type { LeaderboardRowData } from "../types";
 

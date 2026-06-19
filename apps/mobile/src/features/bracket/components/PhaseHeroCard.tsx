@@ -8,8 +8,6 @@ import { spacing } from "../../../theme/spacing";
 
 interface PhaseHeroCardProps {
   phase: TournamentPhase;
-  nextLockAt: Date | null;
-  nextLockLabel: string | null;
   now: Date;
   currentStage?: BracketPredictionStage;
   currentStageLabel?: string;
@@ -33,8 +31,6 @@ function formatRelative(target: Date, now: Date): string {
 
 export function PhaseHeroCard({
   phase,
-  nextLockAt,
-  nextLockLabel,
   now,
   currentStage,
   currentStageLabel,
@@ -62,40 +58,34 @@ export function PhaseHeroCard({
     tone = "neutral";
   } else {
     switch (phase) {
-      case "pre":
+      case "groups-open":
         eyebrow = "PHASE 1";
-        title = "Group Stage";
-        body = nextLockAt
-          ? `Predict the group standings. First lock in ${formatRelative(nextLockAt, now)}.`
-          : "Predict the group standings.";
+        title = "Pick your groups";
+        body = "Rank the top 4 in each group. Save when you're confident — picks are permanent.";
         tone = "green";
         break;
-      case "phase1-closing":
-        eyebrow = "PHASE 1 CLOSING";
-        title = nextLockLabel ? `${nextLockLabel} locks soon` : "Groups closing";
-        body = nextLockAt
-          ? `Next lock: ${nextLockLabel ?? "soon"} in ${formatRelative(nextLockAt, now)}.`
-          : "Some groups already locked.";
-        tone = "amber";
+      case "groups-partial":
+        eyebrow = "PHASE 1";
+        title = "Keep going";
+        body = "Lock the rest of your group rankings before kickoff.";
+        tone = "green";
         break;
-      case "between":
+      case "groups-done":
         eyebrow = "PHASE 2";
-        title = "Knockouts unlocked";
-        body = "Group stage is in the books. Time to pick the bracket.";
+        title = "Knockouts up next";
+        body = "All groups saved. R32 picks open as the bracket fills in.";
         tone = "green";
         break;
-      case "phase2-closing":
-        eyebrow = "PHASE 2 CLOSING";
-        title = nextLockLabel ? `${nextLockLabel} locks soon` : "Knockouts closing";
-        body = nextLockAt
-          ? `Next match locks in ${formatRelative(nextLockAt, now)}.`
-          : "Some matches already locked.";
+      case "knockouts-active":
+        eyebrow = "PHASE 2";
+        title = "Make your call";
+        body = "Pick every winner in a round, then save. Once saved, the round is locked.";
         tone = "amber";
         break;
       case "complete":
         eyebrow = "TOURNAMENT COMPLETE";
-        title = "Final whistle";
-        body = "See your final score on the leaderboard.";
+        title = "Bracket complete";
+        body = "Every round saved. Watch your score climb as matches finish.";
         tone = "neutral";
         break;
     }

@@ -1,4 +1,4 @@
-import type { CardProgressionLevel } from "@world-cup-game/types";
+import type { CardProgressionLevel } from "@gogaffa/types";
 
 export const TEMPLATE_KEY_BY_LEVEL = {
   2: "level-02-base-v1",

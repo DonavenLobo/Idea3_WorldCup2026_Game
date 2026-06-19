@@ -1,6 +1,6 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { formatTeamName, GROUP_IDS, SUPPORTED_NATIONS } from "@world-cup-game/config";
-import type { GroupId } from "@world-cup-game/config";
+import { formatTeamName, GROUP_IDS, SUPPORTED_NATIONS } from "@gogaffa/config";
+import type { GroupId } from "@gogaffa/config";
 import { BrandButton } from "../../../components/brand";
 import { TeamLogo } from "../../../components/team";
 import { useBracket } from "../BracketContext";

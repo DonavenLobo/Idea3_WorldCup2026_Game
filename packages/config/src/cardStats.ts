@@ -1,4 +1,4 @@
-import type { CardStatKey } from "@world-cup-game/types";
+import type { CardStatKey } from "@gogaffa/types";
 
 export const CARD_STATS: Array<{ key: CardStatKey; label: string; name: string }> = [
   { key: "hyp", label: "HYP", name: "Hype" },

@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
-import { TRIVIA_QUESTION_TIERS } from "@world-cup-game/config";
+import { TRIVIA_QUESTION_TIERS } from "@gogaffa/config";
 import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";

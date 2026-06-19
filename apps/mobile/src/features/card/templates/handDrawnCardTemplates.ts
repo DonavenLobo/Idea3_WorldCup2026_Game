@@ -1,6 +1,6 @@
-import { loadTemplate } from "@world-cup-game/card-renderer";
-import type { PlayerCardRenderTemplate } from "@world-cup-game/card-renderer";
-import type { CardTemplateMetadata } from "@world-cup-game/types";
+import { loadTemplate } from "@gogaffa/card-renderer";
+import type { PlayerCardRenderTemplate } from "@gogaffa/card-renderer";
+import type { CardTemplateMetadata } from "@gogaffa/types";
 import type { ImageSourcePropType } from "react-native";
 import { fontFamily } from "../../../theme/typography";
 import {

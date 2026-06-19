@@ -3,7 +3,7 @@
  *   pnpm dlx tsx packages/game-engine/src/trivia/scoreTriviaDay.test.ts
  * Throws only if a case fails.
  *
- * Expected values are derived from the constants in @world-cup-game/config so
+ * Expected values are derived from the constants in @gogaffa/config so
  * the suite survives future tuning of TRIVIA_QUESTION_TIERS / TIMER / combo /
  * streak multipliers, as long as the formula shape stays the same.
  */
@@ -13,7 +13,7 @@ import {
   TRIVIA_TIMER_SECONDS,
   TRIVIA_ALL_THREE_COMBO_BONUS,
   getTriviaStreakMultiplier,
-} from "@world-cup-game/config";
+} from "@gogaffa/config";
 import { scoreTriviaDay } from "./scoreTriviaDay";
 import type { TriviaQuestionResult } from "./scoreTriviaDay";
 

@@ -1,4 +1,4 @@
-import { getTriviaTierForOrder } from "@world-cup-game/config";
+import { getTriviaTierForOrder } from "@gogaffa/config";
 
 export function dateKey(d: Date = new Date()): string {
   const y = d.getFullYear();

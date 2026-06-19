@@ -1,5 +1,4 @@
-import type { AnswerKey, TriviaAnswerOption } from "@world-cup-game/types";
-import type { CardUpgradeEvent } from "@world-cup-game/types";
+import type { AnswerKey, CardUpgradeEvent, TriviaAnswerOption } from "@gogaffa/types";
 import { supabase } from "../../../lib/supabase";
 import { isAnswerKey } from "../schemas/triviaSchema";
 import type { DailyAnswer, DailyTriviaQuestion, ScoredTriviaAttempt } from "../types";

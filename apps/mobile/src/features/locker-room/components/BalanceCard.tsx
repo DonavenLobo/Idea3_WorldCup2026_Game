@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
-import { LOCKER_TIERS } from "@world-cup-game/config";
+import { LOCKER_TIERS } from "@gogaffa/config";
 import type { LockerProgress, LockerWallet } from "../types";
 import { colors, opacity } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";

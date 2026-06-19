@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { GROUP_IDS } from "@world-cup-game/config";
+import { GROUP_IDS } from "@gogaffa/config";
 import { BrandButton } from "../../src/components/brand";
 import { Screen, ScreenHeader } from "../../src/components/layout";
 import {
@@ -28,8 +28,6 @@ export default function BracketScreen() {
     isLoadingSavedBracket,
     lastSavedAt,
     phase,
-    nextLockAt,
-    nextLockLabel,
     stageState,
     areAllGroupsFinalized,
     finalizedGroups,
@@ -215,8 +213,6 @@ export default function BracketScreen() {
     <View style={styles.root}>
       <PhaseHeroCard
         phase={phase}
-        nextLockAt={nextLockAt}
-        nextLockLabel={nextLockLabel}
         now={now}
         currentStage={stageState.currentStage}
         currentStageLabel={stageState.currentStageLabel}

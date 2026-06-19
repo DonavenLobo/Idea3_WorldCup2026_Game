@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { WORLD_CUP_FIXTURES } from "@world-cup-game/config";
+import { WORLD_CUP_FIXTURES } from "@gogaffa/config";
 import { useProfile } from "../../profile/hooks/useProfile";
 import type { ScheduleFilter, ScheduleSection } from "../types";
 import { useCachedMatchScores } from "./useCachedMatchScores";

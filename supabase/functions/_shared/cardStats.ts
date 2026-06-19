@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-const TRIVIA_CATCH_UP_AMOUNT = 2;     // mirror of @world-cup-game/config TRIVIA_CATCH_UP_AMOUNT
+const TRIVIA_CATCH_UP_AMOUNT = 2;     // mirror of @gogaffa/config TRIVIA_CATCH_UP_AMOUNT
 export const CARD_STAT_KEYS = ["atk","ast","frm","hyp","lck","wal"] as const;
 export type CardStatKey = typeof CARD_STAT_KEYS[number];
 

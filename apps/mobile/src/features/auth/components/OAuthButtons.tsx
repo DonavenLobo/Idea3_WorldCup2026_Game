@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
-import { APP_ROUTES } from "@world-cup-game/config";
-import type { AuthProvider } from "@world-cup-game/types";
+import { APP_ROUTES } from "@gogaffa/config";
+import type { AuthProvider } from "@gogaffa/types";
 import { AuthOptionRow } from "../../../components/auth";
 import { spacing } from "../../../theme/spacing";
 import { useOnboarding } from "../../onboarding";

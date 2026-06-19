@@ -1,5 +1,5 @@
 import { StyleSheet, Text } from "react-native";
-import { SUPPORTED_NATIONS } from "@world-cup-game/config";
+import { SUPPORTED_NATIONS } from "@gogaffa/config";
 import type { PlayerCardRenderData } from "../types";
 import { resolveLayerFontStyle } from "../utils/layerTextStyle";
 import { BadgeLayer } from "./BadgeLayer";

@@ -80,11 +80,11 @@ const resolvePkg = (path: string) => fileURLToPath(new URL(path, import.meta.url
 export default defineConfig({
   resolve: {
     alias: {
-      "@world-cup-game/config": resolvePkg("./packages/config/src/index.ts"),
-      "@world-cup-game/types": resolvePkg("./packages/types/src/index.ts"),
-      "@world-cup-game/game-engine": resolvePkg("./packages/game-engine/src/index.ts"),
-      "@world-cup-game/card-renderer": resolvePkg("./packages/card-renderer/src/index.ts"),
-      "@world-cup-game/ui": resolvePkg("./packages/ui/src/index.ts")
+      "@gogaffa/config": resolvePkg("./packages/config/src/index.ts"),
+      "@gogaffa/types": resolvePkg("./packages/types/src/index.ts"),
+      "@gogaffa/game-engine": resolvePkg("./packages/game-engine/src/index.ts"),
+      "@gogaffa/card-renderer": resolvePkg("./packages/card-renderer/src/index.ts"),
+      "@gogaffa/ui": resolvePkg("./packages/ui/src/index.ts")
     }
   },
   test: {
@@ -620,12 +620,12 @@ Expected: prints `Generated 104 fixtures, 16 stadiums, 48 flags.` and writes the
 
 - [ ] **Step 3: Sanity-check generated output**
 
-Run: `node -e "const {WORLD_CUP_FIXTURES}=require('@world-cup-game/config'); " 2>/dev/null || true`
+Run: `node -e "const {WORLD_CUP_FIXTURES}=require('@gogaffa/config'); " 2>/dev/null || true`
 Then inspect: open `packages/config/src/schedule.data.ts` and confirm the first fixture has `"num": 1`, a `"kickoffUtc"` ending in `Z`, and `"venueCity"` set. Confirm `stadiums.data.ts` has decimal `lat`/`lng`.
 
 - [ ] **Step 4: Typecheck the config package**
 
-Run: `pnpm --filter @world-cup-game/config typecheck`
+Run: `pnpm --filter @gogaffa/config typecheck`
 Expected: PASS (hand files from Task 4 now resolve their generated `*.data.ts`).
 
 - [ ] **Step 4b: Flag drift guard test**
@@ -766,7 +766,7 @@ TDD: write `utils.test.ts` first (it will fail to resolve `./utils`), then `type
 
 `types.ts`:
 ```ts
-import type { Fixture } from "@world-cup-game/config";
+import type { Fixture } from "@gogaffa/config";
 
 export type ScheduleFilter = "all" | "group" | "knockouts" | "myTeam";
 
@@ -779,7 +779,7 @@ export interface ScheduleSection {
 `utils.test.ts`:
 ```ts
 import { describe, expect, it } from "vitest";
-import type { Fixture } from "@world-cup-game/config";
+import type { Fixture } from "@gogaffa/config";
 import {
   filterMatches,
   groupByLocalDay,
@@ -856,8 +856,8 @@ describe("mapsUrl", () => {
 
 `utils.ts`:
 ```ts
-import { SUPPORTED_NATIONS } from "@world-cup-game/config";
-import type { Fixture } from "@world-cup-game/config";
+import { SUPPORTED_NATIONS } from "@gogaffa/config";
+import type { Fixture } from "@gogaffa/config";
 import type { ScheduleFilter, ScheduleSection } from "./types";
 
 export function deviceTimeZone(): string {
@@ -958,7 +958,7 @@ Commit: `git add apps/mobile/src/features/schedule/types.ts apps/mobile/src/feat
 - [ ] **Step 1: Create `types.ts`**
 
 ```ts
-import type { Fixture } from "@world-cup-game/config";
+import type { Fixture } from "@gogaffa/config";
 
 export type MatchStatus = "upcoming" | "live" | "final";
 
@@ -990,7 +990,7 @@ export interface ScheduleSection {
 
 ```ts
 import { describe, expect, it } from "vitest";
-import type { Fixture } from "@world-cup-game/config";
+import type { Fixture } from "@gogaffa/config";
 import type { MatchResult, ScheduledMatch } from "./types";
 import {
   filterMatches,
@@ -1092,8 +1092,8 @@ Expected: FAIL — cannot resolve `./utils`.
 - [ ] **Step 4: Implement `utils.ts`**
 
 ```ts
-import { SUPPORTED_NATIONS } from "@world-cup-game/config";
-import type { Fixture } from "@world-cup-game/config";
+import { SUPPORTED_NATIONS } from "@gogaffa/config";
+import type { Fixture } from "@gogaffa/config";
 import type { MatchResult, ScheduledMatch, ScheduleFilter, ScheduleSection } from "./types";
 
 export function deviceTimeZone(): string {
@@ -1288,7 +1288,7 @@ No React Query, no `getMatchResults`, no merge. Reads static fixtures from confi
 `useSchedule.ts`:
 ```ts
 import { useMemo } from "react";
-import { WORLD_CUP_FIXTURES } from "@world-cup-game/config";
+import { WORLD_CUP_FIXTURES } from "@gogaffa/config";
 import { useProfile } from "../../../hooks/useProfile";
 import type { ScheduleFilter, ScheduleSection } from "../types";
 import {
@@ -1305,7 +1305,7 @@ interface UseScheduleResult {
 }
 
 export function useSchedule(filter: ScheduleFilter): UseScheduleResult {
-  // Phase 1 is static: fixtures come straight from @world-cup-game/config.
+  // Phase 1 is static: fixtures come straight from @gogaffa/config.
   // TODO(Phase 2): fetch the live results overlay here (see deferred Task 8)
   // and merge resolved teams / scores before grouping.
   const { profile } = useProfile();
@@ -1341,7 +1341,7 @@ Commit: `git add apps/mobile/src/features/schedule/hooks/useSchedule.ts && git c
 ```ts
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { WORLD_CUP_FIXTURES } from "@world-cup-game/config";
+import { WORLD_CUP_FIXTURES } from "@gogaffa/config";
 import { useProfile } from "../../../hooks/useProfile";
 import { getMatchResults } from "../api/results";
 import type { ScheduleFilter, ScheduleSection } from "../types";
@@ -1434,7 +1434,7 @@ git commit -m "feat: useSchedule hook merging fixtures with overlay"
 `FixtureRow.tsx` (STATIC VARIANT — build this, not Step 3):
 ```tsx
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import type { Fixture } from "@world-cup-game/config";
+import type { Fixture } from "@gogaffa/config";
 import { colors } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";
@@ -1507,7 +1507,7 @@ Commit all four components together at the end of the task: `git commit -m "feat
 
 ```tsx
 import { StyleSheet, Text, View } from "react-native";
-import { flagForTeam } from "@world-cup-game/config";
+import { flagForTeam } from "@gogaffa/config";
 import { colors } from "../../../theme/colors";
 import { spacing } from "../../../theme/spacing";
 
@@ -1740,7 +1740,7 @@ const styles = StyleSheet.create({
 
 ```tsx
 import { Linking, Modal, Pressable, StyleSheet, Text, View } from "react-native";
-import { getStadiumByCity } from "@world-cup-game/config";
+import { getStadiumByCity } from "@gogaffa/config";
 import { colors } from "../../../theme/colors";
 import { radius } from "../../../theme/radius";
 import { spacing } from "../../../theme/spacing";

@@ -1,4 +1,4 @@
-import type { TriviaScoreSummary } from "@world-cup-game/types";
+import type { TriviaScoreSummary } from "@gogaffa/types";
 
 export interface TriviaRewards {
   competitivePoints: number;

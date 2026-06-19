@@ -1,4 +1,4 @@
-import type { CardProgressionLevel, CardUpgradeEvent } from "@world-cup-game/types";
+import type { CardProgressionLevel, CardUpgradeEvent } from "@gogaffa/types";
 import { supabase } from "../../../lib/supabase";
 
 interface CardUpgradeEventRow {

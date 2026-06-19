@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { APP_ROUTES } from "@world-cup-game/config";
+import { APP_ROUTES } from "@gogaffa/config";
 import { AuthShell } from "../../src/components/auth";
 import { AuthLegalLinks, OAuthButtons } from "../../src/features/auth";
 import { colors, opacity } from "../../src/theme/colors";

@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { APP_ROUTES } from "@world-cup-game/config";
+import { APP_ROUTES } from "@gogaffa/config";
 import { SplashScreen } from "../src/components/splash";
 import { useSession } from "../src/features/auth";
 

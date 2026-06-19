@@ -1,9 +1,9 @@
 import { useRouter } from "expo-router";
-import { Alert, Pressable, Share, StyleSheet, Text, View } from "react-native";
+import { Pressable, Share, StyleSheet, Text, View } from "react-native";
 import { BrandButton } from "../../../components/brand";
 import { TeamLogo } from "../../../components/team";
-import { APP_ROUTES, formatTeamName, GROUP_IDS, SUPPORTED_NATIONS } from "@world-cup-game/config";
-import type { GroupId } from "@world-cup-game/config";
+import { APP_ROUTES, formatTeamName, GROUP_IDS, SUPPORTED_NATIONS } from "@gogaffa/config";
+import type { GroupId } from "@gogaffa/config";
 import { WEB_URL } from "../../../lib/constants";
 import { useBracket } from "../BracketContext";
 import { colors, opacity } from "../../../theme/colors";
@@ -36,7 +36,6 @@ export function BracketSummary({
   const {
     groupRankings,
     picks,
-    resetAll,
     stageState,
     isClockFallback
   } = useBracket();
@@ -86,17 +85,6 @@ export function BracketSummary({
 
   const handleJoinGroup = () => {
     router.push(APP_ROUTES.tabs.groups);
-  };
-
-  const handleResetPress = () => {
-    Alert.alert(
-      "Reset your bracket?",
-      "This clears every group pick, knockout result, and final. You can't undo this.",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Reset bracket", style: "destructive", onPress: resetAll }
-      ]
-    );
   };
 
   return (
@@ -191,13 +179,6 @@ export function BracketSummary({
         onPress={handleJoinGroup}
         variant="secondary"
         style={styles.secondaryCta}
-      />
-
-      <BrandButton
-        label="Reset bracket"
-        onPress={handleResetPress}
-        variant="ghost"
-        style={styles.resetCta}
       />
     </View>
   );
@@ -300,9 +281,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: spacing.sm,
     marginBottom: spacing.lg
-  },
-  resetCta: {
-    marginTop: spacing.lg,
   },
   root: {
     padding: spacing.lg

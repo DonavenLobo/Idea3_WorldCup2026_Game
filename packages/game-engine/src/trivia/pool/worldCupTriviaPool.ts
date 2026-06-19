@@ -1,4 +1,4 @@
-import type { AnswerKey, PooledTriviaQuestion } from "@world-cup-game/types";
+import type { AnswerKey, PooledTriviaQuestion } from "@gogaffa/types";
 
 /**
  * Starter pool of factual, nation-tagged trivia for the 2026 global tournament field.

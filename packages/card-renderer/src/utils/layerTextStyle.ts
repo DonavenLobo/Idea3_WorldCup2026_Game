@@ -1,4 +1,4 @@
-import type { CardTemplateLayerMetadata } from "@world-cup-game/types";
+import type { CardTemplateLayerMetadata } from "@gogaffa/types";
 import type { TextStyle } from "react-native";
 
 type LayerFont = Pick<CardTemplateLayerMetadata, "fontFamily" | "fontWeight">;

@@ -1,5 +1,5 @@
 {
-  "name": "@world-cup-game/game-engine",
+  "name": "@gogaffa/game-engine",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -9,11 +9,11 @@
     "build": "tsc -p tsconfig.json --noEmit",
     "lint": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "echo \"No tests yet for @world-cup-game/game-engine\"",
+    "test": "echo \"No tests yet for @gogaffa/game-engine\"",
     "trivia:generate": "tsx scripts/generateTriviaSeed.ts"
   },
   "dependencies": {
-    "@world-cup-game/config": "workspace:*",
-    "@world-cup-game/types": "workspace:*"
+    "@gogaffa/config": "workspace:*",
+    "@gogaffa/types": "workspace:*"
   }
 }

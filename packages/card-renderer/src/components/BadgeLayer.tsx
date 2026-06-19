@@ -1,6 +1,6 @@
 import { Image, StyleSheet, Text, View } from "react-native";
 import type { ImageSourcePropType } from "react-native";
-import type { CardTemplateLayerMetadata } from "@world-cup-game/types";
+import type { CardTemplateLayerMetadata } from "@gogaffa/types";
 import type { BadgeIconComponent } from "../types";
 
 const DEFAULT_BADGE_BACKGROUND = "rgba(245, 240, 232, 0.84)";

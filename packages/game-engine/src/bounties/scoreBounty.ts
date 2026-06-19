@@ -1,4 +1,4 @@
-import type { BountyReward } from "@world-cup-game/types";
+import type { BountyReward } from "@gogaffa/types";
 
 export interface BountyScoreInput {
   isCorrect: boolean;

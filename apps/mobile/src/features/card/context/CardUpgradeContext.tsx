@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import type { PropsWithChildren } from "react";
-import type { CardUpgradeEvent } from "@world-cup-game/types";
+import type { CardUpgradeEvent } from "@gogaffa/types";
 
 interface CardUpgradeContextValue {
   isBlocking: boolean;

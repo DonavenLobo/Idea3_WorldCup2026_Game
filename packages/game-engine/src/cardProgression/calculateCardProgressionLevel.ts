@@ -1,4 +1,4 @@
-import type { CardProgressionLevel, CardProgressionMilestones } from "@world-cup-game/types";
+import type { CardProgressionLevel, CardProgressionMilestones } from "@gogaffa/types";
 
 export function calculateCardProgressionLevel(
   milestones: CardProgressionMilestones

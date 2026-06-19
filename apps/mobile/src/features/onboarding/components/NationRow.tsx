@@ -1,6 +1,6 @@
 import { memo, useCallback } from "react";
 import { Pressable, StyleSheet, Text } from "react-native";
-import type { NationConfig } from "@world-cup-game/config";
+import type { NationConfig } from "@gogaffa/config";
 import { TeamLogo } from "../../../components/team";
 import { colors, opacity } from "../../../theme/colors";
 import { spacing } from "../../../theme/spacing";

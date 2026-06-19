@@ -1,4 +1,4 @@
-import type { PlayerCard } from "@world-cup-game/types";
+import type { PlayerCard } from "@gogaffa/types";
 import { useCallback, useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import type { LayoutChangeEvent } from "react-native";

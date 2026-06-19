@@ -1,8 +1,8 @@
 import { createContext, useCallback, useContext, useMemo } from "react";
 import type { PropsWithChildren } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { LOCKER_TIERS } from "@world-cup-game/config";
-import type { CosmeticItem, LockerTier } from "@world-cup-game/config";
+import { LOCKER_TIERS } from "@gogaffa/config";
+import type { CosmeticItem, LockerTier } from "@gogaffa/config";
 import { useSession } from "../auth/hooks/useSession";
 import {
   getLockerRoomItems,

@@ -1,5 +1,5 @@
 /** Run: pnpm dlx tsx packages/game-engine/src/trivia/generateTriviaSchedule.test.ts */
-import type { PooledTriviaQuestion } from "@world-cup-game/types";
+import type { PooledTriviaQuestion } from "@gogaffa/types";
 import {
   addDays, generateTriviaSchedule, renderScheduleSql, withShuffledOptions,
 } from "./generateTriviaSchedule";

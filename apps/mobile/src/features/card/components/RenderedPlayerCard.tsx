@@ -7,15 +7,15 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
-import { PlayerCard, resolveTemplate } from "@world-cup-game/card-renderer";
-import type { PlayerCardRenderTemplate } from "@world-cup-game/card-renderer";
-import { BASE_CARD_STATS } from "@world-cup-game/config";
+import { PlayerCard, resolveTemplate } from "@gogaffa/card-renderer";
+import type { PlayerCardRenderTemplate } from "@gogaffa/card-renderer";
+import { BASE_CARD_STATS } from "@gogaffa/config";
 import type {
   CardStats,
   CardStatus,
   CardTier,
   PlayerCard as PlayerCardData
-} from "@world-cup-game/types";
+} from "@gogaffa/types";
 import type { PhotoSource } from "../../onboarding";
 import { colors, opacity } from "../../../theme/colors";
 import { startCardGeneration } from "../api/startCardGeneration";

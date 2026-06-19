@@ -1,4 +1,4 @@
-import { templateKeyForLevel } from "@world-cup-game/game-engine";
+import { templateKeyForLevel } from "@gogaffa/game-engine";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo } from "react";
 import { useSession } from "../../auth/hooks/useSession";

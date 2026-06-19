@@ -1,4 +1,4 @@
-import type { PlayerCard } from "@world-cup-game/types";
+import type { PlayerCard } from "@gogaffa/types";
 import * as Haptics from "expo-haptics";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Modal, StyleSheet, View } from "react-native";

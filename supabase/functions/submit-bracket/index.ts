@@ -8,8 +8,7 @@ import {
 import { hasFinalizedAllBracketGroups } from "../_shared/cardProgression.ts";
 import { parseSubmitBracketRequest } from "./schema.ts";
 import {
-  loadKickoffMaps,
-  validateBracketAgainstFixtures,
+  validateBracketWriteAgainstFinalized,
   type BracketPicksPayload
 } from "./validateFixtures.ts";
 
@@ -227,38 +226,47 @@ Deno.serve(async (request) => {
       }
     }
 
-    // Fixture validation: any CHANGED pick on a passed-kickoff unit is rejected.
-    const [existingPicks, kickoffMaps] = await Promise.all([
-      existingBracket ? fetchExistingPicks(supabaseAdmin, existingBracket.id) : Promise.resolve(null),
-      loadKickoffMaps(supabaseAdmin)
-    ]);
+    // Lock-on-save validation: a change targeting an already-finalized group
+    // or knockout round is rejected. Source of truth is the existing bracket's
+    // `picks` JSONB (same place `finalizedGroups` lives).
+    const existingPicks = existingBracket
+      ? await fetchExistingPicks(supabaseAdmin, existingBracket.id)
+      : null;
 
-    const validation = validateBracketAgainstFixtures(
-      Date.now(),
-      input.picks as BracketPicksPayload,
+    const validation = validateBracketWriteAgainstFinalized(
       existingPicks,
-      kickoffMaps.groupKickoffMs,
-      kickoffMaps.knockoutKickoffMs
+      input.picks as BracketPicksPayload
     );
 
-    if (validation.invalidGroups.length > 0 || validation.invalidMatches.length > 0) {
+    if (!validation.ok) {
       return jsonResponse({
         ok: false,
         code: "PICK_PAST_LOCKOUT",
         invalidGroups: validation.invalidGroups,
-        invalidMatches: validation.invalidMatches
+        invalidRounds: validation.invalidRounds
       });
     }
 
     // (Binary `locked_at` check removed — phased lockout is enforced by
-    // validateBracketAgainstFixtures above. The locked_at column remains
-    // nullable on the table but is no longer consulted.)
+    // validateBracketWriteAgainstFinalized above. The locked_at column
+    // remains nullable on the table but is no longer consulted.)
 
     const now = new Date().toISOString();
+    // Mirror per-round finalized flags from the JSONB payload onto the
+    // queryable boolean columns added in migration 000033. The JSONB stays the
+    // source of truth for detail-level state (picks within a round); these
+    // columns are the canonical rollups ("is user X's R32 finalized?").
+    const kf = input.picks.knockoutFinalized ?? {};
     const writePayload = {
       group_id: input.groupId,
       picks: input.picks,
-      updated_at: now
+      updated_at: now,
+      r32_finalized: kf.r32 ?? false,
+      r16_finalized: kf.r16 ?? false,
+      qf_finalized: kf.qf ?? false,
+      sf_finalized: kf.sf ?? false,
+      final_finalized: kf.final ?? false,
+      third_finalized: kf.third ?? false
     };
 
     const writeQuery = existingBracket
