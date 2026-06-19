@@ -1,6 +1,7 @@
 import type { PlayerCard } from "@world-cup-game/types";
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
+import type { LayoutChangeEvent } from "react-native";
 import Animated, {
   Easing,
   cancelAnimation,
@@ -13,13 +14,9 @@ import Animated, {
 } from "react-native-reanimated";
 import { colors } from "../../../theme/colors";
 import {
-  getHandDrawnTemplateMetadata,
   HAND_DRAWN_CANVAS_HEIGHT,
   HAND_DRAWN_CANVAS_WIDTH,
-  LEVEL_02_BASE_METADATA,
 } from "../templates/handDrawnCardTemplates";
-import { CardStatOverlays } from "./CardStatOverlays";
-import { CardTextOverlays } from "./CardTextOverlays";
 import { RenderedPlayerCard } from "./RenderedPlayerCard";
 
 /**
@@ -38,7 +35,8 @@ const CROSSFADE_MS = 380;
 const WIPE_MS = 520;
 const TAPE_MS = 320;
 const TAPE_DELAY = 420;
-const SETTLE_MS = 900;
+const START_DELAY_MS = 120;
+const SETTLE_MS = 1500;
 
 const TAPE_TINT = "rgba(214, 199, 168, 0.82)";
 
@@ -55,50 +53,65 @@ export function CardUpgradeAnimation({
   card,
   onComplete,
 }: CardUpgradeAnimationProps) {
+  const [hasLayout, setHasLayout] = useState(false);
   const flatten = useSharedValue(0);
   const crossfade = useSharedValue(0);
   const wipe = useSharedValue(0);
   const tape = useSharedValue(0);
 
-  const overlayMetadata =
-    getHandDrawnTemplateMetadata(toTemplateKey)
-    ?? getHandDrawnTemplateMetadata(fromTemplateKey)
-    ?? LEVEL_02_BASE_METADATA;
+  const handleLayout = useCallback((event: LayoutChangeEvent) => {
+    const { height, width } = event.nativeEvent.layout;
+    if (height > 0 && width > 0) {
+      setHasLayout(true);
+    }
+  }, []);
 
   useEffect(() => {
-    flatten.value = withSequence(
-      withTiming(1, { duration: FLATTEN_MS * 0.4, easing: Easing.out(Easing.quad) }),
-      withTiming(0, { duration: FLATTEN_MS * 0.6, easing: Easing.elastic(1.1) })
-    );
+    flatten.value = 0;
+    crossfade.value = 0;
+    wipe.value = 0;
+    tape.value = 0;
 
-    crossfade.value = withDelay(
-      FLATTEN_MS * 0.5,
-      withTiming(1, { duration: CROSSFADE_MS, easing: Easing.inOut(Easing.ease) })
-    );
+    if (!hasLayout) {
+      return undefined;
+    }
 
-    wipe.value = withDelay(
-      FLATTEN_MS * 0.6,
-      withTiming(1, { duration: WIPE_MS, easing: Easing.out(Easing.cubic) })
-    );
+    const start = setTimeout(() => {
+      flatten.value = withSequence(
+        withTiming(1, { duration: FLATTEN_MS * 0.4, easing: Easing.out(Easing.quad) }),
+        withTiming(0, { duration: FLATTEN_MS * 0.6, easing: Easing.elastic(1.1) })
+      );
 
-    tape.value = withDelay(
-      TAPE_DELAY,
-      withSequence(
-        withTiming(1.12, { duration: TAPE_MS * 0.7, easing: Easing.out(Easing.back(2)) }),
-        withTiming(1, { duration: TAPE_MS * 0.3, easing: Easing.out(Easing.quad) })
-      )
-    );
+      crossfade.value = withDelay(
+        FLATTEN_MS * 0.5,
+        withTiming(1, { duration: CROSSFADE_MS, easing: Easing.inOut(Easing.ease) })
+      );
 
-    const settle = setTimeout(onComplete, SETTLE_MS);
+      wipe.value = withDelay(
+        FLATTEN_MS * 0.6,
+        withTiming(1, { duration: WIPE_MS, easing: Easing.out(Easing.cubic) })
+      );
+
+      tape.value = withDelay(
+        TAPE_DELAY,
+        withSequence(
+          withTiming(1.12, { duration: TAPE_MS * 0.7, easing: Easing.out(Easing.back(2)) }),
+          withTiming(1, { duration: TAPE_MS * 0.3, easing: Easing.out(Easing.quad) })
+        )
+      );
+    }, START_DELAY_MS);
+
+    const settle = setTimeout(onComplete, START_DELAY_MS + SETTLE_MS);
 
     return () => {
+      clearTimeout(start);
       clearTimeout(settle);
       cancelAnimation(flatten);
       cancelAnimation(crossfade);
       cancelAnimation(wipe);
       cancelAnimation(tape);
     };
-  }, [crossfade, flatten, fromTemplateKey, onComplete, tape, toTemplateKey, wipe]);
+  }, [crossfade, flatten, fromTemplateKey, hasLayout, onComplete, tape, toTemplateKey, wipe]);
 
   const stackStyle = useAnimatedStyle(() => ({
     transform: [
@@ -131,14 +144,13 @@ export function CardUpgradeAnimation({
   }));
 
   return (
-    <View style={styles.root}>
+    <View style={styles.root} onLayout={handleLayout}>
       <Animated.View style={[styles.stack, stackStyle]}>
         <Animated.View style={[StyleSheet.absoluteFill, oldTemplateStyle]}>
           <RenderedPlayerCard
             card={card}
             fillParent
             hideStatusBadge
-            renderOverlays={false}
             templateKey={fromTemplateKey}
           />
         </Animated.View>
@@ -148,7 +160,6 @@ export function CardUpgradeAnimation({
             card={card}
             fillParent
             hideStatusBadge
-            renderOverlays={false}
             templateKey={toTemplateKey}
           />
         </Animated.View>
@@ -157,22 +168,11 @@ export function CardUpgradeAnimation({
         <Animated.View pointerEvents="none" style={[styles.tape, tapeStyle]} />
       </Animated.View>
 
-      <View pointerEvents="none" style={styles.overlayLayer}>
-        <CardTextOverlays
-          displayName={card.displayName}
-          metadata={overlayMetadata}
-          overall={card.overall}
-        />
-        <CardStatOverlays metadata={overlayMetadata} stats={card.stats} />
-      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  overlayLayer: {
-    ...StyleSheet.absoluteFillObject,
-  },
   root: {
     aspectRatio: HAND_DRAWN_CANVAS_WIDTH / HAND_DRAWN_CANVAS_HEIGHT,
     width: "100%",

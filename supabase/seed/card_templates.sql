@@ -194,10 +194,10 @@ values
           "showLabels": false
         },
         "badge": {
-          "x": 735,
-          "y": 155,
-          "width": 150,
-          "height": 132,
+          "x": 745,
+          "y": 234,
+          "width": 140,
+          "height": 104,
           "fontSize": 100,
           "backgroundColor": "transparent",
           "color": "#1a1a2e"
@@ -259,10 +259,10 @@ values
           "showLabels": false
         },
         "badge": {
-          "x": 735,
-          "y": 155,
-          "width": 150,
-          "height": 132,
+          "x": 790,
+          "y": 250,
+          "width": 120,
+          "height": 90,
           "fontSize": 100,
           "backgroundColor": "transparent",
           "color": "#1a1a2e"

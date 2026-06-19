@@ -7,7 +7,12 @@ import { BrandButton } from "../../../components/brand/BrandButton";
 import { Eyebrow } from "../../../components/brand/Eyebrow";
 import { colors, opacity } from "../../../theme/colors";
 import { spacing } from "../../../theme/spacing";
+import {
+  HAND_DRAWN_CANVAS_HEIGHT,
+  HAND_DRAWN_CANVAS_WIDTH,
+} from "../templates/handDrawnCardTemplates";
 import { CardUpgradeAnimation } from "./CardUpgradeAnimation";
+import { RenderedPlayerCard } from "./RenderedPlayerCard";
 
 export interface CardUpgradeModalProps {
   visible: boolean;
@@ -43,6 +48,7 @@ export function CardUpgradeModal({
 
   const isFinished = step >= transitions.length;
   const current = transitions[step];
+  const finalTemplateKey = templateKeys[templateKeys.length - 1];
 
   const handleStepComplete = useCallback(() => {
     setStep((previous) => {
@@ -72,15 +78,24 @@ export function CardUpgradeModal({
     >
       <View style={styles.backdrop}>
         <View style={styles.content}>
-          {current ? (
-            <CardUpgradeAnimation
-              key={`${current.from}->${current.to}`}
-              card={card}
-              fromTemplateKey={current.from}
-              onComplete={handleStepComplete}
-              toTemplateKey={current.to}
-            />
-          ) : null}
+          <View style={styles.animationFrame}>
+            {current ? (
+              <CardUpgradeAnimation
+                key={`${current.from}->${current.to}`}
+                card={card}
+                fromTemplateKey={current.from}
+                onComplete={handleStepComplete}
+                toTemplateKey={current.to}
+              />
+            ) : finalTemplateKey ? (
+              <RenderedPlayerCard
+                card={card}
+                fillParent
+                hideStatusBadge
+                templateKey={finalTemplateKey}
+              />
+            ) : null}
+          </View>
 
           {isFinished ? (
             <Animated.View entering={FadeIn.duration(260)} style={styles.ctaBlock}>
@@ -95,12 +110,18 @@ export function CardUpgradeModal({
 }
 
 const styles = StyleSheet.create({
+  animationFrame: {
+    aspectRatio: HAND_DRAWN_CANVAS_WIDTH / HAND_DRAWN_CANVAS_HEIGHT,
+    overflow: "visible",
+    width: "100%",
+  },
   backdrop: {
     alignItems: "center",
     backgroundColor: opacity.ink60,
     flex: 1,
     justifyContent: "center",
     paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
   },
   content: {
     alignItems: "center",
@@ -108,7 +129,9 @@ const styles = StyleSheet.create({
     borderColor: colors.ink,
     borderRadius: 24,
     borderWidth: 2,
+    maxHeight: "92%",
     maxWidth: 420,
+    overflow: "visible",
     paddingBottom: spacing.xl,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
