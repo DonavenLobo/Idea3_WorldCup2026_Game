@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Alert } from "react-native";
 import { BRACKET_GROUPS, GROUP_IDS } from "@gogaffa/config";
 import type { GroupId } from "@gogaffa/config";
@@ -123,6 +124,7 @@ interface BracketProviderProps {
 export function BracketProvider({ groupId = null, children }: BracketProviderProps) {
   const { user, isLoading: isSessionLoading } = useSession();
   const notifyCardUpgrades = useNotifyCardUpgrades();
+  const queryClient = useQueryClient();
   const [isCreated, setIsCreated] = useState(false);
   const [isLoadingSavedBracket, setIsLoadingSavedBracket] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -329,6 +331,9 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
         [group]: saved.picks.groupRankings[group] ?? nextGroupRankings[group]
       }));
       await notifyCardUpgrades(pendingUpgrades);
+      void queryClient.invalidateQueries({ queryKey: ["competitive-points"] });
+      void queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+      void queryClient.invalidateQueries({ queryKey: ["profile"] });
       return true;
     } catch (err) {
       setSaveError(err instanceof Error ? err : new Error(String(err)));
@@ -344,6 +349,7 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
     groupRankings,
     notifyCardUpgrades,
     knockoutFinalized,
+    queryClient,
     user
   ]);
 
@@ -380,6 +386,9 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
       setPicks(saved.picks.picks);
       setLastSavedAt(saved.updatedAt);
       await notifyCardUpgrades(pendingUpgrades);
+      void queryClient.invalidateQueries({ queryKey: ["competitive-points"] });
+      void queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+      void queryClient.invalidateQueries({ queryKey: ["profile"] });
       return true;
     } catch (err) {
       setSaveError(err instanceof Error ? err : new Error(String(err)));
@@ -394,6 +403,7 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
     knockoutFinalized,
     notifyCardUpgrades,
     picks,
+    queryClient,
     user
   ]);
 
@@ -421,6 +431,15 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
       setKnockoutFinalized(saved.picks.knockoutFinalized ?? knockoutFinalized);
       setLastSavedAt(saved.updatedAt);
       await notifyCardUpgrades(pendingUpgrades);
+
+      // Proactively refresh competitive-points + leaderboard caches. The
+      // score-bracket edge fn upserts the xp_event asynchronously, so the
+      // realtime sub on xp_events is the source of truth for the final
+      // total — this invalidation just covers any earnings already
+      // accumulated alongside the save.
+      void queryClient.invalidateQueries({ queryKey: ["competitive-points"] });
+      void queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+      void queryClient.invalidateQueries({ queryKey: ["profile"] });
     } catch (err) {
       if (err instanceof PickPastLockoutError) {
         // Server rejected the save because at least one group or knockout
@@ -466,7 +485,7 @@ export function BracketProvider({ groupId = null, children }: BracketProviderPro
     } finally {
       setIsSaving(false);
     }
-  }, [finalizedGroups, groupRankings, knockoutFinalized, notifyCardUpgrades, picks, user, groupId]);
+  }, [finalizedGroups, groupRankings, knockoutFinalized, notifyCardUpgrades, picks, user, groupId, queryClient]);
 
   const value = useMemo<BracketContextValue>(
     () => ({

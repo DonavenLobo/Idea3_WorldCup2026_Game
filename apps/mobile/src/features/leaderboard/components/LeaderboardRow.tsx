@@ -36,6 +36,11 @@ export function LeaderboardRow({
         <Text style={[styles.name, textStyle]} numberOfLines={1}>
           {displayName}
         </Text>
+        {isCurrentUser ? (
+          <View style={styles.youChip}>
+            <Text style={styles.youChipText}>YOU</Text>
+          </View>
+        ) : null}
         <Text style={[styles.score, textStyle]}>{score}</Text>
       </View>
     </View>
@@ -101,5 +106,17 @@ const styles = StyleSheet.create({
   wrap: {
     marginBottom: spacing.sm,
     marginHorizontal: spacing.md,
+  },
+  youChip: {
+    backgroundColor: colors.cream,
+    borderRadius: 999,
+    marginRight: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+  },
+  youChipText: {
+    ...typography.eyebrow,
+    color: colors.red,
+    fontSize: 10,
   },
 });

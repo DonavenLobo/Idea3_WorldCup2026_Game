@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { PropsWithChildren } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { TRIVIA_QUESTIONS_PER_DAY } from "@gogaffa/config";
 import { useSession } from "../auth/hooks/useSession";
 import { useNotifyCardUpgrades } from "../card/components/CardUpgradeGate";
@@ -33,6 +34,7 @@ const TriviaContext = createContext<TriviaContextValue | null>(null);
 export function TriviaProvider({ children }: PropsWithChildren) {
   const { user, isLoading: isSessionLoading } = useSession();
   const notifyCardUpgrades = useNotifyCardUpgrades();
+  const queryClient = useQueryClient();
   const [activeDate] = useState(() => dateKey());
   const [answers, setAnswers] = useState<DailyAnswer[]>([]);
   const [completedAttempt, setCompletedAttempt] = useState<ScoredTriviaAttempt | null>(null);
@@ -158,6 +160,12 @@ export function TriviaProvider({ children }: PropsWithChildren) {
       setCurrentIndex(questions.length);
       setIsStarted(true);
       await notifyCardUpgrades(pendingUpgrades);
+
+      // Proactively refresh competitive points + leaderboard caches so the
+      // home pill and leaderboards reflect the trivia award immediately.
+      void queryClient.invalidateQueries({ queryKey: ["competitive-points"] });
+      void queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+      void queryClient.invalidateQueries({ queryKey: ["profile"] });
     } catch (submitError) {
       const normalizedError =
         submitError instanceof Error ? submitError : new Error("Failed to submit trivia attempt.");
@@ -166,7 +174,7 @@ export function TriviaProvider({ children }: PropsWithChildren) {
     } finally {
       setIsSubmitting(false);
     }
-  }, [activeDate, answers, completedAttempt, currentIndex, notifyCardUpgrades, questions.length]);
+  }, [activeDate, answers, completedAttempt, currentIndex, notifyCardUpgrades, questions.length, queryClient]);
 
   const value = useMemo<TriviaContextValue>(
     () => ({

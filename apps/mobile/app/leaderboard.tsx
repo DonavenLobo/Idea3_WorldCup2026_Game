@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -17,6 +17,7 @@ import {
 import type { CountryFilter, FilterOption } from "../src/features/leaderboard";
 import { useSession } from "../src/features/auth";
 import { useBlockedUsers } from "../src/features/moderation";
+import { supabase } from "../src/lib/supabase";
 import { colors, opacity } from "../src/theme/colors";
 import { radius } from "../src/theme/radius";
 import { spacing } from "../src/theme/spacing";
@@ -27,10 +28,41 @@ export default function LeaderboardScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useSession();
+  const queryClient = useQueryClient();
 
   const [stage, setStage] = useState<LeaderboardStage>("overall");
   const [country, setCountry] = useState<CountryFilter>(COUNTRY_ALL);
   const { blockedSet } = useBlockedUsers();
+
+  // Refetch the leaderboard whenever the current user's xp_events changes so
+  // they see their new position without needing to manually refresh. Mirrors
+  // the channel/filter pattern in useCompetitivePoints.
+  useEffect(() => {
+    const userId = user?.id;
+    if (!userId) return;
+
+    const invalidate = () => {
+      void queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+    };
+
+    const channel = supabase
+      .channel(`leaderboard-xp-events:${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          filter: `user_id=eq.${userId}`,
+          schema: "public",
+          table: "xp_events",
+        },
+        invalidate
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [queryClient, user?.id]);
 
   const stageOptions: FilterOption<LeaderboardStage>[] = useMemo(
     () => LEADERBOARD_STAGES.map((s) => ({ id: s.id, label: s.label })),

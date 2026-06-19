@@ -497,6 +497,33 @@ Deno.serve(async (request) => {
       console.error("score-bracket: stat-bump phase threw", statErr);
     }
 
+    // Mirror the bracket's current total into xp_events so the leaderboard
+    // query (which sums xp_events.amount per user) reflects it. Bracket
+    // scoring is recomputed on every match-results update, so we UPSERT one
+    // row keyed on (user_id, source_id) — each run replaces the row's
+    // amount with the latest total. The partial unique index
+    // `xp_events_bracket_user_source_uniq` makes this idempotent. Failures
+    // are logged and swallowed: bracket scoring stays authoritative even if
+    // leaderboard event emission stumbles.
+    const { error: xpEventError } = await supabaseAdmin
+      .from("xp_events")
+      .upsert(
+        {
+          user_id: userId,
+          source_type: "bracket",
+          source_id: bracket.id,
+          currency_type: "competitive_points",
+          amount: scoreResult.total,
+          reason: `Bracket ${bracket.id}`,
+          counts_toward_leaderboard: true,
+        },
+        { onConflict: "user_id,source_id" }
+      );
+
+    if (xpEventError) {
+      console.error("score-bracket: failed to upsert xp_events", xpEventError);
+    }
+
     return jsonResponse({
       bracketId: bracket.id,
       total: scoreResult.total,
