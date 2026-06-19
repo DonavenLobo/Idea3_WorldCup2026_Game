@@ -27,7 +27,8 @@ const SCORE_BRACKET_TIMEOUT_MS = 3000;
  */
 function fireScoreBracket(
   supabaseUrl: string,
-  serviceRoleKey: string,
+  anonKey: string,
+  authorization: string,
   bracketId: string
 ): Promise<void> {
   const controller = new AbortController();
@@ -37,11 +38,10 @@ function fireScoreBracket(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      // The score-bracket fn re-uses the same auth model as the other edge
-      // fns (anon-key → getUser). The service-role key authorizes the call
-      // and short-circuits user lookup via the Authorization header.
-      Authorization: `Bearer ${serviceRoleKey}`,
-      apikey: serviceRoleKey
+      // Forward the caller's JWT because score-bracket resolves the bracket
+      // owner through auth.getUser(). The service-role JWT is not a user token.
+      Authorization: authorization,
+      apikey: anonKey
     },
     body: JSON.stringify({ bracketId }),
     signal: controller.signal
@@ -109,6 +109,19 @@ function jsonResponse(body: unknown, status = 200) {
     },
     status
   });
+}
+
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof error.message === "string"
+  ) {
+    return error.message;
+  }
+  return "Unexpected submit-bracket error.";
 }
 
 function mapBracket(row: BracketRow) {
@@ -274,7 +287,6 @@ Deno.serve(async (request) => {
         .from("brackets")
         .update(writePayload)
         .eq("id", existingBracket.id)
-        .is("locked_at", null)
       : supabaseAdmin
         .from("brackets")
         .insert({
@@ -295,7 +307,8 @@ Deno.serve(async (request) => {
     // never cause the bracket save itself to look like it failed to the user.
     const scorePromise = fireScoreBracket(
       supabaseUrl,
-      supabaseServiceRoleKey,
+      supabaseAnonKey,
+      authorization,
       savedBracket.id
     );
     if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) {
@@ -319,8 +332,9 @@ Deno.serve(async (request) => {
 
     return jsonResponse({ ok: true, bracket: mapBracket(savedBracket), cardProgression });
   } catch (error) {
+    console.error("submit-bracket failed", error);
     return jsonResponse(
-      { error: error instanceof Error ? error.message : "Unexpected submit-bracket error." },
+      { error: errorMessage(error) },
       400
     );
   }
