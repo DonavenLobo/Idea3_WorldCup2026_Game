@@ -30,7 +30,7 @@ create or replace function public.apply_card_stat_bumps(
   p_catch_up_amount  int   default 2
 ) returns jsonb
 language plpgsql
-security definer
+security invoker
 set search_path = public
 as $$
 declare
@@ -43,7 +43,6 @@ declare
   v_min_key text;
   v_min_val int;
   v_bump int;
-  v_iter int;
 begin
   if p_user_id is null then
     raise exception 'apply_card_stat_bumps: p_user_id is required';
@@ -109,7 +108,8 @@ begin
 end;
 $$;
 
-grant execute on function public.apply_card_stat_bumps(uuid, jsonb, int, int) to authenticated, service_role;
+revoke execute on function public.apply_card_stat_bumps(uuid, jsonb, int, int) from public, anon, authenticated;
+grant execute on function public.apply_card_stat_bumps(uuid, jsonb, int, int) to service_role;
 
 comment on function public.apply_card_stat_bumps(uuid, jsonb, int, int) is
   'PR-X (card stats): atomically apply explicit bumps and/or catch-up bumps to a user''s active card stats. Clamps to [50, 100].';
