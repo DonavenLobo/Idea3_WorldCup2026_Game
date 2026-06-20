@@ -10,6 +10,8 @@ import { PlayerStatsLayer } from "./PlayerStatsLayer";
 
 export function PlayerCard({
   card,
+  onAvatarReady,
+  onTemplateReady,
   renderDisplayName = true,
   renderOverall = true,
   renderStatValues = true,
@@ -21,8 +23,12 @@ export function PlayerCard({
   const overallLabelFontSize = overallLayer.labelFontSize ?? 24;
 
   return (
-    <PlayerCardTemplate template={template}>
-      <PlayerAvatarLayer imageUrl={avatarUrl} layer={template.metadata.layers.avatar} />
+    <PlayerCardTemplate onReady={onTemplateReady} template={template}>
+      <PlayerAvatarLayer
+        imageUrl={avatarUrl}
+        layer={template.metadata.layers.avatar}
+        onReady={onAvatarReady}
+      />
       {renderOverall && overallLayer.label ? (
         <Text
           style={[

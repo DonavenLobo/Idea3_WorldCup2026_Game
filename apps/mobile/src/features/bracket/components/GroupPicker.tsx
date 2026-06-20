@@ -213,7 +213,7 @@ export function GroupPicker({ index, onIndexChange, onComplete }: GroupPickerPro
           </View>
         ) : locked ? (
           <Text style={styles.lockedHint}>
-            Group stage is locked. New picks aren&apos;t accepted after the first week of the tournament.
+            Group Picks Locked In.
           </Text>
         ) : null}
 

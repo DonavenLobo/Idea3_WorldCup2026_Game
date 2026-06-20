@@ -5,7 +5,13 @@ import { LOCKER_TIERS } from "@gogaffa/config";
 import type { PlayerCard as PlayerCardData } from "@gogaffa/types";
 import { BrandButton, Eyebrow } from "../../../components/brand";
 import { Screen } from "../../../components/layout";
+import { CardUpgradeModal } from "../components/CardUpgradeModal";
 import { RenderedPlayerCard } from "../components/RenderedPlayerCard";
+import {
+  LEVEL_02_BASE_TEMPLATE_KEY,
+  LEVEL_03_BASE_TEMPLATE_KEY,
+  LEVEL_04_BASE_TEMPLATE_KEY,
+} from "../templates/handDrawnCardTemplates";
 import { useLockerRoom } from "../../locker-room";
 import type { LockerProgress } from "../../locker-room";
 import { useCurrentUserCard } from "../hooks/useCurrentUserCard";
@@ -87,6 +93,7 @@ function MyCardPanel({
   onOpenLocker: () => void;
 }) {
   const tierConfig = LOCKER_TIERS.find((tier) => tier.id === progress.tier);
+  const [previewTemplateKeys, setPreviewTemplateKeys] = useState<string[] | null>(null);
 
   return (
     <View>
@@ -135,6 +142,52 @@ function MyCardPanel({
         style={styles.lockerCta}
       />
 
+      {__DEV__ && card ? (
+        <View style={styles.animationPreview}>
+          <Text style={styles.animationPreviewTitle}>Card animation preview</Text>
+          <BrandButton
+            label="Replay Card 2 to 3"
+            onPress={() => {
+              setPreviewTemplateKeys([
+                LEVEL_02_BASE_TEMPLATE_KEY,
+                LEVEL_03_BASE_TEMPLATE_KEY,
+              ]);
+            }}
+            variant="secondary"
+          />
+          <BrandButton
+            label="Replay Card 3 to 4"
+            onPress={() => {
+              setPreviewTemplateKeys([
+                LEVEL_03_BASE_TEMPLATE_KEY,
+                LEVEL_04_BASE_TEMPLATE_KEY,
+              ]);
+            }}
+            variant="secondary"
+          />
+          <BrandButton
+            label="Replay Full Upgrade"
+            onPress={() => {
+              setPreviewTemplateKeys([
+                LEVEL_02_BASE_TEMPLATE_KEY,
+                LEVEL_03_BASE_TEMPLATE_KEY,
+                LEVEL_04_BASE_TEMPLATE_KEY,
+              ]);
+            }}
+            variant="secondary"
+          />
+        </View>
+      ) : null}
+
+      {__DEV__ && card && previewTemplateKeys ? (
+        <CardUpgradeModal
+          card={card}
+          onContinue={() => setPreviewTemplateKeys(null)}
+          templateKeys={previewTemplateKeys}
+          visible
+        />
+      ) : null}
+
       <Text style={styles.note}>
         Cards never downgrade. Paid cosmetics and status bonuses do not affect competitive points.
       </Text>
@@ -155,6 +208,18 @@ function LockerRoomComingSoonPanel() {
 }
 
 const styles = StyleSheet.create({
+  animationPreview: {
+    borderColor: opacity.ink15,
+    borderTopWidth: 1,
+    gap: spacing.sm,
+    marginTop: spacing.xl,
+    paddingTop: spacing.lg,
+  },
+  animationPreviewTitle: {
+    ...typography.headingCard,
+    color: colors.ink,
+    textAlign: "center",
+  },
   comingSoonBody: {
     ...typography.bodySmall,
     color: opacity.ink60,

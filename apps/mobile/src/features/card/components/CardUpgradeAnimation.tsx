@@ -23,20 +23,20 @@ import { RenderedPlayerCard } from "./RenderedPlayerCard";
  * Plays ONE tier transition (e.g. level-02 -> level-03). Multi-step upgrades
  * are handled by the parent re-mounting this component with a new key.
  *
- * Choreography (~900ms settle):
- *   flatten squash on the paper stack
- *   fast PNG crossfade (overlays stay static above)
- *   sketch-line wipe top->bottom
- *   masking-tape slap with overshoot
+ * Choreography:
+ *   hold the current card long enough to register
+ *   flatten and fade it away
+ *   reveal the upgraded card with a scale settle
+ *   sketch-line wipe and masking-tape slap
  */
 
 const FLATTEN_MS = 240;
 const CROSSFADE_MS = 380;
 const WIPE_MS = 520;
 const TAPE_MS = 320;
-const TAPE_DELAY = 420;
-const START_DELAY_MS = 120;
-const SETTLE_MS = 1500;
+const TAPE_DELAY = 720;
+const START_DELAY_MS = 500;
+const SETTLE_MS = 2100;
 
 const TAPE_TINT = "rgba(214, 199, 168, 0.82)";
 
@@ -53,7 +53,12 @@ export function CardUpgradeAnimation({
   card,
   onComplete,
 }: CardUpgradeAnimationProps) {
+  const hasAvatar = Boolean(card.avatarGeneratedUrl ?? card.avatarSourceUrl);
   const [hasLayout, setHasLayout] = useState(false);
+  const [oldTemplateReady, setOldTemplateReady] = useState(false);
+  const [newTemplateReady, setNewTemplateReady] = useState(false);
+  const [oldAvatarReady, setOldAvatarReady] = useState(!hasAvatar);
+  const [newAvatarReady, setNewAvatarReady] = useState(!hasAvatar);
   const flatten = useSharedValue(0);
   const crossfade = useSharedValue(0);
   const wipe = useSharedValue(0);
@@ -65,6 +70,10 @@ export function CardUpgradeAnimation({
       setHasLayout(true);
     }
   }, []);
+  const handleOldAvatarReady = useCallback(() => setOldAvatarReady(true), []);
+  const handleNewAvatarReady = useCallback(() => setNewAvatarReady(true), []);
+  const handleOldTemplateReady = useCallback(() => setOldTemplateReady(true), []);
+  const handleNewTemplateReady = useCallback(() => setNewTemplateReady(true), []);
 
   useEffect(() => {
     flatten.value = 0;
@@ -72,7 +81,13 @@ export function CardUpgradeAnimation({
     wipe.value = 0;
     tape.value = 0;
 
-    if (!hasLayout) {
+    if (
+      !hasLayout
+      || !oldTemplateReady
+      || !newTemplateReady
+      || !oldAvatarReady
+      || !newAvatarReady
+    ) {
       return undefined;
     }
 
@@ -111,7 +126,20 @@ export function CardUpgradeAnimation({
       cancelAnimation(wipe);
       cancelAnimation(tape);
     };
-  }, [crossfade, flatten, fromTemplateKey, hasLayout, onComplete, tape, toTemplateKey, wipe]);
+  }, [
+    crossfade,
+    flatten,
+    fromTemplateKey,
+    hasLayout,
+    newAvatarReady,
+    newTemplateReady,
+    oldAvatarReady,
+    oldTemplateReady,
+    onComplete,
+    tape,
+    toTemplateKey,
+    wipe,
+  ]);
 
   const stackStyle = useAnimatedStyle(() => ({
     transform: [
@@ -122,11 +150,19 @@ export function CardUpgradeAnimation({
   }));
 
   const oldTemplateStyle = useAnimatedStyle(() => ({
-    opacity: 1 - crossfade.value,
+    opacity: interpolate(crossfade.value, [0, 0.35, 1], [1, 1, 0]),
+    transform: [
+      { scale: interpolate(crossfade.value, [0, 0.55, 1], [1, 0.94, 0.88]) },
+      { rotate: `${interpolate(crossfade.value, [0, 1], [0, -2])}deg` },
+    ],
   }));
 
   const newTemplateStyle = useAnimatedStyle(() => ({
-    opacity: crossfade.value,
+    opacity: interpolate(crossfade.value, [0, 0.3, 1], [0, 0, 1]),
+    transform: [
+      { scale: interpolate(crossfade.value, [0, 0.3, 0.82, 1], [0.86, 0.86, 1.04, 1]) },
+      { rotate: `${interpolate(crossfade.value, [0, 0.3, 1], [2, 2, 0])}deg` },
+    ],
   }));
 
   const wipeStyle = useAnimatedStyle(() => ({
@@ -151,6 +187,8 @@ export function CardUpgradeAnimation({
             card={card}
             fillParent
             hideStatusBadge
+            onAvatarReady={handleOldAvatarReady}
+            onTemplateReady={handleOldTemplateReady}
             templateKey={fromTemplateKey}
           />
         </Animated.View>
@@ -160,6 +198,8 @@ export function CardUpgradeAnimation({
             card={card}
             fillParent
             hideStatusBadge
+            onAvatarReady={handleNewAvatarReady}
+            onTemplateReady={handleNewTemplateReady}
             templateKey={toTemplateKey}
           />
         </Animated.View>

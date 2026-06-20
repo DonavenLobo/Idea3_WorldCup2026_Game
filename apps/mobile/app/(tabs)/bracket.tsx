@@ -14,7 +14,6 @@ import {
 import type { SubTab } from "../../src/features/bracket";
 import type { SubTabItem } from "../../src/features/bracket/components/SubTabBar";
 import { PhaseHeroCard } from "../../src/features/bracket/components/PhaseHeroCard";
-import { LateJoinerBanner } from "../../src/features/bracket/components/LateJoinerBanner";
 import { useTournamentClock } from "../../src/features/bracket/hooks/useTournamentClock";
 import { useFixtures } from "../../src/features/bracket/hooks/useFixtures";
 import { colors } from "../../src/theme/colors";
@@ -37,12 +36,7 @@ export default function BracketScreen() {
   const { now } = useTournamentClock();
   const { fixtures } = useFixtures();
 
-  const lockedGroupCount = GROUP_IDS.filter(isGroupLocked).length;
-  const lockedMatchCount = fixtures
-    ? fixtures.knockouts.filter((k) => isMatchLocked(k.round, k.index)).length
-    : 0;
-
-  const allGroupsLocked = lockedGroupCount === GROUP_IDS.length;
+  const allGroupsLocked = GROUP_IDS.every(isGroupLocked);
   const allRoundLocked = (round: "r32" | "r16" | "qf" | "sf" | "final" | "third"): boolean => {
     if (!fixtures) return false;
     const inRound = fixtures.knockouts.filter((k) => k.round === round);
@@ -218,10 +212,6 @@ export default function BracketScreen() {
         currentStageLabel={stageState.currentStageLabel}
         nextStageUnlockAt={stageState.nextStageUnlockAt}
         nextStageLabel={stageState.nextStageLabel}
-      />
-      <LateJoinerBanner
-        lockedGroupCount={lockedGroupCount}
-        lockedMatchCount={lockedMatchCount}
       />
       <SubTabBar
         value={subTab}

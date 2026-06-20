@@ -451,7 +451,7 @@ Dismiss state stored in AsyncStorage under `bracket.lateJoinerBannerDismissed`. 
 
 - Called from `BracketProvider` after the first successful `getCurrentBracket()` resolves
 - Schedules a single local notification for **2026-06-27T21:00 local time**:
-  > ⚽ Phase 2 is open! Group stage is locked. Pick your knockouts before R32 kicks off tomorrow.
+  > ⚽ Phase 2 is open! Group stage is now locked. Pick your knockouts before R32 kicks off tomorrow.
 - Idempotent: checks for existing scheduled notification with the same identifier (`bracket-phase2-open`) before scheduling
 - If push permission denied, no-op silently
 

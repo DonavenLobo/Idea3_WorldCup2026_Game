@@ -8,9 +8,10 @@ import { CARD_RENDERER_COLORS } from "../utils/colors";
 export interface PlayerCardTemplateProps {
   template: PlayerCardRenderTemplate;
   children: ReactNode;
+  onReady?: () => void;
 }
 
-export function PlayerCardTemplate({ template, children }: PlayerCardTemplateProps) {
+export function PlayerCardTemplate({ template, children, onReady }: PlayerCardTemplateProps) {
   const [renderedWidth, setRenderedWidth] = useState(0);
   const scale = renderedWidth > 0 ? renderedWidth / template.metadata.width : 1;
   const style = {
@@ -54,6 +55,7 @@ export function PlayerCardTemplate({ template, children }: PlayerCardTemplatePro
           style,
         ]}
         onLayout={handleLayout}
+        onLoadEnd={onReady}
       >
         {overlay}
       </ImageBackground>
@@ -61,7 +63,13 @@ export function PlayerCardTemplate({ template, children }: PlayerCardTemplatePro
   }
 
   return (
-    <View style={[styles.card, styles.fallback, style]} onLayout={handleLayout}>
+    <View
+      style={[styles.card, styles.fallback, style]}
+      onLayout={(event) => {
+        handleLayout(event);
+        onReady?.();
+      }}
+    >
       {overlay}
     </View>
   );

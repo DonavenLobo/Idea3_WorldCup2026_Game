@@ -4,15 +4,17 @@ import type { CardTemplateLayerMetadata } from "@gogaffa/types";
 export interface PlayerAvatarLayerProps {
   imageUrl?: string;
   layer: CardTemplateLayerMetadata;
+  onReady?: () => void;
 }
 
-export function PlayerAvatarLayer({ imageUrl, layer }: PlayerAvatarLayerProps) {
+export function PlayerAvatarLayer({ imageUrl, layer, onReady }: PlayerAvatarLayerProps) {
   if (!imageUrl) {
     return null;
   }
 
   return (
     <Image
+      onLoadEnd={onReady}
       source={{ uri: imageUrl }}
       style={[
         styles.avatar,

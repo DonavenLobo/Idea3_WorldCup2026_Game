@@ -49,6 +49,8 @@ interface RenderedPlayerCardProps {
   renderOverlays?: boolean;
   hideStatusBadge?: boolean;
   fillParent?: boolean;
+  onAvatarReady?: () => void;
+  onTemplateReady?: () => void;
 }
 
 function resolveCardTemplate(templates: PlayerCardRenderTemplate[], templateId: string) {
@@ -79,6 +81,8 @@ export function RenderedPlayerCard({
   renderOverlays = true,
   hideStatusBadge = false,
   fillParent = false,
+  onAvatarReady,
+  onTemplateReady,
 }: RenderedPlayerCardProps) {
   const { height: windowHeight } = useWindowDimensions();
   const [isRetrying, setIsRetrying] = useState(false);
@@ -92,7 +96,11 @@ export function RenderedPlayerCard({
   const maxCardHeight = windowHeight * (maxHeightRatio ?? 0.55);
   const maxCardWidth = Math.min(420, maxCardHeight * aspectRatio);
   const cardSizing = fillParent
-    ? { alignSelf: "stretch" as const, flex: 1, width: "100%" as const }
+    ? {
+        alignSelf: "stretch" as const,
+        height: "100%" as const,
+        width: "100%" as const,
+      }
     : {
         alignSelf: "center" as const,
         maxWidth: maxCardWidth,
@@ -141,12 +149,16 @@ export function RenderedPlayerCard({
           tier={tier ?? card?.tier ?? "bronze"}
           useSketchTextOverlays={useSketchTextOverlays}
           overlayMetadata={overlayMetadata}
+          onAvatarReady={onAvatarReady}
+          onTemplateReady={onTemplateReady}
         />
       ) : (
         <View style={[styles.cardSurface, fillParent && styles.cardSurfaceFill]}>
           <View style={[styles.cardCanvas, { aspectRatio }, fillParent && styles.cardCanvasFill]}>
             <PlayerCard
+              onAvatarReady={onAvatarReady}
               renderDisplayName={!useSketchTextOverlays}
+              onTemplateReady={onTemplateReady}
               renderOverall={!useSketchTextOverlays}
               renderStatValues={false}
               template={template}
@@ -194,6 +206,8 @@ function HiddenCardPlaceholder({
   tier,
   useSketchTextOverlays,
   overlayMetadata,
+  onAvatarReady,
+  onTemplateReady,
 }: {
   aspectRatio: number;
   displayName: string;
@@ -205,7 +219,13 @@ function HiddenCardPlaceholder({
   tier: CardTier;
   useSketchTextOverlays: boolean;
   overlayMetadata?: ReturnType<typeof getHandDrawnTemplateMetadata>;
+  onAvatarReady?: () => void;
+  onTemplateReady?: () => void;
 }) {
+  useEffect(() => {
+    onAvatarReady?.();
+  }, [onAvatarReady]);
+
   const title =
     status === "failed"
       ? "Generation needs a retry"
@@ -219,7 +239,9 @@ function HiddenCardPlaceholder({
     <View style={[styles.hiddenCard, { aspectRatio }]}>
       <View style={styles.cardCanvas}>
         <PlayerCard
+        onAvatarReady={onAvatarReady}
         renderDisplayName={!useSketchTextOverlays}
+        onTemplateReady={onTemplateReady}
         renderOverall={!useSketchTextOverlays}
         renderStatValues={false}
         template={template}
@@ -289,7 +311,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   cardSurfaceFill: {
-    flex: 1,
+    height: "100%",
     justifyContent: "center",
     width: "100%",
   },
@@ -298,7 +320,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   cardCanvasFill: {
-    maxHeight: "100%",
+    height: "100%",
   },
   cardWrap: {
     alignSelf: "center",
