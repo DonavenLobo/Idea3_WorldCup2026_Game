@@ -8,13 +8,15 @@ import { CARD_RENDERER_COLORS } from "../utils/colors";
 export interface PlayerCardTemplateProps {
   template: PlayerCardRenderTemplate;
   children: ReactNode;
+  onReady?: () => void;
 }
 
-export function PlayerCardTemplate({ template, children }: PlayerCardTemplateProps) {
+export function PlayerCardTemplate({ template, children, onReady }: PlayerCardTemplateProps) {
   const [renderedWidth, setRenderedWidth] = useState(0);
   const scale = renderedWidth > 0 ? renderedWidth / template.metadata.width : 1;
   const style = {
-    aspectRatio: template.metadata.width / template.metadata.height
+    height: "100%" as const,
+    width: "100%" as const,
   };
   const overlayStyle = {
     height: template.metadata.height,
@@ -38,16 +40,36 @@ export function PlayerCardTemplate({ template, children }: PlayerCardTemplatePro
     </View>
   ) : null;
 
+  const transparentCanvas = template.metadata.transparentCanvas === true;
+  const canvasBlendMode = template.metadata.canvasBlendMode;
+
   if (source) {
     return (
-      <ImageBackground source={source} style={[styles.card, style]} onLayout={handleLayout}>
+      <ImageBackground
+        source={source}
+        resizeMode="cover"
+        style={[
+          styles.card,
+          transparentCanvas ? styles.transparentCard : styles.clippedCard,
+          canvasBlendMode ? { mixBlendMode: canvasBlendMode } : null,
+          style,
+        ]}
+        onLayout={handleLayout}
+        onLoadEnd={onReady}
+      >
         {overlay}
       </ImageBackground>
     );
   }
 
   return (
-    <View style={[styles.card, styles.fallback, style]} onLayout={handleLayout}>
+    <View
+      style={[styles.card, styles.fallback, style]}
+      onLayout={(event) => {
+        handleLayout(event);
+        onReady?.();
+      }}
+    >
       {overlay}
     </View>
   );
@@ -55,9 +77,15 @@ export function PlayerCardTemplate({ template, children }: PlayerCardTemplatePro
 
 const styles = StyleSheet.create({
   card: {
-    overflow: "hidden",
     position: "relative",
-    width: "100%"
+    width: "100%",
+  },
+  clippedCard: {
+    overflow: "hidden",
+  },
+  transparentCard: {
+    backgroundColor: "transparent",
+    overflow: "visible",
   },
   fallback: {
     backgroundColor: CARD_RENDERER_COLORS.fallbackBackground,

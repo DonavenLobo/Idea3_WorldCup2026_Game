@@ -1,4 +1,4 @@
-import type { CardTier } from "@world-cup-game/types";
+import type { CardTier } from "@gogaffa/types";
 
 export const CARD_TIERS: Array<{
   tier: CardTier;

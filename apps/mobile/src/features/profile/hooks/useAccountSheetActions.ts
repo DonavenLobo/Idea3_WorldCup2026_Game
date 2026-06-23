@@ -1,7 +1,7 @@
 import { useCallback, useRef } from "react";
 import { Alert } from "react-native";
 import { useQueryClient } from "@tanstack/react-query";
-import { APP_ROUTES } from "@world-cup-game/config";
+import { APP_ROUTES } from "@gogaffa/config";
 import { useRouter, type Href } from "expo-router";
 import { triggerWarning } from "../../../lib/haptics";
 import { signOutSupabaseUser } from "../../auth/api/sessionRecovery";

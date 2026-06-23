@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
-import { formatTeamName } from "@world-cup-game/config";
+import { formatTeamName } from "@gogaffa/config";
 import { TeamLogo, teamFlagForName } from "../../../components/team";
 import { colors, opacity } from "../../../theme/colors";
 import { spacing } from "../../../theme/spacing";

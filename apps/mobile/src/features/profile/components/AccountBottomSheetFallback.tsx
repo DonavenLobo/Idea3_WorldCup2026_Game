@@ -5,7 +5,7 @@ import {
   useState,
 } from "react";
 import { Modal, StyleSheet } from "react-native";
-import { APP_ROUTES } from "@world-cup-game/config";
+import { APP_ROUTES } from "@gogaffa/config";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { triggerLightImpact } from "../../../lib/haptics";
 import { colors } from "../../../theme/colors";

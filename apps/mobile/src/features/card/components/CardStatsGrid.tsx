@@ -1,6 +1,6 @@
-import { CARD_STATS } from "@world-cup-game/config";
-import { StatBlock } from "@world-cup-game/ui";
-import type { CardStats } from "@world-cup-game/types";
+import { CARD_STATS } from "@gogaffa/config";
+import { StatBlock } from "@gogaffa/ui";
+import type { CardStats } from "@gogaffa/types";
 import { StyleSheet, View } from "react-native";
 import { spacing } from "../../../theme/spacing";
 

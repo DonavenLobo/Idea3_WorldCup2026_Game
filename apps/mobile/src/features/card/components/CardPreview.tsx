@@ -1,6 +1,6 @@
-import { PlayerCard } from "@world-cup-game/card-renderer";
-import { BASE_CARD_STATS } from "@world-cup-game/config";
-import type { PlayerCardRenderTemplate } from "@world-cup-game/card-renderer";
+import { PlayerCard } from "@gogaffa/card-renderer";
+import { BASE_CARD_STATS } from "@gogaffa/config";
+import type { PlayerCardRenderTemplate } from "@gogaffa/card-renderer";
 
 export interface CardPreviewProps {
   template: PlayerCardRenderTemplate;

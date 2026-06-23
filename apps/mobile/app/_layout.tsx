@@ -19,6 +19,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { RootProviders } from "../src/components/layout/RootProviders";
 import { useAuthRedirectHandler } from "../src/features/auth";
 import { BracketProvider } from "../src/features/bracket";
+import { CardUpgradeGate } from "../src/features/card/components/CardUpgradeGate";
+import { CardUpgradeProvider } from "../src/features/card/context/CardUpgradeContext";
 import { GroupsProvider } from "../src/features/groups";
 import { LockerRoomProvider } from "../src/features/locker-room";
 import { LoginGate } from "../src/features/login";
@@ -68,16 +70,19 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <SafeAreaProvider>
           <OnboardingProvider>
-            <BracketProvider>
-              <GroupsProvider>
-                <LockerRoomProvider>
-                  <TriviaProvider>
-                    <RootStack />
-                    <LoginGate />
-                  </TriviaProvider>
-                </LockerRoomProvider>
-              </GroupsProvider>
-            </BracketProvider>
+            <CardUpgradeProvider>
+              <BracketProvider>
+                <GroupsProvider>
+                  <LockerRoomProvider>
+                    <TriviaProvider>
+                      <RootStack />
+                      <LoginGate />
+                      <CardUpgradeGate />
+                    </TriviaProvider>
+                  </LockerRoomProvider>
+                </GroupsProvider>
+              </BracketProvider>
+            </CardUpgradeProvider>
           </OnboardingProvider>
         </SafeAreaProvider>
       </QueryClientProvider>

@@ -1,5 +1,5 @@
-import { SUPPORTED_NATIONS } from "@world-cup-game/config";
-import type { Fixture } from "@world-cup-game/config";
+import { SUPPORTED_NATIONS } from "@gogaffa/config";
+import type { Fixture } from "@gogaffa/config";
 import type { ScheduleFilter, ScheduleSection } from "./types";
 
 interface FilterMatchesOptions {

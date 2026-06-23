@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { Alert, StyleSheet, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { APP_ROUTES } from "@world-cup-game/config";
+import { APP_ROUTES } from "@gogaffa/config";
 import { OnboardingShell } from "../../src/components/onboarding";
 import { PhotoChoiceButton, useOnboarding } from "../../src/features/onboarding";
 import { spacing } from "../../src/theme/spacing";

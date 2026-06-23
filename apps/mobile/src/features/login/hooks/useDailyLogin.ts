@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState, type AppStateStatus } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useQueryClient } from "@tanstack/react-query";
 import { claimDailyLogin, type ClaimDailyLoginResponse } from "../api/claim";
 
 const LAST_CLAIM_DATE_STORAGE_KEY = "gogaffa.login.lastClaimDate";
@@ -39,6 +40,7 @@ export function useDailyLogin(): UseDailyLoginState {
   const [lastResult, setLastResult] = useState<ClaimDailyLoginResponse | null>(null);
   const [isClaiming, setIsClaiming] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
 
   // Prevents two concurrent claim calls (e.g. mount + AppState change racing).
   const inFlightRef = useRef(false);
@@ -78,6 +80,13 @@ export function useDailyLogin(): UseDailyLoginState {
       if (isMountedRef.current) {
         setLastResult(result);
       }
+
+      // Proactively refresh competitive points, leaderboard, and profile
+      // (login streak) so the UI updates without waiting for the realtime
+      // safety net.
+      void queryClient.invalidateQueries({ queryKey: ["competitive-points"] });
+      void queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+      void queryClient.invalidateQueries({ queryKey: ["profile"] });
     } catch (err) {
       const normalized = err instanceof Error ? err : new Error(String(err));
       if (isMountedRef.current) {
@@ -89,7 +98,7 @@ export function useDailyLogin(): UseDailyLoginState {
         setIsClaiming(false);
       }
     }
-  }, []);
+  }, [queryClient]);
 
   const claim = useCallback(async () => {
     await runClaim();

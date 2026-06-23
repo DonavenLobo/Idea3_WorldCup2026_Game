@@ -1,4 +1,4 @@
-import type { GroupId } from "@world-cup-game/config";
+import type { GroupId } from "@gogaffa/config";
 
 export type Round = "r32" | "r16" | "qf" | "sf" | "final" | "third";
 
@@ -15,10 +15,19 @@ export interface BracketPicks {
   third: string | null;
 }
 
+export type KnockoutFinalizedMap = Record<Round, boolean>;
+
 export interface PersistedBracketPicks {
   groupRankings: Record<GroupId, string[]>;
   picks: BracketPicks;
   finalizedGroups?: GroupId[];
+  /**
+   * Per-round knockout finalized flags. Mirrors `finalizedGroups` for the
+   * group stage. Persisted inside the `picks` JSONB on `brackets` so the
+   * existing edge-function payload contract is preserved (the per-round
+   * boolean columns in 000033 are kept in lockstep for future query needs).
+   */
+  knockoutFinalized?: KnockoutFinalizedMap;
 }
 
 export interface BracketState {
@@ -29,6 +38,7 @@ export interface BracketState {
   saveError: Error | null;
   groupRankings: Record<GroupId, string[]>;
   finalizedGroups: GroupId[];
+  knockoutFinalized: KnockoutFinalizedMap;
   picks: BracketPicks;
 }
 
@@ -42,18 +52,18 @@ import type { KnockoutRoundId } from "./lib/computeBracketLockState";
 
 export interface PickPastLockoutDetails {
   invalidGroups: string[];
-  invalidMatches: Array<{ round: KnockoutRoundId; index: number }>;
+  invalidRounds: KnockoutRoundId[];
 }
 
 export class PickPastLockoutError extends Error {
   public readonly invalidGroups: string[];
-  public readonly invalidMatches: Array<{ round: KnockoutRoundId; index: number }>;
+  public readonly invalidRounds: KnockoutRoundId[];
 
   constructor(details: PickPastLockoutDetails) {
     super("Some picks are past lockout");
     this.name = "PickPastLockoutError";
     this.invalidGroups = details.invalidGroups;
-    this.invalidMatches = details.invalidMatches;
+    this.invalidRounds = details.invalidRounds;
   }
 }
 

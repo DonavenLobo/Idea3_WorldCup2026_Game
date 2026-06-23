@@ -1,11 +1,13 @@
 // supabase/functions/submit-bracket/validateFixtures.ts
 //
-// Loads kickoff data on demand from public.matches and validates that
-// every CHANGED pick targets a unit whose lockout window is still open.
-
-import { createClient } from "npm:@supabase/supabase-js@2";
-
-type SupabaseClient = ReturnType<typeof createClient<any>>;
+// Lock-on-save validation: a write is rejected only when it tries to CHANGE
+// a unit (group or knockout round) that the user previously finalized. The
+// source of truth is the existing bracket's `picks` JSONB column — the same
+// place `finalizedGroups` already lives. The per-round boolean columns added
+// in migration 000033 are NOT consulted here so this validator stays
+// consistent with how `finalizedGroups` is read elsewhere.
+//
+// No time gates: kickoff timestamps are irrelevant to the lockout decision.
 
 export type GroupId = "A"|"B"|"C"|"D"|"E"|"F"|"G"|"H"|"I"|"J"|"K"|"L";
 export type KnockoutRoundId = "r32"|"r16"|"qf"|"sf"|"final"|"third";
@@ -13,6 +15,7 @@ export type KnockoutRoundId = "r32"|"r16"|"qf"|"sf"|"final"|"third";
 export interface BracketPicksPayload {
   groupRankings: Record<string, string[]>;
   finalizedGroups?: string[];
+  knockoutFinalized?: Partial<Record<KnockoutRoundId, boolean>>;
   picks: {
     r32: Record<string, string>;
     r16: Record<string, string>;
@@ -23,109 +26,73 @@ export interface BracketPicksPayload {
   };
 }
 
-export interface FixtureValidationResult {
-  invalidGroups: string[];
-  invalidMatches: Array<{ round: KnockoutRoundId; index: number }>;
+export interface ValidationResult {
+  ok: boolean;
+  invalidGroups: GroupId[];
+  invalidRounds: KnockoutRoundId[];
 }
 
-const GROUP_STAGE_EDIT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
-
-interface MatchRow {
-  round: string;
-  group_id: string | null;
-  bracket_index: number | null;
-  kickoff: string;
-}
-
-/** Pull just the kickoff data we need from public.matches. */
-export async function loadKickoffMaps(supabase: SupabaseClient): Promise<{
-  groupKickoffMs: Map<string, number>;
-  knockoutKickoffMs: Map<string, number>;
-}> {
-  const { data, error } = await supabase
-    .from("matches")
-    .select("round,group_id,bracket_index,kickoff");
-
-  if (error) throw error;
-
-  const rows = (data ?? []) as MatchRow[];
-  const groupKickoffMs = new Map<string, number>();
-  const knockoutKickoffMs = new Map<string, number>();
-
-  for (const r of rows) {
-    const ms = new Date(r.kickoff).getTime();
-    if (r.round === "group" && r.group_id) {
-      const existing = groupKickoffMs.get(r.group_id);
-      if (existing === undefined || ms < existing) {
-        groupKickoffMs.set(r.group_id, ms);
-      }
-    } else if (r.bracket_index !== null) {
-      knockoutKickoffMs.set(`${r.round}:${r.bracket_index}`, ms);
-    }
-  }
-
-  return { groupKickoffMs, knockoutKickoffMs };
-}
+const PER_MATCH_ROUNDS: readonly Exclude<KnockoutRoundId, "final" | "third">[] = [
+  "r32",
+  "r16",
+  "qf",
+  "sf"
+];
 
 /**
- * Compare `next` picks against `existing`. Any pick whose value CHANGES after
- * its lockout window closes is invalid.
- *
- * Group rankings share one tournament-wide lockout: earliest group kickoff + 7
- * days. Knockout picks still lock per match at kickoff.
- * Untouched picks pass even on locked units.
+ * Reject changes against groups / knockout rounds that the existing bracket
+ * already marked finalized. Untouched units pass. New picks on non-finalized
+ * units pass. Only mutations of already-finalized state are blocked.
  */
-export function validateBracketAgainstFixtures(
-  nowMs: number,
-  next: BracketPicksPayload,
+export function validateBracketWriteAgainstFinalized(
   existing: BracketPicksPayload | null,
-  groupKickoffMs: Map<string, number>,
-  knockoutKickoffMs: Map<string, number>
-): FixtureValidationResult {
-  const invalidGroups: string[] = [];
-  const invalidMatches: Array<{ round: KnockoutRoundId; index: number }> = [];
-  const groupStageDeadlineMs = getGroupStageDeadlineMs(groupKickoffMs);
+  incoming: BracketPicksPayload
+): ValidationResult {
+  const invalidGroups: GroupId[] = [];
+  const invalidRounds: KnockoutRoundId[] = [];
 
-  for (const [g, ranking] of Object.entries(next.groupRankings)) {
-    if (nowMs < groupStageDeadlineMs) continue;
-    const prev = existing?.groupRankings?.[g];
+  const existingFinalizedGroups = new Set(existing?.finalizedGroups ?? []);
+  const existingFinalizedRounds = existing?.knockoutFinalized ?? {};
+
+  // Group rankings: only blocked when the group is finalized AND the incoming
+  // ranking differs from what was saved.
+  for (const [group, ranking] of Object.entries(incoming.groupRankings)) {
+    if (!existingFinalizedGroups.has(group)) continue;
+    const prev = existing?.groupRankings?.[group];
     if (!arraysEqual(prev, ranking)) {
-      invalidGroups.push(g);
+      invalidGroups.push(group as GroupId);
     }
   }
 
-  for (const round of ["r32", "r16", "qf", "sf"] as const) {
-    const nextRound = next.picks[round] ?? {};
+  // Per-match knockout rounds (r32 / r16 / qf / sf): blocked when the round
+  // is finalized AND any indexed pick changed (added, removed, or replaced).
+  for (const round of PER_MATCH_ROUNDS) {
+    if (existingFinalizedRounds[round] !== true) continue;
     const prevRound = existing?.picks?.[round] ?? {};
-    for (const [indexStr, teamCode] of Object.entries(nextRound)) {
-      const index = Number(indexStr);
-      const kickoff = knockoutKickoffMs.get(`${round}:${index}`);
-      if (kickoff === undefined) continue;
-      if (nowMs < kickoff) continue;
-      if (prevRound[indexStr] !== teamCode) {
-        invalidMatches.push({ round, index });
-      }
+    const nextRound = incoming.picks[round] ?? {};
+    if (!roundMapsEqual(prevRound, nextRound)) {
+      invalidRounds.push(round);
     }
   }
 
-  if (next.picks.final !== (existing?.picks?.final ?? null)) {
-    const k = knockoutKickoffMs.get("final:0");
-    if (k !== undefined && nowMs >= k) invalidMatches.push({ round: "final", index: 0 });
+  // Final / third — compare the winner directly.
+  if (existingFinalizedRounds.final === true) {
+    const prev = existing?.picks?.final ?? null;
+    const next = incoming.picks.final ?? null;
+    if (prev !== next) invalidRounds.push("final");
   }
 
-  if (next.picks.third !== (existing?.picks?.third ?? null)) {
-    const k = knockoutKickoffMs.get("third:0");
-    if (k !== undefined && nowMs >= k) invalidMatches.push({ round: "third", index: 0 });
+  if (existingFinalizedRounds.third === true) {
+    const prev = existing?.picks?.third ?? null;
+    const next = incoming.picks.third ?? null;
+    if (prev !== next) invalidRounds.push("third");
   }
 
-  return { invalidGroups, invalidMatches };
-}
-
-function getGroupStageDeadlineMs(groupKickoffMs: Map<string, number>): number {
-  const earliestGroupKickoff = Math.min(...Array.from(groupKickoffMs.values()));
-  return Number.isFinite(earliestGroupKickoff)
-    ? earliestGroupKickoff + GROUP_STAGE_EDIT_WINDOW_MS
-    : Infinity;
+  return {
+    ok: invalidGroups.length === 0 && invalidRounds.length === 0,
+    invalidGroups,
+    invalidRounds
+  };
 }
 
 function arraysEqual(a: string[] | undefined, b: string[] | undefined): boolean {
@@ -133,6 +100,19 @@ function arraysEqual(a: string[] | undefined, b: string[] | undefined): boolean 
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {
     if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
+function roundMapsEqual(
+  a: Record<string, string>,
+  b: Record<string, string>
+): boolean {
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) return false;
+  for (const k of aKeys) {
+    if (a[k] !== b[k]) return false;
   }
   return true;
 }

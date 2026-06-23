@@ -1,6 +1,6 @@
+import { PlayerCard } from "@gogaffa/card-renderer";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { PlayerCard } from "@world-cup-game/card-renderer";
-import { LEVEL_00_SKETCH_TEMPLATE } from "../../src/features/card/templates/level00SketchTemplate";
+import { LEVEL_02_BASE_TEMPLATE } from "../../src/features/card/templates/handDrawnCardTemplates";
 import { colors, opacity } from "../../src/theme/colors";
 import { spacing } from "../../src/theme/spacing";
 import { typography } from "../../src/theme/typography";
@@ -25,7 +25,7 @@ export default function VisualCardPreviewScreen() {
 
       <View testID="visual-card-preview-card" style={styles.cardFrame}>
         <PlayerCard
-          template={LEVEL_00_SKETCH_TEMPLATE}
+          template={LEVEL_02_BASE_TEMPLATE}
           card={{
             avatarGeneratedUrl: undefined,
             avatarSourceUrl: TEST_AVATAR_URI,

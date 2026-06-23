@@ -1,13 +1,25 @@
-import { GROUP_IDS } from "@world-cup-game/config";
-import type { GroupId } from "@world-cup-game/config";
+import { GROUP_IDS } from "@gogaffa/config";
+import type { GroupId } from "@gogaffa/config";
+import type { CardUpgradeEvent } from "@gogaffa/types";
 import { supabase } from "../../../lib/supabase";
 import { getValidatedSupabaseUser } from "../../auth/api/sessionRecovery";
-import type { BracketPicks, PersistedBracketPicks } from "../types";
+import {
+  mapCardProgressionResponse,
+  type CardProgressionResponse,
+} from "../../card/api/cardProgression";
+import type {
+  BracketPicks,
+  KnockoutFinalizedMap,
+  PersistedBracketPicks,
+  Round
+} from "../types";
 import {
   PickPastLockoutError,
-  NotGroupMemberError,
-  type PickPastLockoutDetails
+  NotGroupMemberError
 } from "../types";
+import type { KnockoutRoundId } from "../lib/computeBracketLockState";
+
+const KNOCKOUT_ROUNDS: readonly Round[] = ["r32", "r16", "qf", "sf", "final", "third"];
 
 interface BracketRow {
   id: string;
@@ -57,6 +69,26 @@ function parseFinalizedGroups(value: unknown): GroupId[] {
   );
 }
 
+function parseKnockoutFinalized(value: unknown): KnockoutFinalizedMap {
+  const fallback: KnockoutFinalizedMap = {
+    r32: false, r16: false, qf: false, sf: false, final: false, third: false
+  };
+  if (value === undefined || value === null) return fallback;
+  if (!isRecord(value)) {
+    throw new Error("Saved bracket knockoutFinalized is malformed.");
+  }
+  const result = { ...fallback };
+  for (const round of KNOCKOUT_ROUNDS) {
+    const entry = value[round];
+    if (entry === undefined) continue;
+    if (typeof entry !== "boolean") {
+      throw new Error(`Saved bracket knockoutFinalized.${round} must be a boolean.`);
+    }
+    result[round] = entry;
+  }
+  return result;
+}
+
 function isRoundPicks(value: unknown): value is Record<number, string> {
   return isRecord(value) && Object.values(value).every((entry) => typeof entry === "string");
 }
@@ -95,6 +127,7 @@ function parsePersistedPicks(value: unknown): PersistedBracketPicks {
   return {
     groupRankings,
     finalizedGroups: parseFinalizedGroups(value.finalizedGroups),
+    knockoutFinalized: parseKnockoutFinalized(value.knockoutFinalized),
     picks: {
       r32: rawPicks.r32,
       r16: rawPicks.r16,
@@ -144,10 +177,28 @@ export async function getCurrentBracket(): Promise<SavedBracket | null> {
 interface SubmitBracketResponse {
   ok?: boolean;
   bracket?: SavedBracket;
+  cardProgression?: CardProgressionResponse | null;
   code?: "PICK_PAST_LOCKOUT" | "NOT_GROUP_MEMBER";
   invalidGroups?: string[];
-  invalidMatches?: Array<{ round: string; index: number }>;
+  invalidRounds?: string[];
   error?: string;
+}
+
+const KNOCKOUT_ROUND_SET: ReadonlySet<KnockoutRoundId> = new Set<KnockoutRoundId>([
+  "r32",
+  "r16",
+  "qf",
+  "sf",
+  "final",
+  "third"
+]);
+
+function parseInvalidRounds(value: unknown): KnockoutRoundId[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter(
+    (entry): entry is KnockoutRoundId =>
+      typeof entry === "string" && KNOCKOUT_ROUND_SET.has(entry as KnockoutRoundId)
+  );
 }
 
 function isResponseLike(value: unknown): value is {
@@ -191,7 +242,10 @@ async function readFunctionErrorResponse(error: unknown): Promise<SubmitBracketR
   return null;
 }
 
-function parseSubmitBracketResponse(data: SubmitBracketResponse | null): SavedBracket {
+function parseSubmitBracketResponse(data: SubmitBracketResponse | null): {
+  bracket: SavedBracket;
+  pendingUpgrades: CardUpgradeEvent[];
+} {
   if (!data) {
     throw new Error("Bracket save returned no data.");
   }
@@ -199,7 +253,7 @@ function parseSubmitBracketResponse(data: SubmitBracketResponse | null): SavedBr
   if (data.code === "PICK_PAST_LOCKOUT") {
     throw new PickPastLockoutError({
       invalidGroups: data.invalidGroups ?? [],
-      invalidMatches: (data.invalidMatches ?? []) as PickPastLockoutDetails["invalidMatches"]
+      invalidRounds: parseInvalidRounds(data.invalidRounds)
     });
   }
 
@@ -215,13 +269,16 @@ function parseSubmitBracketResponse(data: SubmitBracketResponse | null): SavedBr
     throw new Error("Bracket save did not return a saved bracket.");
   }
 
-  return data.bracket;
+  return {
+    bracket: data.bracket,
+    pendingUpgrades: mapCardProgressionResponse(data.cardProgression),
+  };
 }
 
 export async function submitCurrentBracket(
   picks: PersistedBracketPicks,
   groupId: string | null = null
-): Promise<SavedBracket> {
+): Promise<{ bracket: SavedBracket; pendingUpgrades: CardUpgradeEvent[] }> {
   const user = await getValidatedSupabaseUser();
   if (!user) {
     throw new Error("Sign in to save your bracket.");

@@ -5,6 +5,29 @@ import {
   computeLoginReward,
   type ComputeLoginRewardMilestone,
 } from "./computeLoginReward.ts";
+import { safeApplyCardStatBumps } from "../_shared/cardStats.ts";
+
+// MIRROR of packages/config/src/xpRules.ts LOGIN stat-bump constants.
+// Edge functions run in Deno and cannot import workspace packages.
+// Keep in sync manually when login stat-earning rules change.
+const LOGIN_DAILY_BUMP = { hyp: 1 } as const;
+const LOGIN_STREAK_MILESTONE_BUMPS: Record<number, Record<string, number>> = {
+  7: { hyp: 3 },
+  14: { frm: 3 },
+  // Day-30 "user's choice" UI deferred to v2; v1 default = Hype.
+  30: { hyp: 3 },
+};
+
+function buildLoginStatBumps(newStreak: number): Record<string, number> {
+  const bumps: Record<string, number> = { ...LOGIN_DAILY_BUMP };
+  const milestone = LOGIN_STREAK_MILESTONE_BUMPS[newStreak];
+  if (milestone) {
+    for (const [k, v] of Object.entries(milestone)) {
+      bumps[k] = (bumps[k] ?? 0) + v;
+    }
+  }
+  return bumps;
+}
 
 type SupabaseClient = ReturnType<typeof createClient<any>>;
 
@@ -207,6 +230,14 @@ Deno.serve(async (request) => {
     if (xpEventError) {
       throw xpEventError;
     }
+
+    // Apply card stat bumps: always +1 Hype daily, plus streak-milestone bonuses
+    // (7→+3 Hype, 14→+3 Form, 30→+3 Hype). Failure-tolerant: login is
+    // authoritative even if the RPC fails. Only on the shouldClaim path —
+    // same-day duplicates already returned early above.
+    await safeApplyCardStatBumps(supabaseAdmin, userId, {
+      bumps: buildLoginStatBumps(result.newStreak),
+    });
 
     return jsonResponse({
       alreadyClaimedToday: false,

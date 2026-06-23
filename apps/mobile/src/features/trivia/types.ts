@@ -1,4 +1,4 @@
-import type { AnswerKey, TriviaQuestion, TriviaScoreSummary } from "@world-cup-game/types";
+import type { AnswerKey, TriviaQuestion, TriviaScoreSummary } from "@gogaffa/types";
 
 export type DailyTriviaStatus =
   | "loading"

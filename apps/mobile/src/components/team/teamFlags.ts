@@ -1,4 +1,4 @@
-import { SUPPORTED_NATIONS } from "@world-cup-game/config";
+import { SUPPORTED_NATIONS } from "@gogaffa/config";
 import type { FC } from "react";
 import type { SvgProps } from "react-native-svg";
 

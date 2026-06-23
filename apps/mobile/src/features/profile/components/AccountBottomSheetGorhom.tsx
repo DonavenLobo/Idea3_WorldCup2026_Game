@@ -1,6 +1,6 @@
 import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
 import { Dimensions } from "react-native";
-import { APP_ROUTES } from "@world-cup-game/config";
+import { APP_ROUTES } from "@gogaffa/config";
 import {
   BottomSheetModal,
   BottomSheetScrollView,

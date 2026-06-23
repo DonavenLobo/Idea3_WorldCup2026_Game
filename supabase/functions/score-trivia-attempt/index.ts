@@ -1,6 +1,12 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import {
+  evaluateCardProgression,
+  type EvaluateCardProgressionInput,
+  type EvaluateCardProgressionResult
+} from "../_shared/evaluateCardProgression.ts";
+import { safeApplyCardStatBumps } from "../_shared/cardStats.ts";
+import {
   parseScoreTriviaAttemptRequest,
   TRIVIA_DAILY_QUESTION_COUNT,
   type AnswerKey,
@@ -13,6 +19,21 @@ import {
 } from "./scoreTriviaDay.ts";
 
 type SupabaseClient = ReturnType<typeof createClient<any>>;
+
+// Card progression must never break the core trivia save. If it fails, the
+// attempt is still recorded and returned; pending upgrades are picked up later
+// by the client's background pending-upgrades query.
+async function safeEvaluateCardProgression(
+  supabaseAdmin: SupabaseClient,
+  input: EvaluateCardProgressionInput
+): Promise<EvaluateCardProgressionResult | null> {
+  try {
+    return await evaluateCardProgression(supabaseAdmin, input);
+  } catch (error) {
+    console.error("score-trivia-attempt: card progression evaluation failed", error);
+    return null;
+  }
+}
 
 interface TriviaQuestionRow {
   id: string;
@@ -240,7 +261,14 @@ Deno.serve(async (request) => {
     );
 
     if (existingAttempt) {
-      return jsonResponse({ attempt: existingAttempt });
+      // Re-run progression idempotently so a prior attempt that persisted but
+      // failed to record its upgrade can still recover on a retry.
+      const cardProgression = await safeEvaluateCardProgression(supabaseAdmin, {
+        userId: userData.user.id,
+        markFirstTrivia: true,
+      });
+
+      return jsonResponse({ attempt: existingAttempt, cardProgression });
     }
 
     const { data: questions, error: questionsError } = await supabaseAdmin
@@ -411,11 +439,21 @@ Deno.serve(async (request) => {
       points: score.perQuestion[i].total
     }));
 
+    const cardProgression = await safeEvaluateCardProgression(supabaseAdmin, {
+      userId,
+      markFirstTrivia: true,
+    });
+
+    await safeApplyCardStatBumps(supabaseAdmin, userId, {
+      catchUpCount: correctAnswers,   // one +2 bump per correct answer
+    });
+
     return jsonResponse({
       attempt: mapAttempt(attempt, scoredAnswers, score, {
         current: score.newStreak,
         longest: newLongestStreak
-      })
+      }),
+      cardProgression,
     });
   } catch (error) {
     return jsonResponse(

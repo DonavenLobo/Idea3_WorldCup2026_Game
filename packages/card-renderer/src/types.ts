@@ -1,4 +1,4 @@
-import type { CardTemplateMetadata, PlayerCard } from "@world-cup-game/types";
+import type { CardTemplateMetadata, PlayerCard } from "@gogaffa/types";
 import type { ComponentType } from "react";
 import type { ImageSourcePropType } from "react-native";
 
@@ -37,5 +37,9 @@ export interface PlayerCardRenderData {
   renderOverall?: boolean;
   /** When false, the display name is omitted so the host can overlay it on the image. */
   renderDisplayName?: boolean;
+  /** Called after the template image has loaded and can be displayed. */
+  onTemplateReady?: () => void;
+  /** Called after the player portrait has finished loading. */
+  onAvatarReady?: () => void;
   template: PlayerCardRenderTemplate;
 }

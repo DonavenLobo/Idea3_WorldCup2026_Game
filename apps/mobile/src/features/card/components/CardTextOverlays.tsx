@@ -1,20 +1,26 @@
-import { clampText } from "@world-cup-game/card-renderer";
+import { clampText } from "@gogaffa/card-renderer";
+import type { CardTemplateMetadata } from "@gogaffa/types";
 import { useState } from "react";
 import type { LayoutChangeEvent } from "react-native";
 import { StyleSheet, Text, View } from "react-native";
 import { colors } from "../../../theme/colors";
-import { LEVEL_00_SKETCH_METADATA } from "../templates/level00SketchTemplate";
-
-const { width: CANVAS_WIDTH, height: CANVAS_HEIGHT, layers } = LEVEL_00_SKETCH_METADATA;
-const overallLayer = layers.overall;
-const displayNameLayer = layers.displayName;
+import { LEVEL_02_BASE_METADATA } from "../templates/handDrawnCardTemplates";
 
 export interface CardTextOverlaysProps {
   displayName: string;
   overall: number;
+  metadata?: CardTemplateMetadata;
 }
 
-export function CardTextOverlays({ displayName, overall }: CardTextOverlaysProps) {
+export function CardTextOverlays({
+  displayName,
+  overall,
+  metadata = LEVEL_02_BASE_METADATA,
+}: CardTextOverlaysProps) {
+  const { width: CANVAS_WIDTH, height: CANVAS_HEIGHT, layers } = metadata;
+  const overallLayer = layers.overall;
+  const displayNameLayer = layers.displayName;
+  const showOverall = metadata.showOverallOverlay !== false && Boolean(overallLayer.label);
   const [imageWidth, setImageWidth] = useState(0);
 
   const handleLayout = (event: LayoutChangeEvent) => {
@@ -45,7 +51,7 @@ export function CardTextOverlays({ displayName, overall }: CardTextOverlaysProps
 
   return (
     <View pointerEvents="none" style={styles.overlay} onLayout={handleLayout}>
-      {overallLayer.label ? (
+      {showOverall && overallLayer.label ? (
         <View
           style={[
             styles.slot,
@@ -71,30 +77,32 @@ export function CardTextOverlays({ displayName, overall }: CardTextOverlaysProps
           </Text>
         </View>
       ) : null}
-      <View
-        style={[
-          styles.slot,
-          {
-            left: `${overallLeftPct}%`,
-            top: `${overallTopPct}%`,
-            width: `${overallWidthPct}%`,
-          },
-        ]}
-      >
-        <Text
+      {showOverall ? (
+        <View
           style={[
-            styles.text,
+            styles.slot,
             {
-              color: overallLayer.color ?? colors.ink,
-              fontFamily,
-              fontSize: overallFontSize,
-              lineHeight: overallFontSize * 1.1,
+              left: `${overallLeftPct}%`,
+              top: `${overallTopPct}%`,
+              width: `${overallWidthPct}%`,
             },
           ]}
         >
-          {overall}
-        </Text>
-      </View>
+          <Text
+            style={[
+              styles.text,
+              {
+                color: overallLayer.color ?? colors.ink,
+                fontFamily,
+                fontSize: overallFontSize,
+                lineHeight: overallFontSize * 1.1,
+              },
+            ]}
+          >
+            {overall}
+          </Text>
+        </View>
+      ) : null}
       <View
         style={[
           styles.slot,

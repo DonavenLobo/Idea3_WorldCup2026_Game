@@ -3,129 +3,168 @@
 
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
-  validateBracketAgainstFixtures,
+  validateBracketWriteAgainstFinalized,
   type BracketPicksPayload
 } from "./validateFixtures.ts";
 
 const emptyPicks: BracketPicksPayload = {
   groupRankings: {},
+  finalizedGroups: [],
+  knockoutFinalized: {},
   picks: { r32: {}, r16: {}, qf: {}, sf: {}, final: null, third: null }
 };
 
 function picks(overrides: Partial<BracketPicksPayload>): BracketPicksPayload {
   return {
     groupRankings: { ...emptyPicks.groupRankings, ...overrides.groupRankings },
+    finalizedGroups: overrides.finalizedGroups ?? [],
+    knockoutFinalized: overrides.knockoutFinalized ?? {},
     picks: { ...emptyPicks.picks, ...overrides.picks }
   };
 }
 
-// Fixture kickoffs that mirror the seed migration (subset for test)
-const groupKickoffMs = new Map<string, number>([
-  ["A", new Date("2026-06-11T19:00:00Z").getTime()],
-  ["F", new Date("2026-06-14T20:00:00Z").getTime()]
-]);
-
-const knockoutKickoffMs = new Map<string, number>([
-  ["r32:0",   new Date("2026-06-28T19:00:00Z").getTime()],
-  ["final:0", new Date("2026-07-19T23:00:00Z").getTime()]
-]);
-
-const beforeAnyKickoff = new Date("2026-06-01T00:00:00Z").getTime();
-const insideGroupEditWindow = new Date("2026-06-12T00:00:00Z").getTime();
-const afterGroupEditWindow = new Date("2026-06-19T00:00:00Z").getTime();
-const afterFirstR32 = new Date("2026-06-29T00:00:00Z").getTime();
-const afterFinal = new Date("2026-07-20T00:00:00Z").getTime();
-
-Deno.test("before any kickoff: all changes accepted", () => {
-  const result = validateBracketAgainstFixtures(
-    beforeAnyKickoff,
-    picks({ groupRankings: { A: ["MEX", "RSA", "X", "Y"] } }),
-    null,
-    groupKickoffMs,
-    knockoutKickoffMs
-  );
+Deno.test("empty existing + empty incoming: ok", () => {
+  const result = validateBracketWriteAgainstFinalized(null, picks({}));
+  assertEquals(result.ok, true);
   assertEquals(result.invalidGroups, []);
-  assertEquals(result.invalidMatches, []);
+  assertEquals(result.invalidRounds, []);
 });
 
-Deno.test("changing group during one-week edit window is accepted", () => {
-  const existing = picks({ groupRankings: { A: ["MEX", "RSA", "X", "Y"] } });
-  const next = picks({ groupRankings: { A: ["RSA", "MEX", "X", "Y"] } });
-
-  const result = validateBracketAgainstFixtures(
-    insideGroupEditWindow, next, existing, groupKickoffMs, knockoutKickoffMs
-  );
-  assertEquals(result.invalidGroups, []);
-});
-
-Deno.test("changing group after one-week edit window is rejected", () => {
-  const existing = picks({ groupRankings: { A: ["MEX", "RSA", "X", "Y"] } });
-  const next = picks({ groupRankings: { A: ["RSA", "MEX", "X", "Y"] } });
-
-  const result = validateBracketAgainstFixtures(
-    afterGroupEditWindow, next, existing, groupKickoffMs, knockoutKickoffMs
-  );
-  assertEquals(result.invalidGroups, ["A"]);
-});
-
-Deno.test("identical pick after group edit window is accepted (no-op)", () => {
-  const existing = picks({ groupRankings: { A: ["MEX", "RSA", "X", "Y"] } });
-  const next = picks({ groupRankings: { A: ["MEX", "RSA", "X", "Y"] } });
-
-  const result = validateBracketAgainstFixtures(
-    afterGroupEditWindow, next, existing, groupKickoffMs, knockoutKickoffMs
-  );
-  assertEquals(result.invalidGroups, []);
-});
-
-Deno.test("changing any group is accepted during the shared edit window", () => {
+Deno.test("finalized group A: changing A rejects with invalidGroups=['A']", () => {
   const existing = picks({
-    groupRankings: { A: ["MEX", "RSA", "X", "Y"], F: ["NED", "JPN", "X", "Y"] }
+    groupRankings: { A: ["MEX", "RSA", "X", "Y"] },
+    finalizedGroups: ["A"]
   });
-  const next = picks({
-    groupRankings: { A: ["MEX", "RSA", "X", "Y"], F: ["JPN", "NED", "X", "Y"] }
+  const incoming = picks({
+    groupRankings: { A: ["RSA", "MEX", "X", "Y"] },
+    finalizedGroups: ["A"]
   });
 
-  const result = validateBracketAgainstFixtures(
-    insideGroupEditWindow, next, existing, groupKickoffMs, knockoutKickoffMs
-  );
-  assertEquals(result.invalidGroups, []);
-});
-
-Deno.test("changing locked knockout match is rejected", () => {
-  const existing = picks({ picks: { ...emptyPicks.picks, r32: { 0: "BRA" } } });
-  const next = picks({ picks: { ...emptyPicks.picks, r32: { 0: "ARG" } } });
-
-  const result = validateBracketAgainstFixtures(
-    afterFirstR32, next, existing, groupKickoffMs, knockoutKickoffMs
-  );
-  assertEquals(result.invalidMatches, [{ round: "r32", index: 0 }]);
-});
-
-Deno.test("first-time save of a locked unit IS rejected (no existing value)", () => {
-  const next = picks({ groupRankings: { A: ["MEX", "RSA", "X", "Y"] } });
-
-  const result = validateBracketAgainstFixtures(
-    afterGroupEditWindow, next, null, groupKickoffMs, knockoutKickoffMs
-  );
+  const result = validateBracketWriteAgainstFinalized(existing, incoming);
+  assertEquals(result.ok, false);
   assertEquals(result.invalidGroups, ["A"]);
+  assertEquals(result.invalidRounds, []);
 });
 
-Deno.test("changing locked final pick is rejected", () => {
-  const existing = picks({ picks: { ...emptyPicks.picks, final: "BRA" } });
-  const next = picks({ picks: { ...emptyPicks.picks, final: "ARG" } });
+Deno.test("finalized group A: identical ordering is a no-op, ok=true", () => {
+  const existing = picks({
+    groupRankings: { A: ["MEX", "RSA", "X", "Y"] },
+    finalizedGroups: ["A"]
+  });
+  const incoming = picks({
+    groupRankings: { A: ["MEX", "RSA", "X", "Y"] },
+    finalizedGroups: ["A"]
+  });
 
-  const result = validateBracketAgainstFixtures(
-    afterFinal, next, existing, groupKickoffMs, knockoutKickoffMs
-  );
-  assertEquals(result.invalidMatches, [{ round: "final", index: 0 }]);
-});
-
-Deno.test("empty maps: nothing is rejected", () => {
-  const next = picks({ groupRankings: { A: ["MEX", "RSA", "X", "Y"] } });
-  const result = validateBracketAgainstFixtures(
-    afterGroupEditWindow, next, null, new Map(), new Map()
-  );
+  const result = validateBracketWriteAgainstFinalized(existing, incoming);
+  assertEquals(result.ok, true);
   assertEquals(result.invalidGroups, []);
-  assertEquals(result.invalidMatches, []);
+});
+
+Deno.test("unfinalized group A: changing A is allowed", () => {
+  const existing = picks({
+    groupRankings: { A: ["MEX", "RSA", "X", "Y"] },
+    finalizedGroups: []
+  });
+  const incoming = picks({
+    groupRankings: { A: ["RSA", "MEX", "X", "Y"] },
+    finalizedGroups: []
+  });
+
+  const result = validateBracketWriteAgainstFinalized(existing, incoming);
+  assertEquals(result.ok, true);
+  assertEquals(result.invalidGroups, []);
+});
+
+Deno.test("finalized r32: changing an r32 pick rejects with invalidRounds=['r32']", () => {
+  const existing = picks({
+    picks: { ...emptyPicks.picks, r32: { "0": "BRA" } },
+    knockoutFinalized: { r32: true }
+  });
+  const incoming = picks({
+    picks: { ...emptyPicks.picks, r32: { "0": "ARG" } },
+    knockoutFinalized: { r32: true }
+  });
+
+  const result = validateBracketWriteAgainstFinalized(existing, incoming);
+  assertEquals(result.ok, false);
+  assertEquals(result.invalidRounds, ["r32"]);
+  assertEquals(result.invalidGroups, []);
+});
+
+Deno.test("finalized r32: identical r32 picks → ok=true", () => {
+  const existing = picks({
+    picks: { ...emptyPicks.picks, r32: { "0": "BRA", "1": "FRA" } },
+    knockoutFinalized: { r32: true }
+  });
+  const incoming = picks({
+    picks: { ...emptyPicks.picks, r32: { "0": "BRA", "1": "FRA" } },
+    knockoutFinalized: { r32: true }
+  });
+
+  const result = validateBracketWriteAgainstFinalized(existing, incoming);
+  assertEquals(result.ok, true);
+  assertEquals(result.invalidRounds, []);
+});
+
+Deno.test("unfinalized r32: changing an r32 pick is allowed", () => {
+  const existing = picks({
+    picks: { ...emptyPicks.picks, r32: { "0": "BRA" } },
+    knockoutFinalized: {}
+  });
+  const incoming = picks({
+    picks: { ...emptyPicks.picks, r32: { "0": "ARG" } },
+    knockoutFinalized: {}
+  });
+
+  const result = validateBracketWriteAgainstFinalized(existing, incoming);
+  assertEquals(result.ok, true);
+  assertEquals(result.invalidRounds, []);
+});
+
+Deno.test("mixed: finalized group B changed + finalized sf changed → both lists populated", () => {
+  const existing = picks({
+    groupRankings: { B: ["BRA", "ARG", "X", "Y"] },
+    finalizedGroups: ["B"],
+    picks: { ...emptyPicks.picks, sf: { "0": "BRA" } },
+    knockoutFinalized: { sf: true }
+  });
+  const incoming = picks({
+    groupRankings: { B: ["ARG", "BRA", "X", "Y"] },
+    finalizedGroups: ["B"],
+    picks: { ...emptyPicks.picks, sf: { "0": "ARG" } },
+    knockoutFinalized: { sf: true }
+  });
+
+  const result = validateBracketWriteAgainstFinalized(existing, incoming);
+  assertEquals(result.ok, false);
+  assertEquals(result.invalidGroups, ["B"]);
+  assertEquals(result.invalidRounds, ["sf"]);
+});
+
+Deno.test("finalized final.winner: changing final winner → invalidRounds=['final']", () => {
+  const existing = picks({
+    picks: { ...emptyPicks.picks, final: "BRA" },
+    knockoutFinalized: { final: true }
+  });
+  const incoming = picks({
+    picks: { ...emptyPicks.picks, final: "ARG" },
+    knockoutFinalized: { final: true }
+  });
+
+  const result = validateBracketWriteAgainstFinalized(existing, incoming);
+  assertEquals(result.ok, false);
+  assertEquals(result.invalidRounds, ["final"]);
+});
+
+Deno.test("adding NEW picks to a non-finalized round (empty existing) → ok=true", () => {
+  const existing = picks({});
+  const incoming = picks({
+    picks: { ...emptyPicks.picks, r16: { "0": "FRA", "1": "GER" } }
+  });
+
+  const result = validateBracketWriteAgainstFinalized(existing, incoming);
+  assertEquals(result.ok, true);
+  assertEquals(result.invalidGroups, []);
+  assertEquals(result.invalidRounds, []);
 });

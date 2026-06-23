@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { Alert, Pressable, StyleSheet, Text } from "react-native";
-import { APP_ROUTES } from "@world-cup-game/config";
+import { APP_ROUTES } from "@gogaffa/config";
 import { RenderedPlayerCard } from "../../src/features/card";
 import { useOnboarding } from "../../src/features/onboarding";
 import { OnboardingButton, OnboardingShell } from "../../src/components/onboarding";

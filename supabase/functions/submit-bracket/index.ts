@@ -1,9 +1,14 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import {
+  evaluateCardProgression,
+  type EvaluateCardProgressionInput,
+  type EvaluateCardProgressionResult
+} from "../_shared/evaluateCardProgression.ts";
+import { hasFinalizedAllBracketGroups } from "../_shared/cardProgression.ts";
 import { parseSubmitBracketRequest } from "./schema.ts";
 import {
-  loadKickoffMaps,
-  validateBracketAgainstFixtures,
+  validateBracketWriteAgainstFinalized,
   type BracketPicksPayload
 } from "./validateFixtures.ts";
 
@@ -22,7 +27,8 @@ const SCORE_BRACKET_TIMEOUT_MS = 3000;
  */
 function fireScoreBracket(
   supabaseUrl: string,
-  serviceRoleKey: string,
+  anonKey: string,
+  authorization: string,
   bracketId: string
 ): Promise<void> {
   const controller = new AbortController();
@@ -32,11 +38,10 @@ function fireScoreBracket(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      // The score-bracket fn re-uses the same auth model as the other edge
-      // fns (anon-key → getUser). The service-role key authorizes the call
-      // and short-circuits user lookup via the Authorization header.
-      Authorization: `Bearer ${serviceRoleKey}`,
-      apikey: serviceRoleKey
+      // Forward the caller's JWT because score-bracket resolves the bracket
+      // owner through auth.getUser(). The service-role JWT is not a user token.
+      Authorization: authorization,
+      apikey: anonKey
     },
     body: JSON.stringify({ bracketId }),
     signal: controller.signal
@@ -53,6 +58,21 @@ function fireScoreBracket(
       console.error("[submit-bracket] score-bracket invocation failed", error);
     })
     .finally(() => clearTimeout(timeout));
+}
+
+// Card progression must never break the core bracket save. If it fails, the
+// bracket is still saved and returned; pending upgrades are picked up later by
+// the client's background pending-upgrades query.
+async function safeEvaluateCardProgression(
+  supabaseAdmin: SupabaseClient,
+  input: EvaluateCardProgressionInput
+): Promise<EvaluateCardProgressionResult | null> {
+  try {
+    return await evaluateCardProgression(supabaseAdmin, input);
+  } catch (error) {
+    console.error("submit-bracket: card progression evaluation failed", error);
+    return null;
+  }
 }
 
 interface BracketRow {
@@ -89,6 +109,19 @@ function jsonResponse(body: unknown, status = 200) {
     },
     status
   });
+}
+
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof error.message === "string"
+  ) {
+    return error.message;
+  }
+  return "Unexpected submit-bracket error.";
 }
 
 function mapBracket(row: BracketRow) {
@@ -206,38 +239,47 @@ Deno.serve(async (request) => {
       }
     }
 
-    // Fixture validation: any CHANGED pick on a passed-kickoff unit is rejected.
-    const [existingPicks, kickoffMaps] = await Promise.all([
-      existingBracket ? fetchExistingPicks(supabaseAdmin, existingBracket.id) : Promise.resolve(null),
-      loadKickoffMaps(supabaseAdmin)
-    ]);
+    // Lock-on-save validation: a change targeting an already-finalized group
+    // or knockout round is rejected. Source of truth is the existing bracket's
+    // `picks` JSONB (same place `finalizedGroups` lives).
+    const existingPicks = existingBracket
+      ? await fetchExistingPicks(supabaseAdmin, existingBracket.id)
+      : null;
 
-    const validation = validateBracketAgainstFixtures(
-      Date.now(),
-      input.picks as BracketPicksPayload,
+    const validation = validateBracketWriteAgainstFinalized(
       existingPicks,
-      kickoffMaps.groupKickoffMs,
-      kickoffMaps.knockoutKickoffMs
+      input.picks as BracketPicksPayload
     );
 
-    if (validation.invalidGroups.length > 0 || validation.invalidMatches.length > 0) {
+    if (!validation.ok) {
       return jsonResponse({
         ok: false,
         code: "PICK_PAST_LOCKOUT",
         invalidGroups: validation.invalidGroups,
-        invalidMatches: validation.invalidMatches
+        invalidRounds: validation.invalidRounds
       });
     }
 
     // (Binary `locked_at` check removed — phased lockout is enforced by
-    // validateBracketAgainstFixtures above. The locked_at column remains
-    // nullable on the table but is no longer consulted.)
+    // validateBracketWriteAgainstFinalized above. The locked_at column
+    // remains nullable on the table but is no longer consulted.)
 
     const now = new Date().toISOString();
+    // Mirror per-round finalized flags from the JSONB payload onto the
+    // queryable boolean columns added in migration 000033. The JSONB stays the
+    // source of truth for detail-level state (picks within a round); these
+    // columns are the canonical rollups ("is user X's R32 finalized?").
+    const kf = input.picks.knockoutFinalized ?? {};
     const writePayload = {
       group_id: input.groupId,
       picks: input.picks,
-      updated_at: now
+      updated_at: now,
+      r32_finalized: kf.r32 ?? false,
+      r16_finalized: kf.r16 ?? false,
+      qf_finalized: kf.qf ?? false,
+      sf_finalized: kf.sf ?? false,
+      final_finalized: kf.final ?? false,
+      third_finalized: kf.third ?? false
     };
 
     const writeQuery = existingBracket
@@ -245,7 +287,6 @@ Deno.serve(async (request) => {
         .from("brackets")
         .update(writePayload)
         .eq("id", existingBracket.id)
-        .is("locked_at", null)
       : supabaseAdmin
         .from("brackets")
         .insert({
@@ -266,7 +307,8 @@ Deno.serve(async (request) => {
     // never cause the bracket save itself to look like it failed to the user.
     const scorePromise = fireScoreBracket(
       supabaseUrl,
-      supabaseServiceRoleKey,
+      supabaseAnonKey,
+      authorization,
       savedBracket.id
     );
     if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) {
@@ -278,10 +320,21 @@ Deno.serve(async (request) => {
       scorePromise.catch(() => {});
     }
 
-    return jsonResponse({ ok: true, bracket: mapBracket(savedBracket) });
+    // Card progression: only the full personal bracket (no groupId) with all 12
+    // groups finalized advances the milestone. Never blocks the save.
+    let cardProgression = null;
+    if (!input.groupId && hasFinalizedAllBracketGroups(input.picks)) {
+      cardProgression = await safeEvaluateCardProgression(supabaseAdmin, {
+        userId: userData.user.id,
+        markBracketGroupsFinalized: true,
+      });
+    }
+
+    return jsonResponse({ ok: true, bracket: mapBracket(savedBracket), cardProgression });
   } catch (error) {
+    console.error("submit-bracket failed", error);
     return jsonResponse(
-      { error: error instanceof Error ? error.message : "Unexpected submit-bracket error." },
+      { error: errorMessage(error) },
       400
     );
   }

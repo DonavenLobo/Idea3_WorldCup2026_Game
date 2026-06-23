@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet, Text, View } from "react-native";
 import * as Linking from "expo-linking";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { APP_ROUTES } from "@world-cup-game/config";
+import { APP_ROUTES } from "@gogaffa/config";
 import { OnboardingButton, OnboardingInput, OnboardingShell } from "../../src/components/onboarding";
 import { useOnboarding } from "../../src/features/onboarding";
 import { TERMS_OF_SERVICE_URL } from "../../src/lib/constants";

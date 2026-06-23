@@ -1,5 +1,5 @@
-import { TRIVIA_RULES, getTriviaTierForOrder } from "@world-cup-game/config";
-import type { TriviaScoreSummary } from "@world-cup-game/types";
+import { TRIVIA_RULES, getTriviaTierForOrder } from "@gogaffa/config";
+import type { TriviaScoreSummary } from "@gogaffa/types";
 
 export interface TriviaQuestionScoreInput {
   questionId: string;

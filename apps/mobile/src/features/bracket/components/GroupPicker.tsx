@@ -1,6 +1,6 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { formatTeamName, GROUP_IDS, SUPPORTED_NATIONS } from "@world-cup-game/config";
-import type { GroupId } from "@world-cup-game/config";
+import { formatTeamName, GROUP_IDS, SUPPORTED_NATIONS } from "@gogaffa/config";
+import type { GroupId } from "@gogaffa/config";
 import { BrandButton } from "../../../components/brand";
 import { TeamLogo } from "../../../components/team";
 import { useBracket } from "../BracketContext";
@@ -213,7 +213,7 @@ export function GroupPicker({ index, onIndexChange, onComplete }: GroupPickerPro
           </View>
         ) : locked ? (
           <Text style={styles.lockedHint}>
-            Group stage is locked. New picks aren&apos;t accepted after the first week of the tournament.
+            Group Picks Locked In.
           </Text>
         ) : null}
 

@@ -1,5 +1,5 @@
-import { BRACKET_SCORING } from "@world-cup-game/config";
-import type { GroupId } from "@world-cup-game/config";
+import { BRACKET_SCORING } from "@gogaffa/config";
+import type { GroupId } from "@gogaffa/config";
 
 /**
  * Knockout round identifier. Mirrored here (rather than imported from

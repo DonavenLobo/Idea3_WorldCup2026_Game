@@ -1,4 +1,4 @@
-import type { PooledTriviaQuestion } from "@world-cup-game/types";
+import type { PooledTriviaQuestion } from "@gogaffa/types";
 import { seededRandom, seededShuffle } from "./seededRandom";
 
 export class InsufficientPoolError extends Error {

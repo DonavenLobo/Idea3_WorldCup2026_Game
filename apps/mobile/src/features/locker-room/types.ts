@@ -1,4 +1,4 @@
-import type { CosmeticCategory, CosmeticItem, LockerTier } from "@world-cup-game/config";
+import type { CosmeticCategory, CosmeticItem, LockerTier } from "@gogaffa/config";
 
 export type { CosmeticCategory, CosmeticItem, LockerTier };
 

@@ -3,12 +3,12 @@
  *   pnpm dlx tsx packages/game-engine/src/login/computeLoginReward.test.ts
  * Throws only if a case fails.
  *
- * Expected values are derived from LOGIN_REWARDS in @world-cup-game/config so
+ * Expected values are derived from LOGIN_REWARDS in @gogaffa/config so
  * the suite survives future tuning of perDay / milestones, as long as the
  * formula shape (perDay + on-exact-day milestone) stays the same.
  */
 
-import { LOGIN_REWARDS } from "@world-cup-game/config";
+import { LOGIN_REWARDS } from "@gogaffa/config";
 import { computeLoginReward } from "./computeLoginReward";
 
 // ---------- Tiny test harness ----------

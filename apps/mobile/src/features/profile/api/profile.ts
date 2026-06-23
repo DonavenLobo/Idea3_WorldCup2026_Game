@@ -1,4 +1,4 @@
-import type { UserProfile } from "@world-cup-game/types";
+import type { UserProfile } from "@gogaffa/types";
 import { getCardUploadDisplayUrl } from "../../../lib/imageUpload";
 import { supabase } from "../../../lib/supabase";
 

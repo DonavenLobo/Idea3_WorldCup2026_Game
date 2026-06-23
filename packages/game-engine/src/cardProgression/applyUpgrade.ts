@@ -1,4 +1,4 @@
-import type { CardStatKey, CardStats } from "@world-cup-game/types";
+import type { CardStatKey, CardStats } from "@gogaffa/types";
 
 export interface CardStatUpgrade {
   stat: CardStatKey;

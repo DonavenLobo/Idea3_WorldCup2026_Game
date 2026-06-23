@@ -1,4 +1,4 @@
-import type { Fixture } from "@world-cup-game/config";
+import type { Fixture } from "@gogaffa/config";
 
 export type ScheduleFilter = "today" | "all" | "group" | "knockouts" | "myTeam";
 export type MatchStatus = "scheduled" | "live" | "completed";

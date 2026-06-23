@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFocusEffect, useRouter } from "expo-router";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { APP_ROUTES, formatTeamName, WORLD_CUP_FIXTURES } from "@world-cup-game/config";
+import { APP_ROUTES, formatTeamName, WORLD_CUP_FIXTURES } from "@gogaffa/config";
 import { BrandButton, ContentCard, Eyebrow } from "../../src/components/brand";
 import { Screen } from "../../src/components/layout";
 import { RenderedPlayerCard } from "../../src/features/card";
 import { useOnboarding } from "../../src/features/onboarding";
 import { useCurrentUserCard } from "../../src/features/card";
 import { LoginStreakBadge } from "../../src/features/login";
+import { CompetitivePointsPill, useCompetitivePoints } from "../../src/features/points";
 import { useProfile } from "../../src/features/profile";
 import { useCachedMatchScores } from "../../src/features/schedule/hooks/useCachedMatchScores";
 import type { CachedMatchScore } from "../../src/features/schedule/types";
@@ -131,6 +132,8 @@ export default function HomeScreen() {
   const { nation, displayName, photoSource } = useOnboarding();
   const { card } = useCurrentUserCard();
   const { profile } = useProfile();
+  const { total: competitivePointsTotal, isLoading: isPointsLoading } =
+    useCompetitivePoints();
   const { scoresByMatchNum } = useCachedMatchScores();
   const { days, hours, minutes, seconds } = useCountdown(FINAL_DATE);
   const selectedNationCode =
@@ -182,6 +185,10 @@ export default function HomeScreen() {
 
       <View style={styles.streakRow}>
         <LoginStreakBadge streak={profile?.currentLoginStreak ?? 0} />
+        <CompetitivePointsPill
+          total={competitivePointsTotal}
+          isLoading={isPointsLoading}
+        />
       </View>
 
       <Eyebrow label="Your card" />
@@ -275,7 +282,7 @@ const styles = StyleSheet.create({
   },
   navActions: {
     gap: spacing.sm,
-    marginTop: spacing.xxl,
+    marginTop: spacing.sm,
   },
   kickoffUnit: {
     alignItems: "center",
@@ -343,7 +350,9 @@ const styles = StyleSheet.create({
     marginTop: -15,
   },
   streakRow: {
+    alignItems: "center",
     flexDirection: "row",
+    gap: spacing.sm,
     marginBottom: spacing.sm,
   },
 });

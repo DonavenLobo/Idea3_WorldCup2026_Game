@@ -7,24 +7,27 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
-import { PlayerCard, resolveTemplate } from "@world-cup-game/card-renderer";
-import type { PlayerCardRenderTemplate } from "@world-cup-game/card-renderer";
-import { BASE_CARD_STATS } from "@world-cup-game/config";
+import { PlayerCard, resolveTemplate } from "@gogaffa/card-renderer";
+import type { PlayerCardRenderTemplate } from "@gogaffa/card-renderer";
+import { BASE_CARD_STATS } from "@gogaffa/config";
 import type {
   CardStats,
   CardStatus,
   CardTier,
   PlayerCard as PlayerCardData
-} from "@world-cup-game/types";
+} from "@gogaffa/types";
 import type { PhotoSource } from "../../onboarding";
 import { colors, opacity } from "../../../theme/colors";
 import { startCardGeneration } from "../api/startCardGeneration";
 import { useCardTemplates } from "../hooks/useCardTemplates";
 import {
-  applyBundledSketchMetadata,
-  isLevel00SketchTemplate,
-  LEVEL_00_SKETCH_TEMPLATE
-} from "../templates/level00SketchTemplate";
+  applyBundledTemplateMetadata,
+  getHandDrawnTemplateMetadata,
+  LEVEL_02_BASE_TEMPLATE,
+  resolveTemplateKey,
+  templateForKey,
+  usesHandDrawnOverlays,
+} from "../templates/handDrawnCardTemplates";
 import { CardStatOverlays } from "./CardStatOverlays";
 import { CardTextOverlays } from "./CardTextOverlays";
 import { CardStatusBadge } from "./CardStatusBadge";
@@ -39,9 +42,15 @@ interface RenderedPlayerCardProps {
   selectedNationCode?: string;
   stats?: CardStats;
   templateId?: string | null;
+  templateKey?: string | null;
   tier?: CardTier;
   maxHeightRatio?: number;
   style?: StyleProp<ViewStyle>;
+  renderOverlays?: boolean;
+  hideStatusBadge?: boolean;
+  fillParent?: boolean;
+  onAvatarReady?: () => void;
+  onTemplateReady?: () => void;
 }
 
 function resolveCardTemplate(templates: PlayerCardRenderTemplate[], templateId: string) {
@@ -49,9 +58,9 @@ function resolveCardTemplate(templates: PlayerCardRenderTemplate[], templateId: 
     return resolveTemplate(templates, templateId);
   } catch {
     return (
-      templates.find((candidate) => candidate.templateKey === LEVEL_00_SKETCH_TEMPLATE.templateKey)
+      templates.find((candidate) => candidate.templateKey === LEVEL_02_BASE_TEMPLATE.templateKey)
       ?? templates[0]
-      ?? LEVEL_00_SKETCH_TEMPLATE
+      ?? LEVEL_02_BASE_TEMPLATE
     );
   }
 }
@@ -65,25 +74,38 @@ export function RenderedPlayerCard({
   selectedNationCode,
   stats,
   templateId,
+  templateKey,
   tier,
   maxHeightRatio,
   style,
+  renderOverlays = true,
+  hideStatusBadge = false,
+  fillParent = false,
+  onAvatarReady,
+  onTemplateReady,
 }: RenderedPlayerCardProps) {
   const { height: windowHeight } = useWindowDimensions();
   const [isRetrying, setIsRetrying] = useState(false);
   const { templates } = useCardTemplates();
-  const selectedTemplateId = templateId ?? card?.templateId ?? LEVEL_00_SKETCH_TEMPLATE.id;
-  const template = applyBundledSketchMetadata(
-    resolveCardTemplate(templates, selectedTemplateId)
-  );
+  const selectedTemplateId = templateId ?? card?.templateId ?? LEVEL_02_BASE_TEMPLATE.id;
+  const resolvedTemplate = templateKey
+    ? templateForKey(templateKey) ?? resolveCardTemplate(templates, selectedTemplateId)
+    : resolveCardTemplate(templates, selectedTemplateId);
+  const template = applyBundledTemplateMetadata(resolvedTemplate);
   const aspectRatio = template.metadata.width / template.metadata.height;
-  const maxCardHeight = windowHeight * (maxHeightRatio ?? 0.65);
-  const cardSizing = maxHeightRatio
+  const maxCardHeight = windowHeight * (maxHeightRatio ?? 0.55);
+  const maxCardWidth = Math.min(420, maxCardHeight * aspectRatio);
+  const cardSizing = fillParent
     ? {
-      maxHeight: maxCardHeight,
-      maxWidth: Math.min(420, maxCardHeight * aspectRatio)
-    }
-    : { maxHeight: maxCardHeight };
+        alignSelf: "stretch" as const,
+        height: "100%" as const,
+        width: "100%" as const,
+      }
+    : {
+        alignSelf: "center" as const,
+        maxWidth: maxCardWidth,
+        width: "100%" as const,
+      };
   const canRetry = card?.status === "failed" && Boolean(card.id);
   const status = card?.status;
   const shouldConceal =
@@ -110,55 +132,71 @@ export function RenderedPlayerCard({
   const resolvedDisplayName = displayName ?? card?.displayName ?? "Rookie";
   const resolvedOverall = overall ?? card?.overall ?? 50;
   const resolvedNationCode = selectedNationCode ?? card?.selectedNationCode ?? "USA";
-  const useSketchTextOverlays = isLevel00SketchTemplate(template);
+  const useSketchTextOverlays = usesHandDrawnOverlays(template);
+  const overlayMetadata = getHandDrawnTemplateMetadata(resolveTemplateKey(template));
 
   return (
-    <View style={[styles.cardWrap, cardSizing, style]}>
+    <View style={[styles.cardWrap, fillParent && styles.cardWrapFill, cardSizing, style]}>
       {shouldConceal ? (
         <HiddenCardPlaceholder
+          aspectRatio={aspectRatio}
           displayName={resolvedDisplayName}
           overall={resolvedOverall}
           selectedNationCode={resolvedNationCode}
-          status={status}
           stats={resolvedStats}
+          status={status}
           template={template}
           tier={tier ?? card?.tier ?? "bronze"}
           useSketchTextOverlays={useSketchTextOverlays}
+          overlayMetadata={overlayMetadata}
+          onAvatarReady={onAvatarReady}
+          onTemplateReady={onTemplateReady}
         />
       ) : (
-        <View style={styles.cardSurface}>
-          <PlayerCard
-            renderDisplayName={!useSketchTextOverlays}
-            renderOverall={!useSketchTextOverlays}
-            renderStatValues={false}
-            template={template}
-            card={{
-              avatarGeneratedUrl: card?.avatarGeneratedUrl,
-              avatarSourceUrl: card?.avatarSourceUrl ?? photoSource?.uri,
-              badgeIcon: teamFlagForCode(resolvedNationCode),
-              displayName: resolvedDisplayName,
-              overall: resolvedOverall,
-              selectedNationCode: resolvedNationCode,
-              stats: resolvedStats,
-              tier: tier ?? card?.tier ?? "bronze"
-            }}
-          />
-          {useSketchTextOverlays ? (
-            <CardTextOverlays displayName={resolvedDisplayName} overall={resolvedOverall} />
-          ) : null}
-          <CardStatOverlays stats={resolvedStats} />
+        <View style={[styles.cardSurface, fillParent && styles.cardSurfaceFill]}>
+          <View style={[styles.cardCanvas, { aspectRatio }, fillParent && styles.cardCanvasFill]}>
+            <PlayerCard
+              onAvatarReady={onAvatarReady}
+              renderDisplayName={!useSketchTextOverlays}
+              onTemplateReady={onTemplateReady}
+              renderOverall={!useSketchTextOverlays}
+              renderStatValues={false}
+              template={template}
+              card={{
+                avatarGeneratedUrl: card?.avatarGeneratedUrl,
+                avatarSourceUrl: card?.avatarSourceUrl ?? photoSource?.uri,
+                badgeIcon: teamFlagForCode(resolvedNationCode),
+                displayName: resolvedDisplayName,
+                overall: resolvedOverall,
+                selectedNationCode: resolvedNationCode,
+                stats: resolvedStats,
+                tier: tier ?? card?.tier ?? "bronze"
+              }}
+            />
+            {renderOverlays && useSketchTextOverlays && overlayMetadata ? (
+              <CardTextOverlays
+                displayName={resolvedDisplayName}
+                metadata={overlayMetadata}
+                overall={resolvedOverall}
+              />
+            ) : null}
+            {renderOverlays ? <CardStatOverlays metadata={overlayMetadata} stats={resolvedStats} /> : null}
+          </View>
         </View>
       )}
-      <CardStatusBadge
-        isRetrying={isRetrying}
-        onRetry={handleRetry}
-        status={status}
-      />
+      {hideStatusBadge ? null : (
+        <CardStatusBadge
+          isRetrying={isRetrying}
+          onRetry={handleRetry}
+          status={status}
+        />
+      )}
     </View>
   );
 }
 
 function HiddenCardPlaceholder({
+  aspectRatio,
   displayName,
   overall,
   selectedNationCode,
@@ -166,8 +204,12 @@ function HiddenCardPlaceholder({
   stats,
   template,
   tier,
-  useSketchTextOverlays
+  useSketchTextOverlays,
+  overlayMetadata,
+  onAvatarReady,
+  onTemplateReady,
 }: {
+  aspectRatio: number;
   displayName: string;
   overall: number;
   selectedNationCode: string;
@@ -176,7 +218,14 @@ function HiddenCardPlaceholder({
   template: PlayerCardRenderTemplate;
   tier: CardTier;
   useSketchTextOverlays: boolean;
+  overlayMetadata?: ReturnType<typeof getHandDrawnTemplateMetadata>;
+  onAvatarReady?: () => void;
+  onTemplateReady?: () => void;
 }) {
+  useEffect(() => {
+    onAvatarReady?.();
+  }, [onAvatarReady]);
+
   const title =
     status === "failed"
       ? "Generation needs a retry"
@@ -187,9 +236,12 @@ function HiddenCardPlaceholder({
           : "Card reveal after generation";
 
   return (
-    <View style={styles.hiddenCard}>
-      <PlayerCard
+    <View style={[styles.hiddenCard, { aspectRatio }]}>
+      <View style={styles.cardCanvas}>
+        <PlayerCard
+        onAvatarReady={onAvatarReady}
         renderDisplayName={!useSketchTextOverlays}
+        onTemplateReady={onTemplateReady}
         renderOverall={!useSketchTextOverlays}
         renderStatValues={false}
         template={template}
@@ -203,11 +255,16 @@ function HiddenCardPlaceholder({
           stats,
           tier
         }}
-      />
-      {useSketchTextOverlays ? (
-        <CardTextOverlays displayName={displayName} overall={overall} />
+        />
+      {useSketchTextOverlays && overlayMetadata ? (
+        <CardTextOverlays
+          displayName={displayName}
+          metadata={overlayMetadata}
+          overall={overall}
+        />
       ) : null}
-      <CardStatOverlays stats={stats} />
+      <CardStatOverlays metadata={overlayMetadata} stats={stats} />
+      </View>
       <View pointerEvents="none" style={styles.hiddenMask}>
         <View style={styles.hiddenTint} />
         <View style={[styles.hiddenBand, styles.hiddenBandTop]} />
@@ -253,10 +310,27 @@ const styles = StyleSheet.create({
     position: "relative",
     width: "100%",
   },
+  cardSurfaceFill: {
+    height: "100%",
+    justifyContent: "center",
+    width: "100%",
+  },
+  cardCanvas: {
+    position: "relative",
+    width: "100%",
+  },
+  cardCanvasFill: {
+    height: "100%",
+  },
   cardWrap: {
     alignSelf: "center",
+    flexGrow: 0,
     maxWidth: 420,
     width: "100%"
+  },
+  cardWrapFill: {
+    alignSelf: "stretch",
+    maxWidth: undefined,
   },
   hiddenBody: {
     color: opacity.cream80,

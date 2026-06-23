@@ -14,11 +14,11 @@
     "noImplicitOverride": true,
     "noUncheckedIndexedAccess": true,
     "paths": {
-      "@world-cup-game/card-renderer": ["packages/card-renderer/src"],
-      "@world-cup-game/config": ["packages/config/src"],
-      "@world-cup-game/game-engine": ["packages/game-engine/src"],
-      "@world-cup-game/types": ["packages/types/src"],
-      "@world-cup-game/ui": ["packages/ui/src"]
+      "@gogaffa/card-renderer": ["packages/card-renderer/src"],
+      "@gogaffa/config": ["packages/config/src"],
+      "@gogaffa/game-engine": ["packages/game-engine/src"],
+      "@gogaffa/types": ["packages/types/src"],
+      "@gogaffa/ui": ["packages/ui/src"]
     },
     "resolveJsonModule": true,
     "skipLibCheck": true,

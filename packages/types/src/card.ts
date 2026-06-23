@@ -1,3 +1,26 @@
+export type CardProgressionLevel = 2 | 3 | 4;
+
+export interface CardProgressionMilestones {
+  hasCompletedFirstTrivia: boolean;
+  hasFinalizedAllBracketGroups: boolean;
+}
+
+export interface CardUpgradeStep {
+  from: CardProgressionLevel;
+  to: CardProgressionLevel;
+}
+
+export interface CardUpgradeEvent {
+  id: string;
+  userId: string;
+  cardId: string;
+  fromLevel: CardProgressionLevel;
+  toLevel: CardProgressionLevel;
+  sequence: number;
+  createdAt: string;
+  animationSeenAt: string | null;
+}
+
 export type CardTier = "bronze" | "silver" | "gold" | "elite" | "legend";
 
 export type CardStatus =
@@ -51,6 +74,11 @@ export interface CardTemplateLayerMetadata {
   fit?: "cover" | "contain";
 }
 
+export interface CardStatOverlayPosition {
+  left: number;
+  top: number;
+}
+
 export interface CardTemplateMetadata {
   id: string;
   name: string;
@@ -63,6 +91,16 @@ export interface CardTemplateMetadata {
     width: number;
     height: number;
   };
+  /** When true, PNG margins blend into the host background (shield templates). */
+  transparentCanvas?: boolean;
+  /** How the base PNG blends with the host background. Defaults to multiply (white margins). */
+  canvasBlendMode?: "multiply" | "screen";
+  /** When false, OVR label/number overlays are omitted. */
+  showOverallOverlay?: boolean;
+  /** Stat value positions as % of card width/height. */
+  statOverlayPositions?: ReadonlyArray<CardStatOverlayPosition>;
+  /** Stat font size as a fraction of rendered card width. */
+  statFontScale?: number;
   layers: {
     overall: CardTemplateLayerMetadata;
     avatar: CardTemplateLayerMetadata;

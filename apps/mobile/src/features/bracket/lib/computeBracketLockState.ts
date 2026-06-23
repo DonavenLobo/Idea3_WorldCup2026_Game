@@ -1,17 +1,38 @@
 // apps/mobile/src/features/bracket/lib/computeBracketLockState.ts
-import { GROUP_IDS } from "@world-cup-game/config";
-import type { GroupId } from "@world-cup-game/config";
+//
+// Lock-on-save model: a group is locked the moment it's finalized (saved);
+// a knockout match is locked the moment its entire round is finalized.
+// There is no time-based lock — no per-match kickoff gate, no
+// tournament-wide group-stage deadline.
+import { GROUP_IDS } from "@gogaffa/config";
+import type { GroupId } from "@gogaffa/config";
 
 export type KnockoutRoundId = "r32" | "r16" | "qf" | "sf" | "final" | "third";
 
-export type TournamentPhase =
-  | "pre"             // No group has kicked off yet
-  | "phase1-closing"  // Group stage started, shared edit window still open
-  | "between"         // All groups locked, no knockout match kicked off
-  | "phase2-closing"  // Some knockouts locked, some open
-  | "complete";       // Everything locked
+export const KNOCKOUT_ROUND_IDS: readonly KnockoutRoundId[] = [
+  "r32",
+  "r16",
+  "qf",
+  "sf",
+  "third",
+  "final"
+] as const;
 
-/** Lockout-relevant fixture data. Produced by useFixtures() at runtime. */
+/**
+ * Tournament phase, driven purely by which groups and knockout rounds the
+ * user has finalized.
+ */
+export type TournamentPhase =
+  | "groups-open"        // No groups finalized yet
+  | "groups-partial"     // Some groups finalized
+  | "groups-done"        // All groups finalized; no knockout round finalized yet
+  | "knockouts-active"   // At least one knockout round finalized
+  | "complete";          // All knockout rounds finalized (incl. third + final)
+
+/**
+ * Lockout-relevant fixture data. Consumed by `useFixtures` to render the
+ * schedule UI; the lock-on-save model itself ignores fixtures.
+ */
 export interface FixtureData {
   /** First-kickoff per group, as a Date. */
   groupFirstKickoffs: Record<GroupId, Date>;
@@ -19,136 +40,70 @@ export interface FixtureData {
   knockouts: Array<{ round: KnockoutRoundId; index: number; kickoff: Date }>;
 }
 
+/**
+ * Finalized-state snapshot. Owned by BracketContext and passed into
+ * `computeBracketLockStateFromFinalized` to derive lock state.
+ */
+export interface FinalizedState {
+  isGroupFinalized: (group: GroupId) => boolean;
+  isKnockoutRoundFinalized: (round: KnockoutRoundId) => boolean;
+}
+
 export interface BracketLockState {
   isGroupLocked: (group: GroupId) => boolean;
   isMatchLocked: (round: KnockoutRoundId, index: number) => boolean;
   phase: TournamentPhase;
-  nextLockAt: Date | null;
-  nextLockLabel: string | null;
-}
-
-function roundLabel(round: KnockoutRoundId): string {
-  switch (round) {
-    case "r32":   return "R32";
-    case "r16":   return "R16";
-    case "qf":    return "QF";
-    case "sf":    return "SF";
-    case "final": return "Final";
-    case "third": return "3rd-place";
-  }
 }
 
 /**
- * Group-stage editing window: 7 days from the earliest group kickoff.
- * After this deadline, ALL group rankings are locked regardless of which
- * specific group games are still upcoming — this is intentional so that
- * late joiners can't game the system by waiting for groups to play out.
+ * Pure: derive BracketLockState from finalized state.
+ *
+ *  - A group is locked iff the user has finalized (saved) it.
+ *  - A knockout match is locked iff its round has been finalized — locking
+ *    is per-round, not per-match. Once you've saved an R32 sheet, every
+ *    R32 pick is frozen.
  */
-const GROUP_STAGE_EDIT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
-
-/** Pure: derive BracketLockState from (now, fixtures). */
-export function computeBracketLockState(
-  now: Date,
-  fixtures: FixtureData
+export function computeBracketLockStateFromFinalized(
+  finalized: FinalizedState
 ): BracketLockState {
-  const nowMs = now.getTime();
+  const isGroupLocked = (group: GroupId): boolean =>
+    finalized.isGroupFinalized(group);
 
-  const groupKickoffMs = new Map<GroupId, number>();
-  for (const g of GROUP_IDS) {
-    const d = fixtures.groupFirstKickoffs[g];
-    if (d) groupKickoffMs.set(g, d.getTime());
-  }
+  const isMatchLocked = (round: KnockoutRoundId, _index: number): boolean =>
+    finalized.isKnockoutRoundFinalized(round);
 
-  // Tournament-wide group-stage deadline: earliest group kickoff + 7 days.
-  // If no group fixtures are loaded yet, fall back to never-locked.
-  const earliestGroupKickoff = Math.min(...Array.from(groupKickoffMs.values()));
-  const groupStageDeadlineMs =
-    Number.isFinite(earliestGroupKickoff)
-      ? earliestGroupKickoff + GROUP_STAGE_EDIT_WINDOW_MS
-      : Infinity;
-
-  const knockoutKickoffMs = new Map<string, number>();
-  for (const k of fixtures.knockouts) {
-    knockoutKickoffMs.set(`${k.round}:${k.index}`, k.kickoff.getTime());
-  }
-
-  /**
-   * Tournament-wide group lock. All 12 groups lock at the same moment —
-   * once `now` passes the (earliest-kickoff + 7d) deadline.
-   * Per-group kickoff times no longer gate individual groups.
-   */
-  const isGroupLocked = (_group: GroupId): boolean => {
-    return nowMs >= groupStageDeadlineMs;
-  };
-
-  /**
-   * Per-match lock for knockouts. Once a knockout match has kicked off,
-   * its pick can no longer be changed. (Spec: "no edit after a game has
-   * already been played" — kickoff is the closest authoritative signal
-   * we have without a live results feed.)
-   */
-  const isMatchLocked = (round: KnockoutRoundId, index: number): boolean => {
-    const k = knockoutKickoffMs.get(`${round}:${index}`);
-    return k !== undefined && nowMs >= k;
-  };
-
-  // Next lock to display: group-stage deadline (if still in the future),
-  // otherwise the soonest upcoming knockout kickoff.
-  let soonestKnockoutKickoff = Infinity;
-  let soonestKnockoutLabel: string | null = null;
-  for (const k of fixtures.knockouts) {
-    const ms = k.kickoff.getTime();
-    if (nowMs < ms && ms < soonestKnockoutKickoff) {
-      soonestKnockoutKickoff = ms;
-      soonestKnockoutLabel = `${roundLabel(k.round)} #${k.index + 1}`;
-    }
-  }
-
-  let nextLockAt: Date | null = null;
-  let nextLockLabel: string | null = null;
-  if (
-    Number.isFinite(groupStageDeadlineMs) &&
-    nowMs < groupStageDeadlineMs &&
-    groupStageDeadlineMs < soonestKnockoutKickoff
-  ) {
-    nextLockAt = new Date(groupStageDeadlineMs);
-    nextLockLabel = "Group Stage";
-  } else if (soonestKnockoutKickoff < Infinity) {
-    nextLockAt = new Date(soonestKnockoutKickoff);
-    nextLockLabel = soonestKnockoutLabel;
-  }
-
-  // Group lock is now all-or-nothing (a single tournament-wide deadline).
-  const groupsLocked = nowMs >= groupStageDeadlineMs;
-  const anyKnockoutLocked = fixtures.knockouts.some((k) =>
-    isMatchLocked(k.round, k.index)
+  const finalizedGroupCount = GROUP_IDS.reduce(
+    (n, g) => (finalized.isGroupFinalized(g) ? n + 1 : n),
+    0
   );
-  const allKnockoutsLocked =
-    fixtures.knockouts.length > 0 &&
-    fixtures.knockouts.every((k) => isMatchLocked(k.round, k.index));
+  const allGroupsFinalized = finalizedGroupCount === GROUP_IDS.length;
 
-  // Phase derivation under the new model:
-  //   - pre:             tournament hasn't started + groups still editable
-  //   - phase1-closing:  tournament started, groups still editable (within 7d window)
-  //   - between:         group stage locked, no knockouts started yet
-  //   - phase2-closing:  some knockouts locked
-  //   - complete:        all knockouts locked
+  const finalizedRoundCount = KNOCKOUT_ROUND_IDS.reduce(
+    (n, r) => (finalized.isKnockoutRoundFinalized(r) ? n + 1 : n),
+    0
+  );
+  const anyKnockoutRoundFinalized = finalizedRoundCount > 0;
+  const allKnockoutRoundsFinalized =
+    finalizedRoundCount === KNOCKOUT_ROUND_IDS.length;
+
   let phase: TournamentPhase;
-  const earliestGroupHasStarted =
-    Number.isFinite(earliestGroupKickoff) && nowMs >= earliestGroupKickoff;
-  if (!earliestGroupHasStarted) {
-    phase = "pre";
-  } else if (!groupsLocked) {
-    phase = "phase1-closing";
-  } else if (!anyKnockoutLocked) {
-    phase = "between";
-  } else if (!allKnockoutsLocked) {
-    phase = "phase2-closing";
-  } else {
+  if (allKnockoutRoundsFinalized) {
     phase = "complete";
+  } else if (anyKnockoutRoundFinalized) {
+    phase = "knockouts-active";
+  } else if (allGroupsFinalized) {
+    phase = "groups-done";
+  } else if (finalizedGroupCount > 0) {
+    phase = "groups-partial";
+  } else {
+    phase = "groups-open";
   }
 
-  return { isGroupLocked, isMatchLocked, phase, nextLockAt, nextLockLabel };
+  return {
+    isGroupLocked,
+    isMatchLocked,
+    phase
+  };
 }
 
 export type { GroupId };

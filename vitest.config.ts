@@ -6,11 +6,11 @@ const resolvePkg = (path: string) => fileURLToPath(new URL(path, import.meta.url
 export default defineConfig({
   resolve: {
     alias: {
-      "@world-cup-game/config": resolvePkg("./packages/config/src/index.ts"),
-      "@world-cup-game/types": resolvePkg("./packages/types/src/index.ts"),
-      "@world-cup-game/game-engine": resolvePkg("./packages/game-engine/src/index.ts"),
-      "@world-cup-game/card-renderer": resolvePkg("./packages/card-renderer/src/index.ts"),
-      "@world-cup-game/ui": resolvePkg("./packages/ui/src/index.ts")
+      "@gogaffa/config": resolvePkg("./packages/config/src/index.ts"),
+      "@gogaffa/types": resolvePkg("./packages/types/src/index.ts"),
+      "@gogaffa/game-engine": resolvePkg("./packages/game-engine/src/index.ts"),
+      "@gogaffa/card-renderer": resolvePkg("./packages/card-renderer/src/index.ts"),
+      "@gogaffa/ui": resolvePkg("./packages/ui/src/index.ts")
     }
   },
   test: {

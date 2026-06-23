@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Fixture } from "@world-cup-game/config";
+import type { Fixture } from "@gogaffa/config";
 import {
   filterMatches,
   formatDayHeader,

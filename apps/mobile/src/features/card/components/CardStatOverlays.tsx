@@ -1,26 +1,16 @@
-import { CARD_STATS } from "@world-cup-game/config";
-import type { CardStats } from "@world-cup-game/types";
+import { CARD_STATS } from "@gogaffa/config";
+import type { CardStats, CardTemplateMetadata } from "@gogaffa/types";
 import { useState } from "react";
 import type { LayoutChangeEvent } from "react-native";
 import { StyleSheet, Text, View } from "react-native";
 import { colors } from "../../../theme/colors";
 import { fontFamily } from "../../../theme/typography";
+import { LEVEL_02_BASE_METADATA } from "../templates/handDrawnCardTemplates";
 
 /** Caveat reads smaller than Inter at the same px — scale to match template (~42/1024). */
-const SKETCH_STAT_FONT_SCALE = 0.059;
+const DEFAULT_STAT_FONT_SCALE = 0.059;
 
-/**
- * Stat overlay tuning (percent of card width/height):
- * - Positions → `STAT_VALUE_OVERLAY_POSITIONS` below (center of each drawn box)
- * - Size → `SKETCH_STAT_FONT_SCALE`
- *
- * OVR + player name also use overlays — see `CardTextOverlays.tsx` + `templates/level00SketchTemplate.ts`.
- * Order: HYP, FRM, ATK, AST, WAL, LCK.
- */
-export const STAT_VALUE_OVERLAY_POSITIONS: ReadonlyArray<{
-  left: number;
-  top: number;
-}> = [
+const DEFAULT_STAT_POSITIONS: ReadonlyArray<{ left: number; top: number }> = [
   { left: 19, top: 83 },
   { left: 31.5, top: 83 },
   { left: 43.5, top: 83 },
@@ -34,9 +24,13 @@ const STAT_SLOT_WIDTH_PCT = 12;
 
 export interface CardStatOverlaysProps {
   stats: CardStats;
+  metadata?: CardTemplateMetadata;
 }
 
-export function CardStatOverlays({ stats }: CardStatOverlaysProps) {
+export function CardStatOverlays({
+  stats,
+  metadata = LEVEL_02_BASE_METADATA,
+}: CardStatOverlaysProps) {
   const [imageWidth, setImageWidth] = useState(0);
 
   const handleLayout = (event: LayoutChangeEvent) => {
@@ -44,13 +38,15 @@ export function CardStatOverlays({ stats }: CardStatOverlaysProps) {
     setImageWidth((current) => (Math.abs(current - nextWidth) < 1 ? current : nextWidth));
   };
 
-  const fontSize = imageWidth > 0 ? imageWidth * SKETCH_STAT_FONT_SCALE : 18;
+  const positions = metadata.statOverlayPositions ?? DEFAULT_STAT_POSITIONS;
+  const fontScale = metadata.statFontScale ?? DEFAULT_STAT_FONT_SCALE;
+  const fontSize = imageWidth > 0 ? imageWidth * fontScale : 18;
   const lineHeight = fontSize * 1.15;
 
   return (
     <View pointerEvents="none" style={styles.overlay} onLayout={handleLayout}>
       {CARD_STATS.map((stat, index) => {
-        const position = STAT_VALUE_OVERLAY_POSITIONS[index];
+        const position = positions[index];
         if (!position) return null;
 
         return (

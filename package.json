@@ -9,6 +9,7 @@
   },
   "scripts": {
     "assets:card-template": "node scripts/create-transparent-card-template.cjs",
+    "assets:shield-cutout": "node scripts/transparentize-black-cutout.cjs",
     "preview:card": "node scripts/preview-card.cjs",
     "dev": "turbo dev",
     "dev:mobile": "pnpm --filter mobile start",
